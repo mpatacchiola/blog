@@ -4,20 +4,22 @@ layout: default
 
 <div class="home">
 
-  <h1 class="page-heading">Posts</h1>
+  <h1 class="page-heading"><b>Blog Posts</b></h1>
   
   {{ content }}
 
   <ul class="post-list">
-    {% for post in site.posts %}
-      <li>
-        <span class="post-meta">{{ post.date | date: "%b %-d, %Y" }}</span>
 
-        <h2>
-          <a class="post-link" href="{{ post.url | relative_url }}">{{ post.title | escape }}</a>
-        </h2>
-      </li>
+    {% for post in site.posts %}
+      <li><span>{{ post.date | date: "[%Y.%m.%d]" }}</span> &raquo; <a href="{{ post.url }}" style="text-decoration: underline;">{{ post.title }}</a></li>
     {% endfor %}
+
+  </ul>
+
+  <h1 class="page-heading"><b>Open Source Projects</b></h1>
+
+  <ul class="post-list">  
+      <li><span><a href="https://github.com/mpatacchiola/deepgaze" style="text-decoration: underline;">Deepgaze</a> </span> &raquo; Computer Vision library for Human-Computer interaction </li>
   </ul>
 
   <p class="rss-subscribe">subscribe <a href="{{ "/feed.xml" | relative_url }}">via RSS</a></p>

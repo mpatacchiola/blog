@@ -1,9 +1,9 @@
-<header class="site-header" role="banner">
+<header class="site-header" role="banner" style="background-color:black;  ">
 
   <div class="wrapper">
 
-    <a class="site-title" href="{{ "/" | relative_url}}">{{ site.title | escape }}</a>
-
+    <!--<a class="site-title" href="{{ "/" | relative_url}}" style="color:lightgrey; background-image: url('title.png');width:300px">root@mpatacchiola:~$ </a>-->
+    <a class="site-title" href="{{ "/" | relative_url}}" style="color:#006d00; ">root@mpatacchiola:~$ </a>
     <nav class="site-nav">
       <span class="menu-icon">
         <svg viewBox="0 0 18 15" width="18px" height="15px">
@@ -16,7 +16,7 @@
       <div class="trigger">
         {% for my_page in site.pages %}
           {% if my_page.title %}
-          <a class="page-link" href="{{ my_page.url | relative_url }}">{{ my_page.title | escape }}</a>
+          <a class="page-link" href="{{ my_page.url | relative_url }}" style="color:#006d00; ">{{ my_page.title | escape }}</a>
           {% endif %}
         {% endfor %}
       </div>
