@@ -13,6 +13,8 @@ Today I was looking for some robust/fast way to **track hands** in OpenCV. At th
 
 Given this two problems, what to do? 
 
+$$ \frac{1}{n^{2}} $$
+
 Histogram Backprojection for Color Detection
 --------------------------------------------
 
