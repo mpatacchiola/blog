@@ -20,7 +20,7 @@ description: > # this means to ignore newlines until "baseurl:"
   computational modelling with Machine Learning and Deep Learning methods.
   He is a PhD student in Robotics at Plymouth University.
   He is interested in Robotics, Computer Vision and Artificial Intelligence.
-baseurl: "" # the subpath of your site, e.g. /blog
+baseurl: "/blog" # the subpath of your site, e.g. /blog
 url: "https://mpatacchiola.github.io/" # the base hostname & protocol for your site, e.g. http://example.com
 #twitter_username: jekyllrb
 github_username:  mpatacchiola
