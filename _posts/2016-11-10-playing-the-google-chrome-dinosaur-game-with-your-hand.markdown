@@ -1,7 +1,8 @@
 ---
-layout: default
+layout: post
 title:  "Playing the Google Chrome's dinosaur game using hand-tracking"
 date:   2016-11-10 19:00:00 +0000
+comments: true
 ---
 
 Today I was looking for some robust/fast way to **track hands** in OpenCV. At the beginning I turned my attention to classifiers such as: Haar cascade, Convolutional Neural Networks, SVM, etc. Unfortunately there are two main problems with classifiers: slinding windows and datasets.
