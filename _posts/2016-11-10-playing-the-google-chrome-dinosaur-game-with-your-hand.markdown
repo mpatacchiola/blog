@@ -13,6 +13,15 @@ Today I was looking for some robust/fast way to **track hands** in OpenCV. At th
 
 Given this two problems, what to do? 
 
+Histograms in Python
+--------------------
+
+In python we can easilly play with histograms. In `numpy` we have the function:
+
+```python
+numpy.histogram(a, bins=10, range=None, normed=False, weights=None, density=None)
+``` 
+
 Histogram Backprojection for Color Detection
 --------------------------------------------
 

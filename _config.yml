@@ -13,15 +13,14 @@
 # you will see them accessed via {{ site.title }}, {{ site.email }}, and so on.
 # You can create any custom variable you would like, and they will be accessible
 # in the templates via {{ site.myvariable }}.
-title: Massimiliano Patacchiola
+title: mpatacchiola's blog
 #email: your-email@domain.com
 description: > # this means to ignore newlines until "baseurl:"
-  Massimiliano Patacchiola is a cognitive scientist specialised in 
-  computational modelling with Machine Learning and Deep Learning methods.
-  He is a PhD student in Robotics at Plymouth University.
-  He is interested in Robotics, Computer Vision and Artificial Intelligence.
+  Where Massimiliano Patacchiola blogs about artificial intelligence,
+  machine learning, deep learning, robotics and computer vision.
 baseurl: "/blog" # the subpath of your site, e.g. /blog
 url: "https://mpatacchiola.github.io" # the base hostname & protocol for your site, e.g. http://example.com
+author: Massimiliano Patacchiola
 #twitter_username: jekyllrb
 github_username:  mpatacchiola
 #gplus_username: massimiliano
