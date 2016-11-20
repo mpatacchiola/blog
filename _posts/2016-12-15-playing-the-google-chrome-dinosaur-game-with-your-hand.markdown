@@ -1,7 +1,7 @@
 ---
 layout: post
 title:  "Playing the Google Chrome's dinosaur game using hand-tracking"
-date:   2016-11-15 19:00:00 +0000
+date:   2016-12-15 19:00:00 +0000
 comments: true
 ---
 
