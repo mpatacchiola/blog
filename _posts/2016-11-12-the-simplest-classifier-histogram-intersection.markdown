@@ -104,7 +104,7 @@ image = cv2.imread('image_2.jpg') #Batman Test
 comparison_array = my_classifier.returnHistogramComparisonArray(image, method="intersection")
 ```
 
-The method `returnHistogramComparisonArray()` returns a **numpy array** which contains the result of the intersection between the image and the models. In this function it is possible to specify the comparison method, `intersection` refers to the method we discussed in this article. Other available methods are `correlation`, `chisqr` (Chi-Square) and `bhattacharyya` which is an implementation of the [Bhattacharyya distance measure](https://en.wikipedia.org/wiki/Bhattacharyya_distance). To check the result of the comparison we can print the values inside the `comparison_array`:
+The method `returnHistogramComparisonArray()` returns a **numpy array** which contains the result of the intersection between the image and the models. In this function it is possible to specify the comparison method, `intersection` refers to the method we discussed in this article. Other available methods are `correlation` ([Pearson Correlation Coefficient](https://en.wikipedia.org/wiki/Pearson_product-moment_correlation_coefficient)), `chisqr` ([Chi-Square](https://en.wikipedia.org/wiki/Chi-squared_test)) and `bhattacharyya` which is an implementation of the [Bhattacharyya distance measure](https://en.wikipedia.org/wiki/Bhattacharyya_distance). To check the result of the comparison we can print the values inside the `comparison_array`:
 
 ```python
 [ 0.00818883  0.55411926  0.12405966  0.07735263  0.34388389  0.12672027 0.09870308  0.2225694 ]

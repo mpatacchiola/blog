@@ -19,7 +19,7 @@ Given this two problems, what to do? One possibility is to use the **histogram b
 The histogram backprojection algorithm
 ---------------------------------------
 
-The histogram backprojection algorithm was proposed by Swain and Ballard in their article ["Color Indexing"](http://link.springer.com/article/10.1007/BF00130487). If you did not read my [previous post]({{site.baseurl}}{% post_url 2016-11-12-the-simplest-classifier-histogram-intersection %}) about **histogram intersection** you should do it, since the backprojection can be considered the complementary of the intersection. Using the terminology of Swain and Ballard we can say that the **intersection** answers to the question "**What** is the object we are looking to?", whereas the **backprojection** answers to the question "**Where** in the image are the colors that belong to the object being looked for (the target)?". How does the backprojection work? Given the image histogram $$ I $$ and the model histogram $$ M $$ we define a ratio histogram $$ R $$ as follow:
+The histogram backprojection algorithm was proposed by Swain and Ballard in their article ["Color Indexing"](http://link.springer.com/article/10.1007/BF00130487). If you did not read my [previous post]({{site.baseurl}}{% post_url 2016-11-12-the-simplest-classifier-histogram-intersection %}) about **histogram intersection** you should do it, since the backprojection can be considered complementary to the intersection. Using the terminology of Swain and Ballard we can say that the **intersection** answers to the question "**What** is the object we are looking to?", whereas the **backprojection** answers to the question "**Where** in the image are the colors that belong to the object being looked for (the target)?". How does the backprojection work? Given the image histogram $$ I $$ and the model histogram $$ M $$ we define a ratio histogram $$ R $$ as follow:
 
 $$ R_{i} = min \bigg( \frac{M_{i}}{I_{i}}, 1 \bigg) $$
 
@@ -27,7 +27,7 @@ We define also a function $$ h(c) $$ that maps the colour $$ c $$ of the pixel a
 
 Implementation in python
 ---------------------------------------------------------------
-To implement the algorithm in numpy is easy. First of all we need a function to get the ratio histogram $$ R $$ given the the **model histogram** $$ M $$ and the **image histogram** $$ I $$:
+To implement the algorithm in numpy is easy. The code below works with **one dimensional histograms** (greyscale image) but it can be easily extended to work with multi-dimensional histograms. For multidimensional histogram it is necessary to use the method `numpy.histogramdd` instead of the standard `numpy.histogram`. First of all we need a function to get the ratio histogram $$ R $$ given the **model histogram** $$ M $$ and the **image histogram** $$ I $$:
 
 ```python
 def return_ratio_histogram(M, I):
@@ -36,15 +36,27 @@ def return_ratio_histogram(M, I):
     return R
 ```
 
-The next step is to implement the equivalent of the function $$ h(c) $$ which maps the pixel of the **input image** to the value of the **ratio histogram** $$ R $$:
+The next step is the equivalent of the function $$ h(c) $$ which maps the pixel of the **input image** to the value of the **ratio histogram** $$ R $$. Here I supposed that the bins were equally spaced and that the highest pixel value was 255, however this is not always the case:
 
 ```python
 def return_backprojected_image(image, R):
-    
+    indexes = np.true_divide(image.flatten, 255)*R.shape[0]
+    B = R.astype(int)[indexes]
+    return B
+```
+We call `B` the image returned by the `return_backprojected()` method.
+In the next step we apply a circular convolution of radius `r` to the backrpojected image `B`. Numpy does not implement a 2D convolution operator we use the OpenCV method `cv2.filter2D`:
 
+```python
+def convolve(B, r):
+    D = cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(r,r))
+    cv2.filter2D(B, -1, D, B)
+    B = np.uint8(B)
+    cv2.normalize(B, B, 0, 255, cv2.NORM_MINMAX)
+    return B
 ```
 
-Since the backprojection process can be hard to grasp I realised an image which explain what's going on. To simplify the explanation I take into account a **single channel greyscale image**. Imagine to take the first (3x4) pixels on the top right corner of the image. Each one of this pixel has a value in the range [0,255]. If we consider the pixel at the location (1,2) we get a value of 179. We have to access the ratio histogram and find the bin which corresponds to 179. Using a 10 bins histogram the position representing the value 179 is the number eight (range [175, 200]). The value stored in this position (1.0) is taken and assigned to the location (1,2) of the output matrix.
+Since the backprojection process can be hard to grasp I realised an image which explain what's going on. To simplify the explanation I take into account a **single channel greyscale image**. Imagine to take the first (3x4) pixels on the top right corner of the image. Each one of this pixel has a value in the range [0,250]. If we consider the pixel at the location (1,2) we get a value of 179. We have to access the ratio histogram and find the bin which corresponds to 179. Using a 10 bins histogram the position representing the value 179 is the number eight (bin [175, 200]). The value stored in this position (1.0) is taken and assigned to the location (1,2) of the output matrix.
 
 ![image-title-here]({{site.baseurl}}/images/backprojection_figure.png){:class="img-responsive"}
 
