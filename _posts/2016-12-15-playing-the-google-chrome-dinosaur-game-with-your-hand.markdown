@@ -3,6 +3,7 @@ layout: post
 title:  "Playing the Google Chrome's dinosaur game using hand-tracking"
 date:   2016-12-15 19:00:00 +0000
 comments: true
+published: true
 ---
 
 ![image-title-here]({{site.baseurl}}/images/dinosaur_backprojection_hand_tracking.png){:class="img-responsive"}

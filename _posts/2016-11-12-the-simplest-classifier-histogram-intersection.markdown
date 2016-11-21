@@ -3,6 +3,7 @@ layout: post
 title:  "The Simplest Classifier: Histogram Comparison"
 date:   2016-11-12 10:00:00 +0000
 comments: true
+published: true
 ---
 
 ![image-title-here]({{site.baseurl}}/images/ironman_histogram_intersection.png){:class="img-responsive"}

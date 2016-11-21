@@ -11,7 +11,9 @@ layout: default
   <ul class="post-list">
 
     {% for post in site.posts %}
+    {% if post.published== true  %}
       <li><span>{{ post.date | date: "[%Y.%m.%d]" }}</span> &raquo; <a class="post-link" href="{{ post.url | relative_url}}" style="text-decoration: underline; font-size:100%; display: inline;">{{ post.title}}</a></li>
+    {% endif %}
     {% endfor %}
 
   </ul>
