@@ -105,7 +105,21 @@ image = cv2.imread('image_2.jpg') #Batman Test
 comparison_array = my_classifier.returnHistogramComparisonArray(image, method="intersection")
 ```
 
-The method `returnHistogramComparisonArray()` returns a **numpy array** which contains the result of the intersection between the image and the models. In this function it is possible to specify the comparison method, `intersection` refers to the method we discussed in this article. Other available methods are `correlation` ([Pearson Correlation Coefficient](https://en.wikipedia.org/wiki/Pearson_product-moment_correlation_coefficient)), `chisqr` ([Chi-Square](https://en.wikipedia.org/wiki/Chi-squared_test)) and `bhattacharyya` which is an implementation of the [Bhattacharyya distance measure](https://en.wikipedia.org/wiki/Bhattacharyya_distance). To check the result of the comparison we can print the values inside the `comparison_array`:
+The method `returnHistogramComparisonArray()` returns a **numpy array** which contains the result of the intersection between the image and the models. In this function it is possible to specify the comparison method, `intersection` refers to the method we discussed in this article. Other available methods are `correlation` ([Pearson Correlation Coefficient](https://en.wikipedia.org/wiki/Pearson_product-moment_correlation_coefficient)), `chisqr` ([Chi-Square](https://en.wikipedia.org/wiki/Chi-squared_test)) and `bhattacharyya` which is an implementation of the [Bhattacharyya distance measure](https://en.wikipedia.org/wiki/Bhattacharyya_distance). The following table shows the **distance value returned by each method** in case of exact match, half match and mismatch of the two histograms:
+
+{% include add_table_line.html type="style" %}
+{% assign array = "HISTOGRAMS,CORRELATION,CHI SQUARE,INTERSECTION,NHATTACHARYYA" | split: "," %}
+{% assign k = "header" %}
+{% include add_table_line.html type="header" values=array %}
+{% assign array = "Exact Match,1.0,0.0,1.0,0.0" | split: "," %}
+{% include add_table_line.html type="row" values=array %}
+{% assign array = "Half Match,0.7,0.67,0.5,0.55" | split: "," %}
+{% include add_table_line.html type="row" values=array %}
+{% assign array = "Mismatch,-1.0,2.0,0.0,1.0" | split: "," %}
+{% include add_table_line.html type="row" values=array %}
+{% include add_table_line.html type="footer" %}
+
+To check the result of the comparison we can print the values stored in the `comparison_array`:
 
 ```python
 [ 0.00818883  0.55411926  0.12405966  0.07735263  0.34388389  0.12672027 0.09870308  0.2225694 ]

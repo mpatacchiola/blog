@@ -1,0 +1,50 @@
+{% comment %} The add_table_line.html file create a table based on some CSS style
+Syntax:
+{% include add_table_line.html type="style" %}
+{% assign array = "HISTOGRAMS,CORRELATION,CHI SQUARE,INTERSECTION,NHATTACHARYYA" | split: "," %}
+{% assign k = "header" %}
+{% include add_table_line.html type="header" values=array %}
+{% assign array = "Exact Match,1.0,0.0,1.0,0.0" | split: "," %}
+{% include add_table_line.html type="footer" %}
+{% endcomment %}
+
+{% if include.type == "style"  %}
+<!-- Define the table style -->
+<p></p>
+<style type="text/css">
+.tg  {border-collapse:collapse;border-spacing:0;border-color:#ccc;margin:0px auto;}
+.tg td{font-family:Arial, sans-serif;font-size:14px;padding:10px 5px;border-style:solid;border-width:0px;overflow:hidden;word-break:normal;border-color:#ccc;color:#333;background-color:#fff;border-top-width:1px;border-bottom-width:1px;}
+.tg th{font-family:Arial, sans-serif;font-size:14px;font-weight:normal;padding:10px 5px;border-style:solid;border-width:0px;overflow:hidden;word-break:normal;border-color:#ccc;color:#333;background-color:#f0f0f0;border-top-width:1px;border-bottom-width:1px;}
+.tg .tg-baqh{text-align:center;vertical-align:top}
+.tg .tg-0z0h{font-weight:bold;font-family:Arial, Helvetica, sans-serif !important;;background-color:#efefef;vertical-align:top}
+</style>
+
+<table class="tg">
+{% endif %}
+
+{% if include.type == "header" %}
+ <tr>
+
+ {% for value in include.values %}
+  <th class="tg-0z0h">{{value}}</th>
+ {% endfor %}
+
+</tr>
+{% endif %}
+
+{% if include.type == "row"  %}
+
+ <tr>
+ {% for value in include.values %}
+   <td class="tg-baqh">{{value}}</td>
+ {% endfor %}
+  </tr>
+
+{% endif %}
+
+{% if include.type == "footer"  %}
+</table>
+<p></p>
+<p></p>
+{% endif %}
+
