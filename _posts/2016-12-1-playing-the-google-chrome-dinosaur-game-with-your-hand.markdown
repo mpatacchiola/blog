@@ -26,7 +26,7 @@ The histogram backprojection algorithm was proposed by Swain and Ballard in thei
 
 $$ R_{i} = min \bigg( \frac{M_{i}}{I_{i}}, 1 \bigg) $$
 
-We define also a function $$ h(c) $$ that maps the colour $$ c $$ of the pixel at $$ (x, y) $$ to the value of the histogram $$ R $$ it indexes. Using the slang of Swain and Ballard we can say that the function $$ h(c) $$ **backprojects** the histogram $$ R $$ onto the input image. The backprojected image $$ B $$ is then convolved with a disk $$ D^{r} $$ of radius $$ r $$. The authors recommend to choose as area of $$ D $$ the expected area subtended by the object. If you want more technical details I suggest you to read the [original article](http://link.springer.com/article/10.1007/BF00130487) which is not so long and it is well written. Since the backprojection process can be hard to grasp I realised an image which explain what's going on:
+We define also a function $$ h(c) $$ that maps the colour $$ c $$ of the pixel at $$ (x, y) $$ to the value of the histogram $$ R $$ it indexes. Using the slang of Swain and Ballard we can say that the function $$ h(c) $$ **backprojects** the histogram $$ R $$ onto the input image. The backprojected image $$ B $$ is then convolved with a disk $$ D $$ of radius $$ r $$. The authors recommend to choose as area of $$ D $$ the expected area subtended by the object. If you want more technical details I suggest you to read the [original article](http://link.springer.com/article/10.1007/BF00130487) which is not so long and it is well written. Since the backprojection process can be hard to grasp I realised an image which explain what's going on:
 
 ![backprojection]({{site.baseurl}}/images/backprojection_figure.png){:class="img-responsive"}
 
@@ -63,9 +63,7 @@ def convolve(B, r):
     return B
 ```
 
-
-
-Implementing the algorithm from scratch is not necessary since OpenCV has an useful function called `calcBackProject`. I will use this function to isolate the tiger's fur in the image below (which you can [download here]({{site.baseurl}}/images/tiger.jpg)):
+Implementing the algorithm from scratch is not necessary because OpenCV has an useful function called `calcBackProject`. I will use this function to isolate the tiger's fur in the image below (which you can [download here]({{site.baseurl}}/images/tiger.jpg)):
 
 ![tiger]({{site.baseurl}}/images/tiger.jpg){:class="img-responsive"}
 
@@ -138,7 +136,7 @@ cv2.imwrite("result.jpg", img_filtered)
 
 ![tiger multi backprojection]({{site.baseurl}}/images/tiger_multi_backprojected.jpg){:class="img-responsive"}
 
-As you can see we got better results. Having multiple templates allows the model to have a more complete representation of the object. This approach can have some issue, **having more templates means having more noise**. In fact the amount of background noise captured in the second image is higher than the first one. An intelligent use of **morphing operations** can attenuate the problem, in this sense the choice of the kernel size is crucial for having good results. The full version of the code (and the five templates) is available on the [deepgaze repository](https://github.com/mpatacchiola/deepgaze). 
+As you can see we got better results. Having multiple templates allows the model to have a more complete representation of the object. This approach can have some issues, **having more templates means having more noise**. In fact the amount of background noise captured in the second image is higher than the first one. An intelligent use of **morphing operations** can attenuate the problem, in this sense the choice of the kernel size is crucial. The full version of the code (and the five templates) is available on the [deepgaze repository](https://github.com/mpatacchiola/deepgaze). 
 
 Google Chrome's dinosaur game
 ----------------------------------
