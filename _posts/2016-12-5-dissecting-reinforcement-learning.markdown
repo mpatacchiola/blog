@@ -222,45 +222,239 @@ $$ \pi^{*}(s) = \underset{a}{\text{ argmax }} \sum_{s^{'}}^{} T(s,a,s^{'}) U(s^{
 
 We have all the elements, we can add the values we got in the Bellman equation and find the utility of the state (1,1):
 
-$$ U(s_{11}) = -0.04 + 1.0 \times 0.7456 = 0.705$$
+$$ U(s_{11}) = -0.04 + 1.0 \times 0.7456 = 0.7056$$
 
-The Bellman equation works! What we need is a Python implementation of the equation to use in our simulated world. We are going to use the same terminology of the first sections. Our world has 4x3=12 possible states. The starting vector contains 12 values and the transition matrix is a huge 12x4x12 matrix where most of the values are zeros (we can move only from one state to its neighbours).
+The Bellman equation works! What we need is a **Python implementation** of the equation to use in our simulated world. We are going to use the same terminology of the first sections. Our world has 4x3=12 possible states. The starting vector contains 12 values and the transition matrix is a huge 12x12x4 matrix (12 starting states, 12 next states, 4 actions) where most of the values are zeros (we can move only from one state to its neighbours). I generated the transition matrix using a script and I saved it as a Numpy matrix (you can [download it here]()).
+In the script I defined the function `return_state_utility()` which is an implementation of the Bellman equation. Using this function we are going to print the utility of the state (1,1) and check if it is the same we found previously by hand:
 
 ```python
 import numpy as np
 
-#Starting state vector
-#The agent starts from (1, 1)
-v = np.array([[0.0, 0.0, 0.0, 0.0, 
-               0.0, 0.0, 0.0, 0.0, 
-               1.0, 0.0, 0.0, 0.0]])
-
-#Transition matrix loaded from file
-#(It is too big to write here)
-T = np.load("T.npy")
-
-#Utility matrix
-U = np.array([[0.812, 0.868, 0.918,   1.0],
-               [0.762,   0.0, 0.660,  -1.0],
-               [0.705, 0.655, 0.611, 0.388]])
-
-def return_state_utility(v, T, U, reward, gamma):
+def return_state_utility(v, T, u, reward, gamma):
     action_array = np.zeros(4)
     for action in range(0, 4):
-        action_array[action] = np.sum( np.multiply(U, np.dot(v, T[:,:,action]).reshape(3,4)))
+        action_array[action] = np.sum(np.multiply(u, np.dot(v, T[:,:,action])))
     return reward + gamma * np.max(action_array)
-   
+
+def main():
+    #Starting state vector
+    #The agent starts from (1, 1)
+    v = np.array([[0.0, 0.0, 0.0, 0.0, 
+                   0.0, 0.0, 0.0, 0.0, 
+                   1.0, 0.0, 0.0, 0.0]])
+
+    #Transition matrix loaded from file
+    #(It is too big to write here)
+    T = np.load("T.npy")
+
+    #Utility vector
+    u = np.array([[0.812, 0.868, 0.918,   1.0,
+                   0.762,   0.0, 0.660,  -1.0,
+                   0.705, 0.655, 0.611, 0.388]])
+
+    #Defining the reward for state (1,1)
+    reward = -0.04
+    #Assuming that the discount factor is equal to 1.0
+    gamma = 1.0
+
+    #Use the Bellman equation to find the utility of state (1,1)
+    utility_11 = return_state_utility(v, T, u, reward, gamma)
+    print("Utility of state (1,1): " + str(utility_11))
+
+if __name__ == "__main__":
+    main()
 ```
 
+```shell
+Utility of state (1,1): 0.7056
+```
 
-
-That's great, but we supposed that the utility values appeared magically. Instead of using a magician we want to **find an algorithm to obtain these values**. There is a problem. For $$ n $$ possible states there are $$ n $$ Bellman equations, and each equation contains $$ n $$ unknown. Using any linear algebra package would be possible to solve these equations, the problem is that they are not linear because of the $$ \text{max} $$ operator. What to do? We can use the value iteration algorithm...
+That's great, we obtained exactly the same value! 
+Until now **we supposed that the utility values appeared magically**. Instead of using a magician we want to **find an algorithm to obtain these values**. There is a problem. For $$ n $$ possible states there are $$ n $$ Bellman equations, and each equation contains $$ n $$ unknown. Using any linear algebra package would be possible to solve these equations, the problem is that they are not linear because of the $$ \text{max} $$ operator. What to do? We can use the value iteration algorithm...
 
 The value iteration algorithm
 ---------------------------------------
 
-The Bellman equation is the basis of the value iteration algorithm for solving a MDP. **Our objective is to find the utility values for each state**. As we said we cannot use a linear algebra library, we need an iterative approach. We start with arbitrary initial utility values (usually zeros). Then we calculate the utility of a state using the Bellman equation and we assign it to the state. This iteration is called **Bellman update**. Applying the Bellman update infinitely often we are **guaranteed to reach an equilibrium**. Once we reached the equilibrium we have the utility values we were looking for and we can use them to estimate which is the best move for each state.
+The Bellman equation is the basis of the value iteration algorithm for solving a MDP. **Our objective is to find the utility (also called value) for each state**. As we said we cannot use a linear algebra library, we need an iterative approach. We start with arbitrary initial utility values (usually zeros). Then we calculate the utility of a state using the Bellman equation and we assign it to the state. This iteration is called **Bellman update**. Applying the Bellman update infinitely often we are **guaranteed to reach an equilibrium**. Once we reached the equilibrium we have the utility values we were looking for and we can use them to estimate which is the best move for each state. It's time to implement the algorithm in Python. I will reuse the `return_state_utility()` function to update the utility vector `u`.
 
+```python
+import numpy as np
+
+def return_state_utility(v, T, u, reward, gamma):
+    action_array = np.zeros(4)
+    for action in range(0, 4):
+        action_array[action] = np.sum(np.multiply(u, np.dot(v, T[:,:,action])))
+    return reward + gamma * np.max(action_array)
+
+def main():
+    #Transition matrix loaded from file (It is too big to write here)
+    T = np.load("T.npy")
+
+    #Reward vector
+    r = np.array([-0.04, -0.04, -0.04,  +1.0,
+                  -0.04,   0.0, -0.04,  -1.0,
+                  -0.04, -0.04, -0.04, -0.04])    
+
+    #Utility vectors
+    u = np.array([[0.0, 0.0, 0.0,  0.0,
+                   0.0, 0.0, 0.0,  0.0,
+                   0.0, 0.0, 0.0,  0.0]])
+    u1 = np.array([[0.0, 0.0, 0.0,  0.0,
+                    0.0, 0.0, 0.0,  0.0,
+                    0.0, 0.0, 0.0,  0.0]])
+
+    tot_states = 12
+    gamma = 0.9 #Discount factor
+    iteration = 0 #Iteration counter
+    epsilon = 0.001 #
+
+    while True:
+        delta = 0
+        u = u1.copy()
+        iteration += 1
+        for s in range(tot_states):
+            reward = r[s]
+            v = np.zeros((1,tot_states))
+            v[0,s] = 1.0
+            u1[0,s] = return_state_utility(v, T, u, reward, gamma)
+            delta = max(delta, np.abs(u1[0,s] - u[0,s]))
+         
+        if delta < epsilon * (1 - gamma) / gamma:
+                print("=================== FINAL RESULT ==================")
+                print("Iterations: " + str(iteration))
+                print("Delta: " + str(delta))
+                print("Gamma: " + str(gamma))
+                print("Epsilon: " + str(epsilon))
+                print("===================================================")
+                print(u[:,0:4])
+                print(u[:,4:8])
+                print(u[:,8:12])
+                print("===================================================")
+                break
+
+if __name__ == "__main__":
+    main()
+```
+Using the code above I run different simulations with different values for the discounting factor `gamma`. As you can see more the discounting factor approaches 1.0 more our prediction for the utilities are precise. Unfortunately, more precision requires more iterations. In the limit case of `gamma = 1.0` the algorithm will never converge.
+
+```shell
+=================== FINAL RESULT ==================
+Iterations: 9
+Delta: 0.000304045
+Gamma: 0.5
+Epsilon: 0.001
+===================================================
+[[ 0.00854086  0.12551955  0.38243452  1.        ]]
+[[-0.04081336  0.          0.06628399 -1.        ]]
+[[-0.06241921 -0.05337728 -0.01991461 -0.07463402]]
+===================================================
+```
+
+```shell
+=================== FINAL RESULT ==================
+Iterations: 16
+Delta: 0.000104779638547
+Gamma: 0.9
+Epsilon: 0.001
+===================================================
+[[ 0.50939438  0.64958568  0.79536209  1.        ]]
+[[ 0.39844322  0.          0.48644002 -1.        ]]
+[[ 0.29628832  0.253867    0.34475423  0.12987275]]
+===================================================
+```
+
+```shell
+=================== FINAL RESULT ==================
+Iterations: 29
+Delta: 9.97973302774e-07
+Gamma: 0.999
+Epsilon: 0.001
+===================================================
+[[ 0.80796344  0.86539911  0.91653199  1.        ]]
+[[ 0.75696623  0.          0.65836281 -1.        ]]
+[[ 0.69968285  0.64882069  0.6047189   0.38150244]]
+===================================================
+```
+
+The policy iteration algorithm
+-----------------
+With the value iteration algorithm we have a way to estimate the utility of each state. What we still miss is a way to estimate an optimal policy. In this section I am going to show you how we can **use the policy iteration algorithm to find an optimal policy** which maximize the expected reward.
+First of all, we define a policy $$ \pi $$ which assign an action to each state. Using the `return_state_utility()` function (the Bellman equation) we can compute the expected utility of the policy. There is a good news. We do not really need the **complete version of the Bellman equation** which is:
+
+$$ U(s) = R(s) + \gamma \underset{a}{\text{ max }}  \sum_{s^{'}}^{} T(s,a,s^{'}) U(s^{'}) $$
+
+Since we have a policy and the policy associate to each state an action, we can get rid of the $$ \text{ max } $$ operator and use a **simplified version of the Bellman equation**:
+
+$$ U(s) = R(s) + \gamma  \sum_{s^{'}}^{} T(s,\pi(s),s^{'}) U(s^{'}) $$
+
+Once we evaluate the policy we can improve it. The **policy improvement** is the second and last step of the algorithm. Our environment has a finite number of states and then a finite number of policies. Each iteration yields to a better policy.
+
+I have implemented a function called `return_policy_evaluation()` which contains the simplified version of the Bellman equation.
+Moreover, I declared a new vector `p` which contains the actions for each state
+
+```python
+import numpy as np
+
+def return_policy_evaluation(p, u, r, T, gamma):
+    for s in range(12):
+        if(p[s] != np.NaN):
+            v = np.zeros((1,12))
+            v[0,s] = 1.0
+            action = int(p[s])
+            u[s] = r(s) + gamma * np.sum(np.multiply(u, np.dot(v, T[:,:,action])))
+    return u
+
+def return_expected_action(p, u, T):
+    actions_array = np.zeros(4)
+    for action in range(4):
+         actions_array[action] = np.sum(np.multiply(u, np.dot(v, T[:,:,action])))
+    return np.argmax(actions_array)
+        
+
+def main():
+
+    gamma = 0.9
+
+    T = np.load("T.npy")
+
+    # Nan=Nothing, -1=DontMove, 0=Up, 1=Left, 2=Down, 3=Right
+    p = np.array([3,      3, 3, -1,
+                  3, np.NaN, 3, -1,
+                  3,      3, 3,  3])
+
+    #Utility vectors
+    u = np.array([[0.0, 0.0, 0.0,  0.0,
+                   0.0, 0.0, 0.0,  0.0,
+                   0.0, 0.0, 0.0,  0.0]])
+
+    #Reward vector
+    r = np.array([-0.04, -0.04, -0.04,  +1.0,
+                  -0.04,   0.0, -0.04,  -1.0,
+                  -0.04, -0.04, -0.04, -0.04])
+
+    while True:
+        u = return_policy_evaluation(p, u, r, T, gamma)
+        unchanged = True
+        for s in range(12):
+            a = return_expected_action(p, u, T)
+            
+            if a != pi[s]:
+                p[s] = a
+                unchanged = False
+
+        if unchanged == True: break
+
+    print("Finished")
+    print(p)
+```
+
+
+
+
+Conclusions
+-----------
+
+In this first part I show you the foundations of Reinforcement learning. We used a finite environment with a predefined transition model. **What happen if we do not have the transition model?** In the next part I will introduce model-free reinforcement learning, which answer to this question with a new set of interesting tools.
 
 References
 ------------
