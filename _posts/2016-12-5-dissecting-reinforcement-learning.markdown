@@ -14,13 +14,14 @@ This post is an introduction to **Reinforcement Learning** and it is meant to be
 
 ![Russel and Norvig]({{site.baseurl}}/images/artificial_intelligence_a_modern_approach.png){:class="img-responsive"}
 
-In the next section I will introduce **Markov chains** and **Markov Decision Processes**, if you already know this concepts you can skip the section...
+In the next section I will introduce **Markov chains** and **Markov Decision Processes**, if you already know this concepts you can skip to the next section...
 
 In the beginning was Andrey Markov
 ----------------------------------
-[Andrey Markov](https://en.wikipedia.org/wiki/Andrey_Markov) was a Russian mathematician who studied stochastic processes. Markov was particularly interested in systems that follow a chain of linked events. In 1906 Markov produced interesting results about discrete processes that he called **chain**. A **Markov Chain** has a set of **states**  $$ S = \{ s_0, s_1, ... , s_r \} $$ and a **process** that can move successively from one state to another. Each move is a single **step** and is based on a **transition model** $$ T $$. You should make some effort in remembering the keywords in bold because we will use them extensively during the rest of the article. To summarise a Markov chain is defined by:
 
-1. Set of possible States: $$ S $$
+[Andrey Markov](https://en.wikipedia.org/wiki/Andrey_Markov) was a Russian mathematician who studied stochastic processes. Markov was particularly interested in systems that follow a chain of linked events. In 1906 Markov produced interesting results about discrete processes that he called **chain**. A **Markov Chain** has a set of **states**  $$ S = \{ s_0, s_1, ... , s_m \} $$ and a **process** that can move successively from one state to another. Each move is a single **step** and is based on a **transition model** $$ T $$. You should make some effort in remembering the keywords in bold because we will use them extensively during the rest of the article. To summarise a Markov chain is defined by:
+
+1. Set of possible States: $$ S = \{ s_0, s_1, ... , s_m \} $$
 2. Initial State: $$ s_0 $$
 3. Transition Model: $$ T(s, s^{'}) $$
 
@@ -145,15 +146,16 @@ u_100: [[ 0.83333333  0.16666667]]
 This time the probability of being in $$ s_0 $$ at k=3 is lower (0.812), but in the long run we have the same outcome (0.8333333). **What is happening in the long run?** The result after 50 and 100 iterations are the same and `u_50` is equal to `u_100` no matter which starting distribution we have. The chain **converged to equilibrium** meaning that as the time progresses it forgets about the starting distribution. But we have to be careful, the convergence is not always guaranteed. The dynamics of a Markov chain can be very complex, in particular it is possible to have **transient and recurrent states**. For our scope what we saw is enough. I suggest you to give a look at the [setosa.io](http://setosa.io/) blog because they have an interactive page for Markov chain visualization.
 
 
-Markov Devision Process
+Markov Decision Process
 -----------------------
 
-In reinforcement learning it is often used a concept which is affine to Markov chain, I am talking about **Markov Decision Process (MDP)**. A MDP is a reinterpretation of Markov chains which includes an **agent** and a **decision making** process. A MDP is defined by four components:
+In reinforcement learning it is often used a concept which is affine to Markov chain, I am talking about **Markov Decision Process (MDP)**. A MDP is a reinterpretation of Markov chains which includes an **agent** and a **decision making** process. A MDP is defined by these components:
 
-1. Set of possible States: $$ S $$
+1. Set of possible States: $$ S = \{ s_0, s_1, ..., s_m \}$$
 2. Initial State: $$ s_0 $$
-3. Transition Model: $$ T(s, a, s^{'}) $$
-4. Reward Function: $$ R(s) $$
+3. Set of possible Actions: $$ A = \{ a_0, a_1, ..., a_n \}$$
+4. Transition Model: $$ T(s, a, s^{'}) $$
+5. Reward Function: $$ R(s) $$
 
 As you can see we are introducing some new elements respect to Markov chains, in particular the Transition Model depends on the current state, the next state and the action of the agent. The Transition Model returns the probability of reaching the state $$ s^{'} $$ if the action $$ a $$ is done in state $$ s $$. But given $$ s $$ and $$ a $$ the model is conditionally independent of all previous states and actions (Markov Property). Moreover there is the **Reward function** $$ R(s) $$ which return a real value to the agent every times it moves from one state to the other (Attention: defining the Reward function to depend only from $$ s $$ can be confusing, Russel and Norvig used this notation in the book to simplify the description, it does not change the problem in any significant way). Since we have a reward function we can say that **some states are more desirable that others** because when the agent move in those states it receives an higher reward. On the opposite there are **states that are not desirable at all**, because when the agent moves there it receives a negative reward.
 
@@ -208,19 +210,19 @@ To empirically test the Bellman equation we are going to use our cleaning robot 
 
 ![Example with R(s)=0.04]({{site.baseurl}}/images/reinforcement_learning_example_r004.png){:class="img-responsive"}
 
-In our example we suppose **the robot starts from the state (1,1)**. First of all the robot has to **find which is the best action** between UP, LEFT, DOWN and RIGHT. The robot does not know the optimal policy, but it knows the transition model and the utility values for each state. You have to remember two main things. First, if the robot bounce on the wall it goes back to the previous state. Second, the selected action is executed only with a probability of 80% in accordance with the transition model. Instead of dealing with crude numbers I want to show you with a graphical illustration which are the possible outcomes of the robot action.
+In our example we suppose **the robot starts from the state (1,1)**. Using the Bellman equation we have to **find which is the action with the highest utility** between UP, LEFT, DOWN and RIGHT. We do not have the optimal policy, but we have the transition model and the utility values for each state. You have to remember two main things. First, if the robot bounce on the wall it goes back to the previous state. Second, the selected action is executed only with a probability of 80% in accordance with the transition model. Instead of dealing with crude numbers I want to show you with a graphical illustration of the possible outcomes for the robot actions.
 
 ![Example with R(s)=0.04]({{site.baseurl}}/images/reinforcement_learning_simple_world_bellman_example.png){:class="img-responsive"}
 
-For each possible outcome I reported the utility and the probability given by the transition model. The next step in the Bellman equation is to calculate the **product between the utility and the transition probability, then sum up the value for each action**.
+For each possible outcome I reported the utility and the probability given by the transition model. This correspond to the first part of the Bellman equation. The next step is to calculate the **product between the utility and the transition probability, then sum up the value for each action**.
 
 ![Example with R(s)=0.04]({{site.baseurl}}/images/reinforcement_learning_simple_world_bellman_example_2.png){:class="img-responsive"}
 
-We found out that **the action UP is the one with the highest value**. This is in accordance with the optimal policy we magically got. This part of the Bellman equation returns the action that maximizes the expected utility of the subsequent state, which is what an optimal policy should do:
+We found out that for state (1,1) **the action UP has the highest value**. This is in accordance with the optimal policy we magically got. This part of the Bellman equation returns the action that maximizes the expected utility of the subsequent state, which is what an optimal policy should do:
 
 $$ \pi^{*}(s) = \underset{a}{\text{ argmax }} \sum_{s^{'}}^{} T(s,a,s^{'}) U(s^{'}) $$
 
-We have all the elements, we can add the values we got in the Bellman equation and find the utility of the state (1,1):
+Now we have all the elements, we can plug in the values in the Bellman equation and find the utility of the state (1,1):
 
 $$ U(s_{11}) = -0.04 + 1.0 \times 0.7456 = 0.7056$$
 
@@ -287,14 +289,16 @@ def return_state_utility(v, T, u, reward, gamma):
     return reward + gamma * np.max(action_array)
 
 def main():
+    tot_states = 12
+    gamma = 0.9 #Discount factor
+    iteration = 0 #Iteration counter
+    epsilon = 0.001 #Small value used in stopping criteria
     #Transition matrix loaded from file (It is too big to write here)
     T = np.load("T.npy")
-
     #Reward vector
     r = np.array([-0.04, -0.04, -0.04,  +1.0,
                   -0.04,   0.0, -0.04,  -1.0,
                   -0.04, -0.04, -0.04, -0.04])    
-
     #Utility vectors
     u = np.array([[0.0, 0.0, 0.0,  0.0,
                    0.0, 0.0, 0.0,  0.0,
@@ -302,11 +306,6 @@ def main():
     u1 = np.array([[0.0, 0.0, 0.0,  0.0,
                     0.0, 0.0, 0.0,  0.0,
                     0.0, 0.0, 0.0,  0.0]])
-
-    tot_states = 12
-    gamma = 0.9 #Discount factor
-    iteration = 0 #Iteration counter
-    epsilon = 0.001 #
 
     while True:
         delta = 0
@@ -318,7 +317,7 @@ def main():
             v[0,s] = 1.0
             u1[0,s] = return_state_utility(v, T, u, reward, gamma)
             delta = max(delta, np.abs(u1[0,s] - u[0,s]))
-         
+        #Stopping criteria
         if delta < epsilon * (1 - gamma) / gamma:
                 print("=================== FINAL RESULT ==================")
                 print("Iterations: " + str(iteration))
@@ -335,7 +334,7 @@ def main():
 if __name__ == "__main__":
     main()
 ```
-Using the code above I run different simulations with different values for the discounting factor `gamma`. As you can see more the discounting factor approaches 1.0 more our prediction for the utilities are precise. Unfortunately, more precision requires more iterations. In the limit case of `gamma = 1.0` the algorithm will never converge.
+Using the code above **I run different simulations** with different values for the discounting factor `gamma`. As you can see more the discounting factor approaches 1.0 more our prediction for the utilities are precise. Unfortunately, more precision requires more iterations. In the limit case of `gamma = 1.0` the algorithm will never converge.
 
 ```shell
 =================== FINAL RESULT ==================
@@ -378,8 +377,8 @@ Epsilon: 0.001
 
 The policy iteration algorithm
 -----------------
-With the value iteration algorithm we have a way to estimate the utility of each state. What we still miss is a way to estimate an optimal policy. In this section I am going to show you how we can **use the policy iteration algorithm to find an optimal policy** which maximize the expected reward.
-First of all, we define a policy $$ \pi $$ which assign an action to each state. Using the `return_state_utility()` function (the Bellman equation) we can compute the expected utility of the policy. There is a good news. We do not really need the **complete version of the Bellman equation** which is:
+With the value iteration algorithm we have a way to estimate the utility of each state. What we still miss is a way to estimate an optimal policy. In this section I am going to show you how we can **use the policy iteration algorithm to find an optimal policy** which maximize the expected reward. No policy generates more reward than the optimal policy $$ \pi^{*} $$. **Policy iteration is guaranteed to converge and at convergence, the current policy and its value function are the optimal policy and the optimal value function**.
+First of all, we define a policy $$ \pi $$ which assign an action to each state. We can assign random actions to this policy, it does not matter. Using the `return_state_utility()` function (the Bellman equation) we can compute the expected utility of the policy. There is a good news. We do not really need the **complete version of the Bellman equation** which is:
 
 $$ U(s) = R(s) + \gamma \underset{a}{\text{ max }}  \sum_{s^{'}}^{} T(s,a,s^{'}) U(s^{'}) $$
 
@@ -387,74 +386,159 @@ Since we have a policy and the policy associate to each state an action, we can 
 
 $$ U(s) = R(s) + \gamma  \sum_{s^{'}}^{} T(s,\pi(s),s^{'}) U(s^{'}) $$
 
-Once we evaluate the policy we can improve it. The **policy improvement** is the second and last step of the algorithm. Our environment has a finite number of states and then a finite number of policies. Each iteration yields to a better policy.
+Once we evaluate the policy we can improve it. The **policy improvement** is the second and last step of the algorithm. Our environment has a finite number of states and then a finite number of policies. Each iteration yields to a better policy. I have implemented a function called `return_policy_evaluation()` which contains the simplified version of the Bellman equation. Moreover we need the function `return_expected_action()` which returns the action with the highest utility based on the current value of `u` and `T`. To check what's going on I created also a printing function, that map each action contained in the policy vector `p` to a symbol and print it on terminal. 
 
-I have implemented a function called `return_policy_evaluation()` which contains the simplified version of the Bellman equation.
-Moreover, I declared a new vector `p` which contains the actions for each state
 
 ```python
 import numpy as np
 
 def return_policy_evaluation(p, u, r, T, gamma):
-    for s in range(12):
-        if(p[s] != np.NaN):
-            v = np.zeros((1,12))
-            v[0,s] = 1.0
-            action = int(p[s])
-            u[s] = r(s) + gamma * np.sum(np.multiply(u, np.dot(v, T[:,:,action])))
-    return u
+  """Return the policy utility.
 
-def return_expected_action(p, u, T):
-    actions_array = np.zeros(4)
-    for action in range(4):
-         actions_array[action] = np.sum(np.multiply(u, np.dot(v, T[:,:,action])))
+  """
+  for s in range(12):
+    if not np.isnan(p[s]):
+      v = np.zeros((1,12))
+      v[0,s] = 1.0
+      action = int(p[s])
+      u[s] = r[s] + gamma * np.sum(np.multiply(u, np.dot(v, T[:,:,action])))
+  return u
+
+def return_expected_action(p, u, T, v):
+    """Return the expected action.
+
+    It returns an action based on the
+    expected utility of doing a in state s, 
+    according to T and u.
+    """
+    a = np.zeros(4) #action array
+    for i in range(4):         
+         a[i] = np.sum(np.multiply(u, np.dot(v, T[:,:,i])))
     return np.argmax(actions_array)
-        
 
+def print_policy(p, shape):
+    """Printing utility.
+
+    Print the policy actions using symbols:
+    ^, v, <, > up, down, left, right
+    * terminal states
+    # obstacles
+    """
+    counter = 0
+    policy_string = ""
+    for row in range(shape[0]):
+        for col in range(shape[1]):
+            if(p[counter] == -1): policy_string += " *  "            
+            elif(p[counter] == 0): policy_string += " ^  "
+            elif(p[counter] == 1): policy_string += " <  "
+            elif(p[counter] == 2): policy_string += " v  "           
+            elif(p[counter] == 3): policy_string += " >  "
+            elif(np.isnan(p[counter])): policy_string += " #  "
+            counter += 1
+        policy_string += '\n'
+    print(policy_string)
+```
+
+No I am going to use these function in a main loop which is an implementation of the policy iteration algorithm. I declared a new vector `p` which contains the actions for each state. The **stopping condition** of the algorithm is the difference between the utility vectors of two consecutive iterations. The algorithm terminates when the improvement step yields no change (or a very small change) in the utilities. 
+
+```python     
 def main():
-
-    gamma = 0.9
-
+    gamma = 0.999
+    epsilon = 0.0001
+    iteration = 0
     T = np.load("T.npy")
-
-    # Nan=Nothing, -1=DontMove, 0=Up, 1=Left, 2=Down, 3=Right
-    p = np.array([3,      3, 3, -1,
-                  3, np.NaN, 3, -1,
-                  3,      3, 3,  3])
-
+    #Generate the first policy randomly
+    # NaN=Nothing, -1=Terminal, 0=Up, 1=Left, 2=Down, 3=Right
+    p = np.random.randint(0, 4, size=(12)).astype(np.float32)
+    p[5] = np.NaN
+    p[3] = p[7] = -1
     #Utility vectors
-    u = np.array([[0.0, 0.0, 0.0,  0.0,
-                   0.0, 0.0, 0.0,  0.0,
-                   0.0, 0.0, 0.0,  0.0]])
-
+    u = np.array([0.0, 0.0, 0.0,  0.0,
+                  0.0, 0.0, 0.0,  0.0,
+                  0.0, 0.0, 0.0,  0.0])
     #Reward vector
     r = np.array([-0.04, -0.04, -0.04,  +1.0,
                   -0.04,   0.0, -0.04,  -1.0,
                   -0.04, -0.04, -0.04, -0.04])
 
     while True:
+        iteration += 1
+        #1- Policy evaluation
+        u_0 = u.copy()
         u = return_policy_evaluation(p, u, r, T, gamma)
-        unchanged = True
+        #Stopping criteria
+        delta = np.absolute(u - u_0).max()
+        if delta < epsilon * (1 - gamma) / gamma: break
         for s in range(12):
-            a = return_expected_action(p, u, T)
-            
-            if a != pi[s]:
-                p[s] = a
-                unchanged = False
+            if not np.isnan(p[s]) and not p[s]==-1:
+                v = np.zeros((1,12))
+                v[0,s] = 1.0
+                #2- Policy improvement
+                a = return_expected_action(p, u, T, v)         
+                if a != p[s]: p[s] = a
+        print_policy(p, shape=(3,4))
 
-        if unchanged == True: break
+    print("=================== FINAL RESULT ==================")
+    print("Iterations: " + str(iteration))
+    print("Delta: " + str(delta))
+    print("Gamma: " + str(gamma))
+    print("Epsilon: " + str(epsilon))
+    print("===================================================")
+    print(u[0:4])
+    print(u[4:8])
+    print(u[8:12])
+    print("===================================================")
+    print_policy(p, shape=(3,4))
+    print("===================================================")
 
-    print("Finished")
-    print(p)
+if __name__ == "__main__":
+    main()
 ```
 
+Running the script with `gamma=0.999` and `epsilon=0.0001` we get convergence in 22 iterations with the following result:
 
+```
+=================== FINAL RESULT ==================
+Iterations: 22
+Delta: 9.03617490833e-08
+Gamma: 0.999
+Epsilon: 0.0001
+===================================================
+[ 0.80796344  0.86539911  0.91653199  1.        ]
+[ 0.75696624  0.          0.65836281 -1.        ]
+[ 0.69968295  0.64882105  0.60471972  0.38150427]
+===================================================
+ >   >   >   *  
+ ^   #   ^   *  
+ ^   <   <   <  
+===================================================
+```
 
+**The final policy returned by the algorithm is equal to the optimal policy** (graphically shown in the *Bellman equation* section). Moreover using the simplified Bellman equation the algorithm managed to find good values for the utility vector.
+
+Policy iteration and value iteration, which is best? If you have many actions or you start from a fair policy then choose Policy Iteration. If you have few actions and the transition is acyclic then chose value iteration. If you want an intermediate approach that use the best from the two world the give a look to the [modified policy iteration algorithm](http://pubsonline.informs.org/doi/abs/10.1287/mnsc.24.11.1127).
+
+Policy evaluation using linear algebra
+--------------------------------------
+I said that eliminating the $$ max $$ operator from the Bellman equation maked our life easier because we could use any linear algebra package to calculate the utilities. In the last section I used an iterative approach, while here I would like to show how to reach the same conclusion using a linear algebra approach. We have a linear system with $$ n $$ variables and $$ n $$ constraints. The variables are values of states.
+
+$$ u = r + \gamma T u $$
+
+$$ (I - \gamma T) u = r $$
+
+$$ u = (I - \gamma T)^{-1} r $$
 
 Conclusions
 -----------
 
 In this first part I show you the foundations of Reinforcement learning. We used a finite environment with a predefined transition model. **What happen if we do not have the transition model?** In the next part I will introduce model-free reinforcement learning, which answer to this question with a new set of interesting tools.
+
+Resources
+----------
+
+The [setosa blog](http://setosa.io/) containing a good-looking simulator for Markov chains.
+
+Official [github repository](https://github.com/aimacode) for the book *"Artificial Intelligence: a Modern Approach"*.
 
 References
 ------------
