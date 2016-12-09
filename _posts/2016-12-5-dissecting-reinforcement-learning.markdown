@@ -4,8 +4,8 @@ title:  "Dissecting Reinforcement Learning-Part.1"
 date:   2016-12-8 19:00:00 +0000
 description: Explaining the basic ideas behind reinforcement learning. In particular, Markov Decision Process, Bellman equation, Value iteration and Policy Iteration algorithms, policy iteration through linear algebra methods. It includes full working code written in Python.
 author: Massimiliano Patacchiola
-comments: false
-published: false
+comments: true
+published: true
 ---
 
 
