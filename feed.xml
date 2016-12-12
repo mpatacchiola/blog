@@ -13,8 +13,8 @@ layout: null
           <title>{{ post.title | xml_escape }}</title>
           <description>{{ post.description | xml_escape }}</description>
           <pubDate>{{ post.date | date_to_xmlschema }}</pubDate>
-          <link>{{ post.url | prepend: site.url }}</link>
-          <guid isPermaLink="true">{{ post.url | prepend: site.url }}</guid>
+          <link>{{site.url}}{{site.baseurl}}{{post.url}}</link>
+          <guid isPermaLink="true">{{site.url}}{{site.baseurl}}{{post.url}}</guid>
         </item>
       {% endunless %}
     {% endfor %}
