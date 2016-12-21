@@ -15,13 +15,6 @@
 
     {% include footer.html %}
 
-    <!--Loading the analytics only if the jekyll.environment is in productio
-        mode. In this way we do not ping the analytics page when we are
-        working in local. In local the default jekyll.environment=developer-->
-    {% if jekyll.environment == 'production' %}
-    {% include analytics.html %}
-    {% endif %}
-
   </body>
 
 </html>

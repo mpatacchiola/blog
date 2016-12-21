@@ -22,4 +22,11 @@
     src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-MML-AM_CHTML">
   </script>
 
+  <!--Loading the analytics only if the jekyll.environment is in production
+      mode. In this way we do not ping the analytics page when we are
+      working in local. In local the default jekyll.environment=developer-->
+  {% if jekyll.environment == 'production' %}
+  {% include analytics.html %}
+  {% endif %}
+
 </head>
