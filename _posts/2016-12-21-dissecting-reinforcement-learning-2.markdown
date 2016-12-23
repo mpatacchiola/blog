@@ -13,34 +13,30 @@ published: true
 [difference in the terminology used by Norvig e Sutton]
 
 Welcome to the second part of the series **dissecting reinforcement learning**. If you managed to survive to the [first part](https://mpatacchiola.github.io/blog/2016/12/09/dissecting-reinforcement-learning.html) then congratulations! You learnt the foundation of reinforcement learning, the **dynamic programming** approach.
-In the second part I will show you an overview of **Monte Carlo methods**. This post is (weakly) connected with [part one](https://mpatacchiola.github.io/blog/2016/12/09/dissecting-reinforcement-learning.html), and I will use the same terminology, examples and mathematical notation.
-In this post I will merge some of the ideas presented by Russel and Norvig in **Artificial Intelligence: A Modern Approach** and the classical **Reinforcement Learning, An Introduction** by **Sutton and Barto**. In particular I will focus on chapter 21 (second edition) of the former and on chapter 5 (first edition) of the latter. For open versions of the books look at the resources section.
+As I promised in the second part I will go deep in model-free reinforcement learning for prediction, giving an overview on **Monte Carlo (MC)** and **Temporal Differencing (TD)** methods. This post is (weakly) connected with [part one](https://mpatacchiola.github.io/blog/2016/12/09/dissecting-reinforcement-learning.html), and I will use the same terminology, examples and mathematical notation.
+In this post I will merge some of the ideas presented by Russel and Norvig in **Artificial Intelligence: A Modern Approach** and the classical **Reinforcement Learning, An Introduction** by **Sutton and Barto**. In particular I will focus on chapter 21 (second edition) of the former and on chapter 5 (first edition) of the latter. Moreover you can follow [lecture 4 of David Silver's course](https://www.youtube.com/watch?v=PnHCvfgC_ZA). For open versions of the books look at the resources section.
 
 ![Russel and Norvig and Sutton and Barto]({{site.baseurl}}/images/artificial_intelligence_a_modern_approach_reinforcement_learning_an_introduction.png){:class="img-responsive"}
 
-This post is particularly relevant because it includes a description of important concepts like the General Policy Iteration, Bootstrap and On-Off-Policy which are hard to find in online resources. With the same spirit of the previous part I am going to dissect all the concepts we will step through.
+This post is a gentle introduction to model-free reinforcement learning. With the same spirit of the previous part I am going to dissect all the concepts we will step through.
 
 Beyond dynamic programming
 --------------------------
-In the first post I showed you the two main algorithms for computing optimal policies namely value iteration and policy iteration. We modelled the environment as a Markov decision process (MDP), and we used a transition model to describe the probability of moving from one state to the other. Here I will focus on the policy iteration because its structure is the core of many reinforcement learning methods. The policy iteration allowed finding the utility values for each state and at the same time the optimal policy $$ \pi^{*} $$. The approach we used in policy iteration included two main stages:
+In the first post I showed you the two main algorithms for computing optimal policies namely value iteration and policy iteration. We modelled the environment as a Markov decision process (MDP), and we used a transition model to describe the probability of moving from one state to the other. The transition model was stored in a matrix `T` and used to find the utility function $$ U^{*} $$ and the best policy $$ \pi^{*} $$. Here we must be careful with the mathematical notation. In the book of Sutton and Barto the utility function is called value function and is indicated with the letter $$ V $$. To keep uniformity with the previous post I will use the notation of Russel and Norvig which uses the letter $$ U $$ to identify the utility (value) function. The two notations have the same meaning, but in literature it is often used the $$ V $$ notation. The reader should get used to different notations, it is a good form of mental gymnastics. 
 
-1. Policy evaluation: $$ U \rightarrow U^{\pi} $$
-2. Policy improvement: $$ \pi \rightarrow greedy(U) $$
+Having said that I would like to give a proper definition of model-free reinforcement learning and in particular of the **passive reinforcement learning** approach we are using in this post. In model-free reinforcement learning the first thing we miss is a **transition model**. In fact the name model-free stands for transition-model-free. The second thing we miss is the **reward function** $$ R(s) $$ which gives to the agent the reward associated to a particular state. What we have is a **policy** $$ \pi $$ which the agent can use to move in the environment. This last statement is part of the passive approach, in state $$ s $$ the agent always produce the action $$ a $$ given by the policy $$ \pi $$. The **goal of the agent** in passive reinforcement learning is to learn the utility function $$ U^{\pi}(s) $$. I will use again the example of the **cleaning robot** from the first post with a different starting setup. 
 
-[Here we must be careful with the mathematical notation. In the book of Sutton and Barto the utility function is called value function and is indicated with the letter $$ V $$ while here I used the notation of Russel and Norvig which uses the letter $$ U $$. The two notations have the same meaning, but in literature it is often used the $$ V $$ notation. The reader should get used to different notations, it is a good form of mental gymnastics.]
+![Passive Model-Free RL]({{site.baseurl}}/images/reinforcement_learning_model_free_passive_simple_world.png){:class="img-responsive"}
 
-Policy iteration uses these two steps until the utility and policy functions are optimal. The **first step** makes the utility (or value) function consistent with the current policy (evaluation). The **second step** makes the policy $$ \pi $$ *greedy* with respect to the current utility function (improvement). **What does it means greedy?** I said something about it in the policy iteration section of the first post. We saw that at certain point the algorithm found a suboptimal policy and stick to it for some iterations. In that case the agent was following a greedy behaviour, meaning that it was short sighted preferring a small reward in the short-term instead of a big reward in the long-term. 
+The robot is in a 3x4 world with an unknown transition model. The only information about the environment is the states availability. Since the robot does not have the reward function it does not know which state contains the charging station (+1) and which state contains the stairs (-1). The robot does not even have any clue about the policy, it can be a good policy or a bad one. Finally the transition model, since the robot does not know what it is going to happen after each action it can only give unknown probabilities to each possible outcome. 
 
-All reinforcement learning methods can be described in terms of policy iteration. Sutton and Barto used a specific name for this general idea that they called **Generalised Policy Iteration (GPI)**. 
+Bayesian reinforcement learning
+-------------------------------
+The first thing the robot can do is to estimate the transition model. Moving in the environment and looking to the reaction to its actions. Once the transition model has been estimated the robot can use either value iteration or policy iteration to get the utility function. Estimating the values of a transition model can be expensive. In our 3x4 world for example it means to estimate the values for a 12x12x4 table.
 
-The drawbacks of the dynamic programming approach are clear when we think of MDP with an high number of states. In this scenario the [curse of dimensionality](https://en.wikipedia.org/wiki/Curse_of_dimensionality) can make the use of these techniques of limited applicability. However modern GPUs can be used to handle these limitations, making the dynamic programming approach feasible.
+This approach is inspired by the Bayes rule and is then called by Russel and Norvig **Bayesian reinforcement learning** (chapter 21.2.2).
 
-
-
-
-[Policy Improvement Theorem]
-
-Passive Monte Carlo Methods
+Monte Carlo methods
 --------------------------
 [model free RL]
 [Why using Montecarlo name for this methods?]
@@ -70,11 +66,9 @@ Conclusions
 Resources
 ----------
 
-The [dissecting-reinforcement-learning](https://github.com/mpatacchiola/dissecting-reinforcement-learning) repository.
+The [dissecting-reinforcement-learning](https://github.com/mpatacchiola/dissecting-reinforcement-learning) official repository.
 
-The [setosa blog](http://setosa.io/) containing a good-looking simulator for Markov chains.
-
-Official [github repository](https://github.com/aimacode) for the book *"Artificial Intelligence: a Modern Approach"*.
+*"Artificial Intelligence: a Modern Approach"* [[github]](https://github.com/aimacode)
 
 References
 ------------
