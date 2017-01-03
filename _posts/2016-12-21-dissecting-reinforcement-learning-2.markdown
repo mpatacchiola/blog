@@ -57,17 +57,28 @@ Each occurrence of a state during the episode is called **visit**. The concept o
 
 2. **Every-Visit MC**: $$ U^{\pi}(s) $$ is defined as the average of the returns following *all the visit* to $$ s $$ in a set of episodes.
 
-What does **return** means? The return is the sum of discounted reward. I already presented the return in the first post when I introduced the Bellman equation and the utility of a state history.
-I will now introduce the equation used in MC methods, which give us the utility of a state following the policy $$ \pi $$:
+**I will focus only on the First-Visit MC method in this post**. What does **return** means? The return is the sum of discounted reward. I already presented the return in the first post when I introduced the Bellman equation and the utility of a state history. 
+
+$$ \text{Return}(s) = \sum_{t=0}^{\infty} \gamma^{t} R(S_{t})  $$
+
+There is nothing new. We have the discount factor $$ \gamma $$, the reward function $$ R(s) $$ and $$ S_{t} $$ the state reached at time $$ t $$. We can calculate the return for the state (1,1) of the first episode, with $$ \gamma=0.9 $$, as follow: 
+
+![Passive Model-Free RL Monte Carlo Return First Episode]({{site.baseurl}}/images/reinforcement_learning_model_free_return_first_episode.png){:class="img-responsive"}
+
+The return for the first episode is 0.27.  Following the same procedure we get the same result for the second episode. For the third episode we get a different return -0.79. After the three episodes we came out with three different returns: 0.27, 0.27, -0.79. **How to use the returns to estimate the utilities?** I will now introduce the equation used in MC methods, which give the utility of a state following the policy $$ \pi $$:
 
 $$ U^{\pi}(s) = E \Bigg[ \sum_{t=0}^{\infty} \gamma^{t} R(S_{t})  \Bigg]  $$
 
-There is nothing new. We have the discount factor $$ \gamma $$, the reward function $$ R(s) $$ and $$ S_{t} $$ the state reached at time $$ t $$. Here is where the MC terminology steps into. We can define $$ S_{t} $$ to be a [discrete random variable](https://en.wikipedia.org/wiki/Random_variable) which can assume all the available states with a certain probability. Every time our robot steps into a state is like if we are picking a value for the random variable $$ S_{t} $$. For each state of each episode we can calculate the return and store it in a list. Repeating this process for a large number of times is **guaranteed to converge to the true utility**. How is that possible? This is the result of a famous theorem known as the [law of large number](https://en.wikipedia.org/wiki/Law_of_large_numbers). Understanding the law of large number is crucial. Rolling a six-sided dice produces one of the numbers 1, 2, 3, 4, 5, or 6, each with equal probability. The [expectation](https://en.wikipedia.org/wiki/Expected_value) is 3.5 and can be calculated as the arithmetic mean: (1+2+3+4+5+6)/6=3.5. Using a MC approach we can obtain the same value, let's do it in Python:
+That's it. To find the utility of a state we need to calculate the expectation of the returns for that state. In our example after only three episodes the approximated utility for the state (1, 1) is: (0.27+0.27-0.79)/3=-0.08. An estimation based only on three episodes is inaccurate. We need more episodes in order to get the true value. 
+
+**Here is where the MC terminology steps into**. We can define $$ S_{t} $$ to be a [discrete random variable](https://en.wikipedia.org/wiki/Random_variable) which can assume all the available states with a certain probability. Every time our robot steps into a state is like if we are picking a value for the random variable $$ S_{t} $$. For each state of each episode we can calculate the return and store it in a list. Repeating this process for a large number of times is **guaranteed to converge to the true utility**. How is that possible? This is the result of a famous theorem known as the [law of large number](https://en.wikipedia.org/wiki/Law_of_large_numbers). Understanding the law of large number is crucial. Rolling a six-sided dice produces one of the numbers 1, 2, 3, 4, 5, or 6, each with equal probability. The [expectation](https://en.wikipedia.org/wiki/Expected_value) is 3.5 and can be calculated as the arithmetic mean: (1+2+3+4+5+6)/6=3.5. Using a MC approach we can obtain the same value, let's do it in Python:
 
 ```python
 import numpy as np
 
 #Trowing a dice for N times and evaluating the expectation
+dice = np.random.randint(low=1, high=7, size=3)
+print("Expectation (rolling 3 times): " + str(np.mean(dice)))
 dice = np.random.randint(low=1, high=7, size=10)
 print("Expectation (rolling 10 times): " + str(np.mean(dice)))
 dice = np.random.randint(low=1, high=7, size=100)
@@ -79,6 +90,7 @@ print("Expectation (rolling 100000 times): " + str(np.mean(dice)))
 ```
 
 ```
+Expectation (rolling 3 times): 4.0
 Expectation (rolling 10 times): 2.9
 Expectation (rolling 100 times): 3.47
 Expectation (rolling 1000 times): 3.481
@@ -87,7 +99,7 @@ Expectation (rolling 100000 times): 3.49948
 
 As you can see the estimation of the expectation converges to the true value of 3.5. What we are doing in MC reinforcement learning is exactly the same but in this case we want to **estimate the utility for each state based on the return of each episode**. As for the dice, more episodes we take into account more accurate our estimation will be.
 
-Following the order on the Sutton and Barto's book **I will focus only on the First-Visit MC method in this post**. As usual we will implement the algorithm in Python. I wrote a class called `GridWorld` which is contained in the module `gridworld.py`. Using this class it is possible to create a grid world of any size and add obstacles and terminal states. The world contains a cleaning robot which will move following a specified policy. Let's see how to create the world of our example:
+As usual we will implement the algorithm in Python. I wrote a class called `GridWorld` which is contained in the module `gridworld.py`. Using this class it is possible to create a grid world of any size and add obstacles and terminal states. The cleaning robot will move in the grid world following a specific policy. Let's see how to create the world of our example:
 
 ```python
 import numpy as np
@@ -116,17 +128,16 @@ transition_matrix = np.array([[0.8, 0.1, 0.0, 0.1],
                               [0.1, 0.0, 0.1, 0.8]])
 #Define the policy matrix
 #0=UP, 1=RIGHT, 2=DOWN, 3=LEFT
-policy_matrix = np.array([[1, 1, 1, 0],
-                          [0, 1, 0, 0],
-                          [0, 0, 0, 3],
-                          [0, 3, 3, 3]])
+policy_matrix = np.array([[1,  1,  1,  0],
+                          [0, -1,  0,  0],
+                          [0,  3,  3,  3]])
 #Set the matrices 
 env.setStateMatrix(state_matrix)
 env.setRewardMatrix(reward_matrix)
 env.setTransitionMatrix(transition_matrix)
 ```
 
-In a few lines I defined a grid world with the properties of our example.
+In a few lines I defined a grid world with the properties of our example. The policy is the optimal policy for a reward of -0.04 as we saw in the first post.
 Now it is time to reset the environment (move the robot to starting position) and using the `render` method to display the world.
 
 ```python
@@ -158,8 +169,24 @@ for _ in range(1000):
     env.render()
     if done: break
 ```
+You can find the full example in the github repository. Given the transition matrix and the policy we defined the robot will reach the charging station after six steps. The most likely output of the script will be something like this:
 
-If you are familiar with [OpenAI Gym](https://gym.openai.com/) you will find many similarities with my code. I used the same structure and I implemented the same methods `step` `reset` and `render`. In particular the method `step` moves forward at t+1 and returns the **reward**, an **observation** (the position of the robot), and a variable called `done` which is `True` when the episode is finished (the robot reached a terminal state). Now we have all we need to implement the MC method.
+```
+ -  -  -  *      -  -  -  *      ○  -  -  *
+ -  #  -  *      ○  #  -  *      -  #  -  *
+ ○  -  -  -      -  -  -  -      -  -  -  -
+
+
+ -  ○  -  *      -  -  ○  *      -  -  -  ○
+ -  #  -  *      -  #  -  *      -  #  -  *
+ -  -  -  -      -  -  -  -      -  -  -  -
+```
+
+If you are familiar with [OpenAI Gym](https://gym.openai.com/) you will find many similarities with my code. I used the same structure and I implemented the same methods `step` `reset` and `render`. In particular the method `step` moves forward at t+1 and returns the **reward**, an **observation** (the position of the robot), and a variable called `done` which is `True` when the episode is finished (the robot reached a terminal state). 
+
+Now we have all we need to implement the MC method.
+
+
 
 
 Temporal-Difference learning
