@@ -18,21 +18,26 @@ This post is a gentle introduction to model-free reinforcement learning for pred
 
 Beyond dynamic programming
 --------------------------
-In the first post I showed you the two main algorithms for computing optimal policies namely value iteration and policy iteration. We modelled the environment as a Markov decision process (MDP), and we used a transition model to describe the probability of moving from one state to the other. The transition model was stored in a matrix `T` and used to find the utility function $$ U^{*} $$ and the best policy $$ \pi^{*} $$. Here we must be careful with the mathematical notation. In the book of Sutton and Barto the utility function is called value function or state-value function and is indicated with the letter $$ V $$. To keep uniformity with the previous post I will use the notation of Russel and Norvig which uses the letter $$ U $$ to identify the utility function. The two notations have the same meaning and they define the value of a state as the expected cumulative future discounted reward starting from that state. The reader should get used to different notations, it is a good form of mental gymnastics. 
+**In the first post** I showed you the two main algorithms for computing optimal policies namely value iteration and policy iteration. We modelled the environment as a Markov decision process (MDP), and we used a transition model to describe the probability of moving from one state to the other. The transition model was stored in a matrix `T` and used to find the utility function $$ U^{*} $$ and the best policy $$ \pi^{*} $$. Here we must be **careful with the mathematical notation**. In the book of Sutton and Barto the utility function is called value function or state-value function and is indicated with the letter $$ V $$. To keep uniformity with the previous post I will use the notation of Russel and Norvig which uses the letter $$ U $$ to identify the utility function. The two notations have the same meaning and they define the value of a state as the expected cumulative future discounted reward starting from that state. The reader should get used to different notations, it is a good form of mental gymnastics. 
 
-Having said that I would like to give a proper definition of model-free reinforcement learning and in particular of the **passive reinforcement learning** approach we are using in this post. In model-free reinforcement learning the first thing we miss is a **transition model**. In fact the name model-free stands for transition-model-free. The second thing we miss is the **reward function** $$ R(s) $$ which gives to the agent the reward associated to a particular state. What we have is a **policy** $$ \pi $$ which the agent can use to move in the environment. This last statement is part of the passive approach, in state $$ s $$ the agent always produce the action $$ a $$ given by the policy $$ \pi $$. The **goal of the agent** in passive reinforcement learning is to learn the utility function $$ U^{\pi}(s) $$. I will use again the example of the **cleaning robot** from the first post with a different starting setup. 
+Having said that I would like to give a proper definition of model-free reinforcement learning and in particular of the **passive reinforcement learning** approach we are using in this post. In model-free reinforcement learning the first thing we miss is a **transition model**. In fact the name model-free stands for transition-model-free. The second thing we miss is the **reward function** $$ R(s) $$ which gives to the agent the reward associated to a particular state. What we have is a **policy** $$ \pi $$ which the agent can use to move in the environment. This last statement is part of the passive approach, in state $$ s $$ the agent always produce the action $$ a $$ given by the policy $$ \pi $$. The **goal of the agent** in passive reinforcement learning is to learn the utility function $$ U^{\pi}(s) $$. I will use again the example of the **cleaning robot** from the first post but with a different setup. 
 
 ![Passive Model-Free RL]({{site.baseurl}}/images/reinforcement_learning_model_free_passive_simple_world.png){:class="img-responsive"}
 
-The robot is in a 4x3 world with an unknown transition model. The only information about the environment is the states availability. Since the robot does not have the reward function it does not know which state contains the charging station (+1) and which state contains the stairs (-1). The robot does not even have any clue about the policy, it can be a good policy or a bad one. Finally the transition model, since the robot does not know what it is going to happen after each action it can only give unknown probabilities to each possible outcome. 
+The robot is in a 4x3 world with an unknown transition model. **The only information about the environment is the states availability**. Since the robot does not have the reward function it does not know which state contains the charging station (+1) and which state contains the stairs (-1). The robot does not even have any clue about the policy, it can be a good policy or a bad one. Finally the transition model, since the robot does not know what it is going to happen after each action it can only give unknown probabilities to each possible outcome. To summarise, this is what we have:
 
-Bayesian reinforcement learning
--------------------------------
-The first thing the robot can do is to estimate the transition model. Moving in the environment and looking to the reaction to its actions. Once the transition model has been estimated the robot can use either value iteration or policy iteration to get the utility function. Estimating the values of a transition model can be expensive. In our 3x4 world for example it means to estimate the values for a 12x12x4 (states x states x actions) table.
+1. Set of possible States: $$ S = \{ s_0, s_1, ..., s_m \}$$
+2. Initial State: $$ s_0 $$
+3. Set of possible Actions: $$ A = \{ a_0, a_1, ..., a_n \}$$
+4. The policy $$ \pi $$
 
-This approach is inspired by the Bayes rule and is then called by Russel and Norvig **Bayesian reinforcement learning** (chapter 21.2.2).
+Our **objective** is to use the available information to **estimate the utility function**. How we can do it?
+ 
+The first thing the robot can do is to **estimate the transition model**, moving in the environment and keeping track of the number of times an action has been correctly executed. Once the transition model is available the robot can use either value iteration or policy iteration to get the utility function. In this sense, there are different techniques which can find out the transition model making use of Bayes rule and maximum likelihood estimation. Russel and Norvig mention these techniques in chapter 21.2.2  (Bayesian reinforcement learning).
+The problem of this approach should be evident: **estimating the values of a transition model can be expensive**. In our 3x4 world it means to estimate the values for a 12x12x4 (states x states x actions) table. Moreover certain actions and some states can be extremely unlikely, making the entries in the transition table hard to estimate. Here I will focus on another technique which directly estimates the utility function without using the transition model, I am talking about the **Monte Carlo method**.
 
-Monte Carlo methods
+
+The Monte Carlo method
 --------------------------
 [model free RL]
 [Why using Montecarlo name for this methods?]
@@ -65,11 +70,11 @@ There is nothing new. We have the discount factor $$ \gamma $$, the reward funct
 
 ![Passive Model-Free RL Monte Carlo Return First Episode]({{site.baseurl}}/images/reinforcement_learning_model_free_return_first_episode.png){:class="img-responsive"}
 
-The return for the first episode is 0.27.  Following the same procedure we get the same result for the second episode. For the third episode we get a different return -0.79. After the three episodes we came out with three different returns: 0.27, 0.27, -0.79. **How to use the returns to estimate the utilities?** I will now introduce the equation used in MC methods, which give the utility of a state following the policy $$ \pi $$:
+The return for the first episode is 0.27.  Following the same procedure we get the same result for the second episode. For the third episode we get a different return -0.79. After the three episodes we came out with three different returns: 0.27, 0.27, -0.79. **How to use the returns to estimate the utilities?** I will now introduce the core equation used in the MC method, which give the utility of a state following the policy $$ \pi $$:
 
 $$ U^{\pi}(s) = E \Bigg[ \sum_{t=0}^{\infty} \gamma^{t} R(S_{t})  \Bigg]  $$
 
-That's it. To find the utility of a state we need to calculate the expectation of the returns for that state. In our example after only three episodes the approximated utility for the state (1, 1) is: (0.27+0.27-0.79)/3=-0.08. An estimation based only on three episodes is inaccurate. We need more episodes in order to get the true value. 
+If you compare this equation with the equation used to calculate the return you will see only one difference: to obtain the utility function we take the **estimation of the returns**. That's it. To find the utility of a state we need to calculate the expectation of the returns for that state. In our example after only three episodes the approximated utility for the state (1, 1) is: (0.27+0.27-0.79)/3=-0.08. However, an estimation based only on three episodes is inaccurate. We need more episodes in order to get the true value. Why do we need more episodes?
 
 **Here is where the MC terminology steps into**. We can define $$ S_{t} $$ to be a [discrete random variable](https://en.wikipedia.org/wiki/Random_variable) which can assume all the available states with a certain probability. Every time our robot steps into a state is like if we are picking a value for the random variable $$ S_{t} $$. For each state of each episode we can calculate the return and store it in a list. Repeating this process for a large number of times is **guaranteed to converge to the true utility**. How is that possible? This is the result of a famous theorem known as the [law of large number](https://en.wikipedia.org/wiki/Law_of_large_numbers). Understanding the law of large number is crucial. Rolling a six-sided dice produces one of the numbers 1, 2, 3, 4, 5, or 6, each with equal probability. The [expectation](https://en.wikipedia.org/wiki/Expected_value) is 3.5 and can be calculated as the arithmetic mean: (1+2+3+4+5+6)/6=3.5. Using a MC approach we can obtain the same value, let's do it in Python:
 
@@ -99,7 +104,10 @@ Expectation (rolling 100000 times): 3.49948
 
 As you can see the estimation of the expectation converges to the true value of 3.5. What we are doing in MC reinforcement learning is exactly the same but in this case we want to **estimate the utility for each state based on the return of each episode**. As for the dice, more episodes we take into account more accurate our estimation will be.
 
-As usual we will implement the algorithm in Python. I wrote a class called `GridWorld` which is contained in the module `gridworld.py`. Using this class it is possible to create a grid world of any size and add obstacles and terminal states. The cleaning robot will move in the grid world following a specific policy. Let's see how to create the world of our example:
+Python implementation
+----------------------
+
+As usual we will implement the algorithm in Python. I wrote a class called `GridWorld` which is contained in the module `gridworld.py` available in [my github repository](https://github.com/mpatacchiola/dissecting-reinforcement-learning). Using this class it is possible to create a grid world of any size and add obstacles and terminal states. The cleaning robot will move in the grid world following a specific policy. Let's bring to life our 4x3 world:
 
 ```python
 import numpy as np
@@ -169,7 +177,7 @@ for _ in range(1000):
     env.render()
     if done: break
 ```
-You can find the full example in the github repository. Given the transition matrix and the policy we defined the robot will reach the charging station after six steps. The most likely output of the script will be something like this:
+You can find the full example in the github repository. Given the transition matrix and the policy the most likely output of the script will be something like this:
 
 ```
  -  -  -  *      -  -  -  *      ○  -  -  *
@@ -182,7 +190,7 @@ You can find the full example in the github repository. Given the transition mat
  -  -  -  -      -  -  -  -      -  -  -  -
 ```
 
-If you are familiar with [OpenAI Gym](https://gym.openai.com/) you will find many similarities with my code. I used the same structure and I implemented the same methods `step` `reset` and `render`. In particular the method `step` moves forward at t+1 and returns the **reward**, an **observation** (the position of the robot), and a variable called `done` which is `True` when the episode is finished (the robot reached a terminal state). 
+If you are familiar with [OpenAI Gym](https://gym.openai.com/) you will find many similarities with my code. I used the same structure and I implemented the same methods `step` `reset` and `render`. In particular the method `step` moves forward at t+1 and returns the **reward**, the **observation** (position of the robot), and a variable called `done` which is `True` when the episode is finished (the robot reached a terminal state). 
 
 Now we have all we need to implement the MC method.
 
