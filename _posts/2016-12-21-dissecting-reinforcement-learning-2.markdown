@@ -9,16 +9,16 @@ published: false
 ---
 
 Welcome to the second part of the series **dissecting reinforcement learning**. If you managed to survive to the [first part](https://mpatacchiola.github.io/blog/2016/12/09/dissecting-reinforcement-learning.html) then congratulations! You learnt the foundation of reinforcement learning, the **dynamic programming** approach.
-As I promised in the second part I will go deep in model-free reinforcement learning (for prediction), giving an overview on **Monte Carlo (MC)** and **Temporal Differencing (TD)** methods. This post is (weakly) connected with [part one](https://mpatacchiola.github.io/blog/2016/12/09/dissecting-reinforcement-learning.html), and I will use the same terminology, examples and mathematical notation.
-In this post I will merge some of the ideas presented by Russel and Norvig in **Artificial Intelligence: A Modern Approach** and the classical **Reinforcement Learning, An Introduction** by **Sutton and Barto**. In particular I will focus on chapter 21 (second edition) of the former and on chapter 5 (first edition) of the latter. Moreover you can follow [lecture 4 of David Silver's course](https://www.youtube.com/watch?v=PnHCvfgC_ZA). For open versions of the books look at the resources section.
+As I promised in the second part I will go deep in model-free reinforcement learning (for prediction and control), giving an overview on **Monte Carlo (MC)** methods. This post is (weakly) connected with [part one](https://mpatacchiola.github.io/blog/2016/12/09/dissecting-reinforcement-learning.html), and I will use the same terminology, examples and mathematical notation.
+In this post I will merge some of the ideas presented by Russel and Norvig in **Artificial Intelligence: A Modern Approach** and the classical **Reinforcement Learning, An Introduction** by **Sutton and Barto**. In particular I will focus on chapter 21 (second edition) of the former and on chapter 5 (first edition) of the latter. Moreover you can follow [lecture 4](https://www.youtube.com/watch?v=PnHCvfgC_ZA) and [lecture 5](https://www.youtube.com/watch?v=0g4j2k_Ggc4) of David Silver's course. For open versions of the books look at the resources section.
 
 ![Russel and Norvig and Sutton and Barto]({{site.baseurl}}/images/artificial_intelligence_a_modern_approach_reinforcement_learning_an_introduction.png){:class="img-responsive"}
 
-This post is a gentle introduction to model-free reinforcement learning for prediction. With the same spirit of the previous part I am going to dissect all the concepts we will step through.
+All right, now with the same spirit of the previous part I am going to dissect all the concepts we will step through.
 
 Beyond dynamic programming
 --------------------------
-**In the first post** I showed you the two main algorithms for computing optimal policies namely value iteration and policy iteration. We modelled the environment as a Markov decision process (MDP), and we used a transition model to describe the probability of moving from one state to the other. The transition model was stored in a matrix `T` and used to find the utility function $$ U^{*} $$ and the best policy $$ \pi^{*} $$. Here we must be **careful with the mathematical notation**. In the book of Sutton and Barto the utility function is called value function or state-value function and is indicated with the letter $$ V $$. To keep uniformity with the previous post I will use the notation of Russel and Norvig which uses the letter $$ U $$ to identify the utility function. The two notations have the same meaning and they define the value of a state as the expected cumulative future discounted reward starting from that state. The reader should get used to different notations, it is a good form of mental gymnastics. 
+[In the first post]((https://mpatacchiola.github.io/blog/2016/12/09/dissecting-reinforcement-learning.html)) I showed you the two main algorithms for computing optimal policies namely value iteration and policy iteration. We modelled the environment as a Markov decision process (MDP), and we used a transition model to describe the probability of moving from one state to the other. The transition model was stored in a matrix `T` and used to find the utility function $$ U^{*} $$ and the best policy $$ \pi^{*} $$. Here we must be **careful with the mathematical notation**. In the book of Sutton and Barto the utility function is called value function or state-value function and is indicated with the letter $$ V $$. To keep uniformity with the previous post I will use the notation of Russel and Norvig which uses the letter $$ U $$ to identify the utility function. The two notations have the same meaning and they define the value of a state as the expected cumulative future discounted reward starting from that state. The reader should get used to different notations, it is a good form of mental gymnastics. 
 
 Having said that I would like to give a proper definition of model-free reinforcement learning and in particular of the **passive reinforcement learning** approach we are using in this post. In model-free reinforcement learning the first thing we miss is a **transition model**. In fact the name model-free stands for transition-model-free. The second thing we miss is the **reward function** $$ R(s) $$ which gives to the agent the reward associated to a particular state. What we have is a **policy** $$ \pi $$ which the agent can use to move in the environment. This last statement is part of the passive approach, in state $$ s $$ the agent always produce the action $$ a $$ given by the policy $$ \pi $$. The **goal of the agent** in passive reinforcement learning is to learn the utility function $$ U^{\pi}(s) $$. I will use again the example of the **cleaning robot** from the first post but with a different setup. 
 
@@ -39,19 +39,21 @@ The problem of this approach should be evident: **estimating the values of a tra
 
 The Monte Carlo method
 --------------------------
-[model free RL]
-[Why using Montecarlo name for this methods?]
-[Bootstrap: MC does not need to bootstrap (to guess the state at t+1)]
-[Backup: The MC needs to beackup the full episode, whereas TD only t and t+1]
 
-The Monte Carlo (MC) method was used for the first time in 1930 by [Enrico Fermi](https://en.wikipedia.org/wiki/Enrico_Fermi) who was studying neutron diffusion. Fermi did not publish anything on it, the modern version is due to [Stanislaw Ulam](https://en.wikipedia.org/wiki/Stanislaw_Ulam) who invented it during the 1940s at Los Alamos. The idea behind MC is simple: using randomness to solve problems. For example it is possible to use MC to estimate a multidimensional definite integral, a technique which is called [MC integration](https://en.wikipedia.org/wiki/Monte_Carlo_integration). In artificial intelligence we can use MC tree search to find the best move in a game. The [DeepMind AlphaGo](https://deepmind.com/research/alphago/) defeated the Go world champion Lee Seedol using MC tree search combined with convolutional networks and deep reinforcement learning. Later on in this series we will discover how it was possible.
+The Monte Carlo (MC) method was used for the first time in 1930 by [Enrico Fermi](https://en.wikipedia.org/wiki/Enrico_Fermi) who was studying neutron diffusion. Fermi did not publish anything on it, the modern version is due to [Stanislaw Ulam](https://en.wikipedia.org/wiki/Stanislaw_Ulam) who invented it during the 1940s at Los Alamos. The idea behind MC is simple: using randomness to solve problems. For example it is possible to use MC to estimate a multidimensional definite integral, a technique which is called [MC integration](https://en.wikipedia.org/wiki/Monte_Carlo_integration). In artificial intelligence we can use MC tree search to find the best move in a game. The [DeepMind AlphaGo](https://deepmind.com/research/alphago/) defeated the Go world champion Lee Seedol using MC tree search combined with convolutional networks and deep reinforcement learning. Later on in this series we will discover how it was possible. The **advantages of MC methods over the dynamic programming approach** are the following:
 
-Now let's go back to our cleaning robot and let's see what does it mean to apply the MC method to this scenario.
-The robot starts at state (1, 1) and it follows its internal policy. At each step it records the reward obtained and saves an history of all the states visited until reaching a terminal state. We call an **episode** the sequence of states from the starting state to the terminal state. Now let's suppose that our robot recorded the following three episodes:
+1. MC allow learning optimal behaviour **directly from interaction** with the environment.
+2. It is easy and efficient to **focus** MC methods on small **subset of the states**.
+3. MC can be used with **simulations** (sample models)
+
+During the post I will analyse the first two points. The third point is less intuitive. In many applications it is easy to simulate episodes but it can be extremely difficult to construct the transition model required by the dynamic programming techniques. In all these cases the MC method rules.
+
+Now let's go back to our **cleaning robot** and let's see what does it mean to apply the MC method to this scenario.
+As usual the robot starts at state (1, 1) and it follows its internal policy. At each step it records the reward obtained and saves an history of all the states visited until reaching a terminal state. We call an **episode** the sequence of states from the starting state to the terminal state. Now let's suppose that our robot recorded the following three episodes:
 
 ![Passive Model-Free RL Monte Carlo Three Episodes]({{site.baseurl}}/images/reinforcement_learning_model_free_monte_carlo_three_episodes_fast.gif){:class="img-responsive"}
 
-The robot followed its internal policy but **the unknown transition model perturbed the trajectory** leading to undesired states. In the first and second episode, after some fluctuation the robot eventually reached the terminal state obtaining a positive reward. In the third episode the robot moved along a wrong path reaching the stairs and falling down (reward: -1.0). The following is another representation of the three episodes, useful if you are reading the pdf version of the post.
+The robot followed its internal policy but **an unknown transition model perturbed the trajectory** leading to undesired states. In the first and second episode, after some fluctuation the robot eventually reached the terminal state obtaining a positive reward. In the third episode the robot moved along a wrong path reaching the stairs and falling down (reward: -1.0). The following is another representation of the three episodes, useful if you are reading the pdf version of the post.
 
 ![Passive Model-Free RL Monte Carlo Three Episodes]({{site.baseurl}}/images/reinforcement_learning_model_free_monte_carlo_three_episodes_linear.png){:class="img-responsive"}
 
@@ -62,7 +64,7 @@ Each occurrence of a state during the episode is called **visit**. The concept o
 
 2. **Every-Visit MC**: $$ U^{\pi}(s) $$ is defined as the average of the returns following *all the visit* to $$ s $$ in a set of episodes.
 
-**I will focus only on the First-Visit MC method in this post**. What does **return** means? The return is the sum of discounted reward. I already presented the return in the first post when I introduced the Bellman equation and the utility of a state history. 
+I will **focus only on the First-Visit MC method in this post**. What does **return** means? The return is the sum of discounted reward. I already presented the return in the first post when I introduced the Bellman equation and the utility of a state history. 
 
 $$ \text{Return}(s) = \sum_{t=0}^{\infty} \gamma^{t} R(S_{t})  $$
 
@@ -192,20 +194,181 @@ You can find the full example in the github repository. Given the transition mat
 
 If you are familiar with [OpenAI Gym](https://gym.openai.com/) you will find many similarities with my code. I used the same structure and I implemented the same methods `step` `reset` and `render`. In particular the method `step` moves forward at t+1 and returns the **reward**, the **observation** (position of the robot), and a variable called `done` which is `True` when the episode is finished (the robot reached a terminal state). 
 
-Now we have all we need to implement the MC method.
+Now we have all we need to **implement the MC method**. Here I will use a discount factor of $$ \gamma=1 $$, the best policy $$ \pi^{*} $$ and the same transition model used in the previous post. Remeber that in the current transition model the robot will go in the direction choosen in 80% of the cases, whereas it will finish on the left or right in 20% of the cases. First of all I wrote a function to estimate the return:
+
+```python
+def get_return(state_list, gamma):
+    counter = 0
+    return_value = 0
+    for visit in state_list:
+        reward = visit[1]
+        return_value += reward * np.power(gamma, counter)
+        counter += 1
+    return return_value
+```
+The function `get_return` takes as input a list containing a tuple `(position, reward)` and the discount factor `gamma`, the output is a value representing the return for that action list. We are going to use the function `get_return` in the following loop in order to get the returns for each episode and estimate the utilities. The following part is crucial, I added many comments to make it more readable. 
+
+```python
+#Defining an empty utility matrix
+utility_matrix = np.zeros((3,4))
+#init with 1.0e-10 to avoid division by zero
+running_mean_matrix = np.full((3,4), 1.0e-10) 
+gamma = 1.0 #discount factor
+tot_epoch = 50000
+print_epoch = 1000
+
+for epoch in range(tot_epoch):
+    #Starting a new episode
+    episode_list = list()
+    #Reset and return the first observation and reward
+    observation, reward = env.reset(exploring_start=False)
+    episode_list.append((observation, reward))
+    for _ in range(1000):
+        #Take the action from the action matrix
+        action = policy_matrix[observation[0], observation[1]]
+        #Move one step in the environment and get obs and reward
+        observation, reward, done = env.step(action)
+        #Append the visit in the episode list
+        episode_list.append((observation, reward))
+        if done: break
+    #The episode is finished, now estimating the utilities
+    counter = 0
+    #Checkup to identify if it is the first visit to a state
+    checkup_matrix = np.zeros((3,4))
+    #This cycle is the implementation of First-Visit MC.
+    #For each state stored in the episode list check if it
+    #is the first visit and then estimate the return.
+    for visit in episode_list:
+        observation = visit[0]
+        row = observation[0]
+        col = observation[1]
+        reward = visit[1]
+        if(checkup_matrix[row, col] == 0):
+            return_value = get_return(episode_list[counter:], gamma)
+            running_mean_matrix[row, col] += 1
+            utility_matrix[row, col] += return_value
+            checkup_matrix[row, col] = 1
+        counter += 1
+    if(epoch % print_epoch == 0):
+        print("Utility matrix after " + str(epoch+1) + " iterations:") 
+        print(utility_matrix / running_mean_matrix)
+
+#Time to check the utility matrix obtained
+print("Utility matrix after " + str(tot_epoch) + " iterations:")
+print(utility_matrix / running_mean_matrix)
+```
+
+Executing this cose will print the estimation of the utility matrix every 1000 iterations:
+
+```
+Utility matrix after 1 iterations:
+[[ 0.59184009  0.71385957  0.75461418  1.        ]
+ [ 0.55124825  0.          0.87712296  0.        ]
+ [ 0.510697    0.          0.          0.        ]]
+
+Utility matrix after 1001 iterations:
+[[ 0.81379324  0.87288388  0.92520101  1.        ]
+ [ 0.76332603  0.          0.73812382 -1.        ]
+ [ 0.70553067  0.65729802  0.          0.        ]]
+
+Utility matrix after 2001 iterations:
+[[ 0.81020502  0.87129531  0.92286107  1.        ]
+ [ 0.75980199  0.          0.71287269 -1.        ]
+ [ 0.70275487  0.65583747  0.          0.        ]]
 
 
+...
+
+Utility matrix after 50000 iterations:
+[[ 0.80764909  0.8650596   0.91610018  1.        ]
+ [ 0.7563441   0.          0.65231439 -1.        ]
+ [ 0.69873614  0.6478315   0.          0.        ]]
+```
+
+As you can see the utility get more and more accurate and in the limit to infinite it is guaranteed to converge to the true values. In the first post we already found the utilities of this particular grid world using the dynamic programming techniques. Here we can compare the results obtained with MC and the one obtained with dynamic programming:
+
+ 
+![Passive Model-Free RL DP vs MC policy estimation]({{site.baseurl}}/images/reinforcement_learning_utility_estimation_dp_vs_mc.png){:class="img-responsive"}
+
+If you observe the two utility matrices you will notice many similarities but two important differences. The utility estimations for the states (4,1) and (3,1) are zero. This can be considered one of the limitations and at the same time one of the advantage of MC methods.
+The policy we are using, the transition probabilities, and the fact that the robot always start from the same position (bottom-left corner) are responsible of the wrong estimation for those states. **Starting from the state (1,1) the robot will never reach those states** and it cannot estimate the corresponding utilities. As I told you this is a problem because we cannot estimate those values but at the same time it is an advantage. In a very big grid world **we can estimate the utilities only for the states we are interested in**, saving time and resources and focusing only on a particular subspace of the world. 
+
+What we can do to estimate the values for each state? A possible solution is called **exploring starts** and consists in making the robot start from all the available states. This guarantees that all states will be visited in the limit of an infinite number of episodes. To enable the exploring starts in our code the only thing to do is to set the parameter `exploring_strarts` in the `reset` function to `True` as following:
+
+```python
+observation, reward = env.reset(exploring_start=True)
+```
+
+Now every time a new episode begins the robot will start from a random position. Running again the script will result in the following estimations:
+
+```
+Utility matrix after 1 iterations:
+[[ 0.87712296  0.918041    0.959       1.        ]
+ [ 0.83624584  0.          0.          0.        ]
+ [ 0.          0.          0.          0.        ]]
+
+Utility matrix after 1001 iterations:
+[[ 0.81345829  0.8568502   0.91298468  1.        ]
+ [ 0.76971062  0.          0.64240071 -1.        ]
+ [ 0.71048183  0.65156625  0.62423942  0.3622782 ]]
+
+Utility matrix after 2001 iterations:
+[[ 0.80248079  0.85321     0.90835335  1.        ]
+ [ 0.75558086  0.          0.64510648 -1.        ]
+ [ 0.69689178  0.64712344  0.6096939   0.34484468]]
+
+...
+
+Utility matrix after 50000 iterations:
+[[ 0.8077211   0.86449595  0.91575904  1.        ]
+ [ 0.75630573  0.          0.65417382 -1.        ]
+ [ 0.6989143   0.64707444  0.60495949  0.36857044]]
+
+```
+
+Has you can see this time we got the right values also for the states (4,1) and (3,1). Until now we assumed that we had a policy and we used that policy to estimate the utility function. What to do when we do not have a policy? In this case there are other methods we can use. Russel and Norvig called this case **active** reinforcement learning. Following the definition of Sutton and Barto I will call this case the **model-free Monte Carlo control** estimation.
+
+Monte Carlo control
+--------------------
+
+The MC methods for control are slightly different from MC methods for prediction. In some sense the MC control problem is more realistic because **we need to estimate a policy which is not given**. The mechanics behind MC for control is the same we used in the dynamic programming techniques. In the Sutton and Barto book it is called **Generalised Policy Iteration** or **GPI**. The GPI is well explained by the **policy iteration algorithm** of the first post. The policy iteration allowed finding the utility values for each state and at the same time the optimal policy $$ \pi^{*} $$. The approach we used in policy iteration included two main stages:
+
+1. Policy evaluation: $$ U \rightarrow U^{\pi} $$
+2. Policy improvement: $$ \pi \rightarrow greedy(U) $$
+
+The **first step** makes the utility function consistent with the current policy (evaluation). The **second step** makes the policy $$ \pi $$ *greedy* with respect to the current utility function (improvement). The two changes work against each other, creating a moving target for the other, but together they collaborate making both policy and value function approach optimality.
+
+![Active Model-Free RL GPI overview]({{site.baseurl}}/images/reinforcement_learning_gpi_overview.png){:class="img-responsive"}
+
+Examining the second step we notice a new term: greedy. **What does it means greedy?** I said something about it in the policy iteration section of the first post. We saw that at certain point the algorithm found a suboptimal policy and stick to it for some iterations. In that case the agent was following a greedy behaviour, meaning that it was short sighted **preferring a small reward in the short-term instead of a big reward in the long-term**. All reinforcement learning methods can be described in terms of policy iteration and more specifically in terms of GPI. Keeping the GPI idea in your mind will let you understand easily MC method for control. Now I have to introduce another concept, which is 
+ 
+
+Action Values and the Q function
+--------------------------------
+Until now we used the function $$ U $$ called the utility function (aka value function, state-value function) as a way to estimate the utility (value) of a state. More precisely we used $$ U^{\pi}(s) $$ to estimate the value of a state $$ s $$ under a policy $$ \pi $$. Now it is time to introduce a new function called $$ Q $$ (aka action-value function) and defined as follow:
+
+$$ Q^{\pi}(s, a) = E \big\{ \text{Return}_{t} | s_{t}=s, a_{t}=a \big\} $$
+
+That's it,  the $$ Q $$ function takes the action $$ a $$ in state $$ s $$ under the policy $$ \pi $$ and it returns the utility of that state-action pair. The $$ Q $$ function is defined as the expected return starting from $$ s $$, taking the action $$ a $$ and thereafter following policy $$ \pi $$. 
+
+**Why do we need the function Q in MC methods?** In model-free reinforcement learning the utility of the states are not sufficient to suggest a policy. One must explicitly estimate the utility of each action, thus the primary goal in MC methods for control is to estimate the function $$ Q^{*} $$. What I said previously about the GPI applies also for the action-value function $$ Q $$. Estimating the optimal action-value function is not different from estimating the utility function. The **first-visit MC method for control estimation** averages the return following the first time a specific **state-action pair** has been visited. We must think in terms of state-action and no more in terms of states. When we estimated the utility function $$ U $$ we stored the utilities in a matrix having the same dimension of the world. Here **we need a new way to represent the state-value function** $$ Q $$, because we have to take into account the actions. What we can do is to have a row for each action and a column for each state. Imagine to take all the 12 states of our 4x3 grid world and dispose them along a single row, then repeat the process for all the four possible actions (up, right, down, left). The resulting matrix is the following:
 
 
-Temporal-Difference learning
----------------------------
+![Active Model-Free RL State-Action TAble]({{site.baseurl}}/images/reinforcement_learning_model_free_active_state_action_table.png){:class="img-responsive"}
 
-The exploration-exploitation dilemma
-------------------------------------
+The **state-action matrix** stores the utilities of executing a specific action in a specific state, thus with a query to the matrix we can estimate which action should be executed in order to have the highest utility.
+
+In MC for control it is important to **guarantee a uniform exploration of all the state-action pairs**. Following the policy $$ \pi $$ it can happen that relevant state-action pairs may never be visited. With no returns the method will not improve. To compare different actions we need to estimate the value of all the actions from each state. The solution is to use the **exploring starts** assumption specifying that the first step of each episode starts at a state-action pair and that every such pair has a non-zero probability of being selected. It's time to implement the algorithm in Python...
+
+Python implementation
+---------------------
+
+
 
 Conclusions
 -----------
 
+TD learning is the root of Q-Learning and Deep Reinforcement Learning. 
 
 
 Resources
