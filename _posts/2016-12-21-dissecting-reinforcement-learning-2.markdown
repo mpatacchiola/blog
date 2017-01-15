@@ -2,7 +2,7 @@
 layout: post
 title:  "Dissecting Reinforcement Learning-Part.2"
 date:   2017-01-15 11:00:00 +0000
-description: Explaining the basic ideas behind reinforcement learning. In particular, Markov Decision Process, Bellman equation, Value iteration and Policy Iteration algorithms, policy iteration through linear algebra methods. It includes full working code written in Python.
+description: Explaining the basic ideas behind reinforcement learning. In particular, Monte Carlo Methods for prediction and control, Generalised Policy Iteration, Q-Function. It includes complete working code written in Python.
 author: Massimiliano Patacchiola
 comments: true
 published: true
