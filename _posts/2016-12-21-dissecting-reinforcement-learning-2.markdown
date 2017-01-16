@@ -434,8 +434,8 @@ Finally we have the main loop of the algorithm, which is not so different from t
 for epoch in range(tot_epoch):
 #Starting a new episode
 episode_list = list()
-#Reset and return the first observation and reward
-observation, _ = env.reset(exploring_starts=True)
+#Reset and return the first observation
+observation = env.reset(exploring_starts=True)
 is_starting = True
 for _ in range(1000):
     #Take the action from the action matrix
