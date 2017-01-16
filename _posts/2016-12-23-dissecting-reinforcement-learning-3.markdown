@@ -12,13 +12,32 @@ published: false
 [Bootstrapping]
 [What TD Learning is]
 [TD(0) the simplest form of TD learning]
-[Eligibility traces and TD(lamda)]
+[TD(lamda) Eligibility traces]
 [TD generally converge faster the MC on stochastic task][Example 6.2 pag. 139]
 [Batch Learning]
 [SARSA (on-policy) TD control]
 [On-Policy and Off-Policy]
+[for "off-policy example" cite Deep Reinforcement Learning for Robotic Manipulation with Asynchronous Off-Policy Updates]
 [Q-Learning]
 
+
+[Value Function Approximation]
+[Action-Value Function Approximation]
+[Linear Approximation]
+[Neural Network Approximation]
+[Example in python with tensorflow]
+[Policy Gradient][Lesson 7 of David Silver's course][See pong from pixels post]
+[Policy Optimization without gradient (e.g. genetic algoritm which are actor only model)]
+
+[Deep Reinforcement Learning]
+[Playing Atari with Deep Reinforcement Learning - 2013]
+[Human-level control through deep reinforcement learning - 2015]
+[Replay Memory]
+[Improving Replay Memory with Prioritized Sweeping][9.4, pag 238; cit in "Human level control through deep RL" in section "Training algorithm for deep Q-networks"]
+[Example in Python, cleaning robot 3D]
+
+[Actor-Critic]
+[Mastering the game of Go with deep neural networks and tree search - 2016]
 
 
 Conclusions

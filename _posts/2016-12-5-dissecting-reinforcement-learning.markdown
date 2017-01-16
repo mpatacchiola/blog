@@ -26,7 +26,7 @@ In the beginning was Andrey Markov
 2. Initial State: $$ s_0 $$
 3. Transition Model: $$ T(s, s^{'}) $$
 
-There is something peculiar in a Markov chain that I did not mention. A Markov chain is based on the **Markov Property**. The Markov property states that **given the present, the future is conditionally independent of the past**. That's it, the state in which the process is now it is dependent only from the state it was at $$ t-1 $$. An example can simplify the digestion of Markov chains. Let's suppose we have a chain with only two states $$ s_0 $$ and $$ s_1 $$, where $$ s_0 $$ is the initial state. For 90% of the time the process is in $$ s_0 $$  and in the remaining 10% of the time it can move to $$ s_1 $$. When the process is in state $$ s_1 $$ it will remain there 50% of the time. Given this data we can create a **Transition Matrix** $$ T $$ as follow: 
+There is something peculiar in a Markov chain that I did not mention. A Markov chain is based on the **Markov Property**. The Markov property states that **given the present, the future is conditionally independent of the past**. That's it, the state in which the process is now it is dependent only from the state it was at $$ t-1 $$. An example can simplify the digestion of Markov chains. Let's suppose we have a chain with only two states $$ s_0 $$ and $$ s_1 $$, where $$ s_0 $$ is the initial state. The process is in $$ s_0 $$ 90% of the time and it can move to $$ s_1 $$ the remaining 10% of the time. When the process is in state $$ s_1 $$ it will remain there 50% of the time. Given this data we can create a **Transition Matrix** $$ T $$ as follow: 
 
 $$
 T = 
@@ -36,11 +36,11 @@ T =
 \end{bmatrix}
 $$
 
-The transition matrix is always a square matrix, and since we are dealing with probability distributions all the entries are included between 0 and 1 and a single row should sum up to 1. **We can graphically represent the Markov chain**. In the following representation each state of the chain is a node and the transition probabilities are edges. Highest probabilities have a thickest edge:
+The transition matrix is always a square matrix, and since we are dealing with probability distributions all the entries are within 0 and 1 and a single row sums to 1. **We can graphically represent the Markov chain**. In the following representation each state of the chain is a node and the transition probabilities are edges. Highest probabilities have a thickest edge:
 
 ![Simple Markov Chain]({{site.baseurl}}/images/simple_markov_chain.png){:class="img-responsive"}
 
-Until now we did not mentioned **time**, but we have to do it because Markov chains are dynamical processes which evolve in time.
+Until now we did not mention **time**, but we have to do it because Markov chains are dynamical processes which evolve in time.
 Let's suppose we have to guess were the process will be after 3 steps and after 50 steps. How can we do it? We are interested in chains that have a finite number of states and are  time-homogeneous meaning that the transition matrix does not change over time. Given these assumptions **we can compute the k-step transition probability as the k-th power of the transition matrix**, let's do it in Numpy:
 
 ```python
