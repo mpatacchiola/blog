@@ -74,7 +74,7 @@ There is nothing new. We have the discount factor $$ \gamma $$, the reward funct
 
 The return for the first episode is 0.27.  Following the same procedure we get the same result for the second episode. For the third episode we get a different return -0.79. After the three episodes we came out with three different returns: 0.27, 0.27, -0.79. **How to use the returns to estimate the utilities?** I will now introduce the core equation used in the MC method, which give the utility of a state following the policy $$ \pi $$:
 
-$$ U^{\pi}(s) = E \Bigg[ \sum_{t=0}^{\infty} \gamma^{t} R(S_{t})  \Bigg]  $$
+$$ U^{\pi}(s) = E \Bigg[ \sum_{t=0}^{\infty} \gamma^{t} \text{Return}(s_{t})  \Bigg]  $$
 
 If you compare this equation with the equation used to calculate the return you will see only one difference: to obtain the utility function we take the **[expectation](https://en.wikipedia.org/wiki/Expected_value) of the returns**. That's it. To find the utility of a state we need to calculate the expectation of the returns for that state. In our example after only three episodes the approximated utility for the state (1, 1) is: (0.27+0.27-0.79)/3=-0.08. However, an estimation based only on three episodes is inaccurate. We need more episodes in order to get the true value. Why do we need more episodes?
 
