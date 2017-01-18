@@ -258,7 +258,7 @@ print("Utility matrix after " + str(tot_epoch) + " iterations:")
 print(utility_matrix / running_mean_matrix)
 ```
 
-Executing this cose will print the estimation of the utility matrix every 1000 iterations:
+Executing this script will print the estimation of the utility matrix every 1000 iterations:
 
 ```
 Utility matrix after 1 iterations:
@@ -285,7 +285,7 @@ Utility matrix after 50000 iterations:
  [ 0.69873614  0.6478315   0.          0.        ]]
 ```
 
-As you can see the utility get more and more accurate and in the limit to infinite it converges to the true values. In the first post we already found the utilities of this particular grid world using the dynamic programming techniques. Here we can compare the results obtained with MC and the one obtained with dynamic programming:
+As you can see the utility gets more and more accurate and in the limit to infinite it converges to the true values. In the first post we already found the utilities of this particular grid world using the dynamic programming techniques. Here we can compare the results obtained with MC and the ones obtained with dynamic programming:
 
  
 ![Passive Model-Free RL DP vs MC policy estimation]({{site.baseurl}}/images/reinforcement_learning_utility_estimation_dp_vs_mc.png){:class="img-responsive"}
