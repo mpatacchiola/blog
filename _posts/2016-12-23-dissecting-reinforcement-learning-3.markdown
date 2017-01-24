@@ -2,7 +2,7 @@
 layout: post
 title:  "Dissecting Reinforcement Learning-Part.3"
 date:   2017-01-16 19:00:00 +0000
-description: This blog series explains the basic ideas behind reinforcement learning. In particular Temporal Difference Learning, Sarsa, Q-Learning, On-Policy and Off-Policy. It includes full working code written in Python.
+description: This blog series explains the main ideas and techniques behind reinforcement learning. In particular Temporal Difference Learning, Animal Learning, Eligibility Traces, Sarsa, Q-Learning, On-Policy and Off-Policy. It includes complete Python code.
 author: Massimiliano Patacchiola
 comments: false
 published: false
@@ -67,9 +67,9 @@ Applying the TD algorithm means to move step by step considering only the state 
 
 ![Reinforcement Learning TD(0) first episode utilities]({{site.baseurl}}/images/reinforcement_learning_model_free_passive_td_first_episode_utilities.png){:class="img-responsive"}
 
-The red frame highlights the utility value that has been updated at each visit. The matrix is initialised with zeros. At k=0 the state (1,1) is updated since the robot is in the state (1,2) and the first reward (-0.04) is available.
+The red frame highlights the **utility value** that has been **updated at each visit**. The matrix is initialised with zeros. At k=0 the state (1,1) is updated since the robot is in the state (1,2) and the first reward (-0.04) is available. The calculation for updating the utility at (1,1) is: `0.0 + 0.1 (-0.04 + 0.9 (0.0) - 0.0) = -0.004`. Similarly to (1,1) the algorithm updates the state at (1,2). At k=2 the robot goes back and the calculation take the form: `0.0 + 0.1 (-0.04 + 0.9 (-0.004) - 0.0) = -0.00436`. At k=3 the robot changes again its direction. In this case the algorithm update for the second time the state (1,2) as follow: `-0.004 + 0.1 (-0.04 + 0.9 (-0.00436) + 0.004) = -0.0079924`. The same process is applied until the end of the episode.
 
-In Python we have to create a grid world as we did in the [second post](https://mpatacchiola.github.io/blog/2017/01/15/dissecting-reinforcement-learning-2.html), using the class `GridWorld` contained in the module `gridworld.py`. I will use again the 4x3 world with a charging station at (4,3) and the stairs at (4,2).  The **optimal policy** and the **utility values** of this world are the same we obtained in the previous posts:
+In the **Python implementation** we have to create a grid world as we did in the [second post](https://mpatacchiola.github.io/blog/2017/01/15/dissecting-reinforcement-learning-2.html), using the class `GridWorld` contained in the module `gridworld.py`. I will use again the 4x3 world with a charging station at (4,3) and the stairs at (4,2).  The **optimal policy** and the **utility values** of this world are the same we obtained in the previous posts:
 
 ```
 Optimal policy:			Utility Matrix:
@@ -87,10 +87,10 @@ def update_utility(utility_matrix, observation, new_observation,
     '''Return the updated utility matrix
 
     @param utility_matrix the matrix before the update
-    @param observation the state obsrved at t
+    @param observation the state observed at t
     @param new_observation the state observed at t+1
     @param reward the reward observed after the action
-    @param alpha the ste size (learning rate)
+    @param alpha the step size (learning rate)
     @param gamma the discount factor
     @return the updated utility matrix
     '''
@@ -168,17 +168,8 @@ As I told you in the previous section, the TD(0) algorithm does not take into ac
 
 $$e_{t}(s) = \begin{cases} \gamma \lambda e_{t-1}(s) & \text{if}\ s \neq s_{t}; \\ \gamma \lambda e_{t-1}(s)+1 & \text{if}\ s=s_{t}; \end{cases}$$
 
-Here $$ \gamma $$ is the discount rate and $$ \lambda \in [0,1] $$ is a **decay parameter** which defines the update weight for each state visited. The **decay is extimeted backward** from the current state back to the first one. We can define $$ n $$ as a value which is equal to one for the current state and it increments backward to the first state. The value of $$ \lambda $$ for the $$ n $$-th state $$ s $$ can be obtained as follow: 
-
-$$ \lambda _{s} = (1 - \lambda) \lambda^{n-1} $$
-
-Here $$ (1 - \lambda) $$ is a normalisation factor and it guarantees that all the $$ N $$ values of $$ \lambda $$ sum to 1. To better understand this backward process we can consider an episode where five states have been visited, that's it we are in state $$ s_{4} $$. At t+1 a new state $$ s_{5} $$ is visited and the eligibility traces estimated going backward from $$ s_{4} $$ to $$ s_{0} $$.
-
-![Reinforcement Learning TD(lamda) episode Decay Evaluation]({{site.baseurl}}/images/reinforcement_learning_model_free_passive_td_lambda_episode_decay_evaluation.png){:class="img-responsive"}
-
-When $$ \lambda \neq 0 $$ and $$ \lambda \neq 1 $$ the traces decrease going backward. This allow giving a small weight to old states.
-For $$ \lambda = 0 $$ we have the TD(0) case, and only the immediately preceding prediction is updated. For $$ \lambda = 1$$ we have TD(1) where all the preceding predictions are equally updated. 
-Let's see now what happens to a specific state trace during an episode. I will take into account an episode with seven visits and five state visited. The state $$ s_1 $$ is visited twice during the episode. Let's see what happens to its trace.
+Here $$ \gamma $$ is the discount rate and $$ \lambda \in [0,1] $$ is a decay parameter called **trace-decay** or **accumulating trace** which defines the update weight for each state visited. When $$ 0 <\lambda <\ 1 $$ the traces decrease in time. This allow giving a small weight to infrequent states.
+For $$ \lambda = 0 $$ we have the TD(0) case, and only the immediately preceding prediction is updated. For $$ \lambda = 1$$ we have TD(1) where all the preceding predictions are equally updated. TD(1) can be considered an **extension of MC methods using a TD framework**. In MC methods we need to wait the end of the episode in order to update the states. In TD(1) we can update all the previous states online, we do not need the end of the episode. Let's see now what happens to a specific state trace during an episode. I will take into account an episode with seven visits where five states are visited. The state $$ s_1 $$ is visited twice during the episode. Let's see what happens to its trace.
 
 ![Reinforcement Learning TD(lamda) first episode Trace Decay]({{site.baseurl}}/images/reinforcement_learning_model_free_passive_td_lambda_first_episode_trace_decay.png){:class="img-responsive"}
 
@@ -195,10 +186,88 @@ we can update the utility function as follow:
 
 $$ U(s_{t}) = U(s_{t}) + \alpha \delta_{t} e_{t}(s) \qquad  \text{for all } s \in S $$
 
-The Python implementation of TD(λ) is straightforward. We only need to add an eligibility matrix and a new update rule to the previous TD(0) case.
+The **Python implementation** of TD(λ) is straightforward. We only need to add an eligibility matrix and a new update rule for the utility matrix.
 
+```python
+def update_utility(utility_matrix, trace_matrix, alpha, delta):
+    '''Return the updated utility matrix
 
-The special case of **TD(1)** can be considered an **extension of MC methods using a TD framework**. In MC methods we need to wait the end of the episode in order to update the states. In TD(1) we can update all the previous states online, we do not need the end of the episode.
+    @param utility_matrix the matrix before the update
+    @param alpha the step size (learning rate)
+    @param delta the error (Taget-OldEstimte) 
+    @return the updated utility matrix
+    '''
+    utility_matrix += alpha * delta * trace_matrix
+    return utility_matrix
+
+def update_eligibility(trace_matrix, gamma, lambda_):
+    '''Return the updated trace_matrix
+
+    @param trace_matrix the eligibility traces matrix
+    @param gamma discount factor
+    @param lambda_ the decaying value
+    @return the updated trace_matrix
+    '''
+    trace_matrix = trace_matrix * gamma * lambda_
+    return trace_matrix
+```
+
+The main loop introduces some new components compared with the previous TD(0) case. We have the estimation of `delta` in a separate line and the management of the `trace_matrix` in two lines. First of all the states are increased (+1) and then they are decayed.
+
+```python
+for epoch in range(tot_epoch):
+  #Reset and return the first observation
+  observation = env.reset(exploring_starts=True)
+  for step in range(1000):
+    #Take the action from the action matrix
+    action = policy_matrix[observation[0], observation[1]]
+    #Move one step in the environment and get obs and reward
+    new_observation, reward, done = env.step(action)
+    #Estimate the error delta (Target - OldEstimate)
+    delta = reward + gamma * \
+        utility_matrix[new_observation[0], new_observation[1]] - \
+        utility_matrix[observation[0], observation[1]]
+    #Adding +1 in the trace matrix (only the state visited)
+    trace_matrix[observation[0], observation[1]] += 1
+    #Update the utility matrix (all the states)
+    utility_matrix = update_utility(utility_matrix, trace_matrix, alpha, delta)
+    #Update the trace matrix (decaying) (all the states)
+    trace_matrix = update_eligibility(trace_matrix, gamma, lambda_)
+    observation = new_observation
+    if done: break #return
+```
+
+The complete code is available on the [GitHub repository](https://github.com/mpatacchiola/dissecting-reinforcement-learning) and it is called `temporal_differencing_trace_prediction.py`. Running the script we obtain the following utility matrices:
+
+```
+Utility matrix after 1 iterations:
+[[ 0.       0.04595  0.1      0.     ]
+ [ 0.       0.       0.       0.     ]
+ [ 0.       0.       0.       0.     ]]
+
+...
+
+Utility matrix after 101 iterations:
+[[ 0.90680695  0.98373981  1.05569002  0.        ]
+ [ 0.8483302   0.          0.6750451   0.        ]
+ [ 0.77096419  0.66967837  0.50653039  0.22760573]]
+
+...
+
+Utility matrix after 100001 iterations:
+[[ 0.86030512  0.91323552  0.96350672  0.        ]
+ [ 0.80914277  0.          0.82155788  0.        ]
+ [ 0.76195244  0.71064599  0.68342933  0.48991829]]
+
+...
+
+Utility matrix after 300000 iterations:
+[[ 0.87075806  0.92693723  0.97192601  0.        ]
+ [ 0.82203398  0.          0.87812674  0.        ]
+ [ 0.76923169  0.71845851  0.7037472   0.52270127]]
+```
+
+Comparing the final utility matrix with the one obtained without the use of eligibility traces in TD(0) you will notice similar values. One could ask: **what's the advantage of using eligibility traces?** The advantage become clear when dealing with sparse reward in a large state space. In this case the eligibility trace mechanism can speed up learning propagating what learnt at t+1 back to the last states visited. 
 
 
 SARSA: Temporal Differencing control
@@ -262,7 +331,12 @@ The most famous **off-policy TD algorithm for control** is called **Q-Learning**
 Conclusions
 -----------
 
+Index
+------
 
+1. [[First Post]]((https://mpatacchiola.github.io/blog/2016/12/09/dissecting-reinforcement-learning.html)) Markov Decision Process, Bellman Equation, Value iteration and Policy Iteration algorithms.
+2. [[Second Post]](https://mpatacchiola.github.io/blog/2017/01/15/dissecting-reinforcement-learning-2.html) Monte Carlo Intuition, Monte Carlo methods, Prediction and Control, Generalised Policy Iteration, Q-function. 
+3. **[Third Post]** Temporal Differencing intuition, Animal Learning, TD(0), TD(λ) and Eligibility Traces, SARSA, Q-learning.
 
 Resources
 ----------
