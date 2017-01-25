@@ -237,7 +237,7 @@ for epoch in range(tot_epoch):
     if done: break #return
 ```
 
-The complete code is available on the [GitHub repository](https://github.com/mpatacchiola/dissecting-reinforcement-learning) and it is called `temporal_differencing_trace_prediction.py`. Running the script we obtain the following utility matrices:
+The complete code is available on the [GitHub repository](https://github.com/mpatacchiola/dissecting-reinforcement-learning) and it is called `temporal_differencing_prediction_trace.py`. Running the script we obtain the following utility matrices:
 
 ```
 Utility matrix after 1 iterations:
@@ -277,23 +277,97 @@ Now it is time to extend the TD method to the control case. Here we are in the *
 
 $$ U(s_{t}) \leftarrow U(s_{t}) + \alpha \big[ \text{r}_{t+1} + \gamma U(s_{t+1}) - U(s_{t}) \big] $$
 
-In this update rule we need the utility at t+1. The update rule works having the tuple **State-Action-Reward-State**. Now we are in the control case. Here we follow the Generalised Policy Iteration (GPI) framework (see [second post](https://mpatacchiola.github.io/blog/2017/01/15/dissecting-reinforcement-learning-2.html)) using the Q-function to estimate the best policy. The Q-function requires as input a state-action pair. The TD algorithm for control is straightforward, giving a look at the update rule will give you immediately the idea of how it works:
+The update rule is based on the tuple **State-Reward-State**. Remember that now we are in the **control case**. Here we use the **Q-function** (see [second post](https://mpatacchiola.github.io/blog/2017/01/15/dissecting-reinforcement-learning-2.html)) to estimate the best policy. The Q-function requires as input a state-action pair. The TD algorithm for control is straightforward, giving a look at the update rule will give you immediately the idea of how it works:
 
 $$ Q(s_{t}, a_{t}) \leftarrow Q(s_{t}, a_{t}) + \alpha \big[ \text{r}_{t+1} + \gamma Q(s_{t+1}, a_{t+1}) - Q(s_{t}, a_{t}) \big] $$
 
-That's it, we simply replaced $$ U $$ with $$ Q $$ in our updating rule. We must be careful because there is a difference. Now we need a new value which is the action at t+1. This is not a problem because it is contained in the Q-matrix. In TD control the estimation is based on the tuple **State-Action-Reward-State-Action** and this tuple gives the name to the algorithm: **SARSA**.
+That's it, we simply replaced $$ U $$ with $$ Q $$ in our updating rule. We must be careful because there is a difference. Now we need a new value which is the action at t+1. This is not a problem because it is contained in the Q-matrix. In **TD control** the estimation is based on the tuple **State-Action-Reward-State-Action** and this tuple gives the name to the algorithm: **SARSA**.
 
-**How do we choose the actions?** In the [second post](https://mpatacchiola.github.io/blog/2017/01/15/dissecting-reinforcement-learning-2.html) we used the assumption of **exploring starts** to guarantee a uniform exploration of all the state-action pairs. Without random exploration movements the policy could get stuck in a sub-optimal solution. However, exploring start is a constraint because in a very big world we cannot easily explore all the possible states. This issue is known as the **exploration-exploitation dilemma**.
+![Reinforcement Learning SARSA first episode]({{site.baseurl}}/images/reinforcement_learning_model_free_passive_td_sarsa_first_episode.png){:class="img-responsive"}
 
-The solution is called **ε-greedy policy**. An ε-greedy policy explores all the states picking an action from a specific probability distribution. 
+To get the intuition behind the algorithm we consider again a single episode of the cleaning robot in the grid world. The robot starts at (1,1) and after seven visits it reaches the charging station at (4,3). As you can see for each state we have an action. Moving forward the algorithm takes into account only the state at t and t+1. In the standard implementation of SARSA the **previous states are ignored**, as shown by the shadow on top of them in the graphical illustration. This is in line with the TD framework as explained in the TD(0) section. 
+
+**Which are the steps of the algorithm?** The steps of the algorithm are the following:
+
+1. Move one step selecting $$ a_{t} $$ from $$ \pi(s_{t}) $$
+2. Observe: $$ r_{t+1} $$, $$ s_{t+1} $$, $$ a_{t+1} $$
+3. Update the state-action function $$ Q(s_{t}, a_{t}) $$
+4. Update the policy $$ \pi(s_{t}) \leftarrow \underset{a}{\text{ argmax }} Q(s_{t},a_{t}) $$
+
+In **step 4** we are using the same mechanism of MC for control (see [second post](https://mpatacchiola.github.io/blog/2017/01/15/dissecting-reinforcement-learning-2.html)), the **policy $$ \pi $$ is updated at each visit** choosing the action with the highest state-action value. We are making the policy **greedy**. 
 
 
-Q-Learning: off-policy control
+[In the [second post](https://mpatacchiola.github.io/blog/2017/01/15/dissecting-reinforcement-learning-2.html) we used the assumption of **exploring starts** to guarantee a uniform exploration of all the state-action pairs. Without random exploration the policy could get stuck in a sub-optimal solution. However, exploring start is a constraint because in a very big world we cannot easily explore all the possible states. This issue is known as the **exploration-exploitation dilemma**.
+The solution is called **ε-greedy policy**. An ε-greedy policy explores all the states picking an action from a specific probability distribution.] 
+
+The Python implementation of SARSA is based on the same code of TD(0) but with a different update rule.
+
+```python
+def update_state_action(state_action_matrix, observation, new_observation, 
+                   action, new_action, reward, alpha, gamma):
+    '''Return the updated utility matrix
+
+    @param state_action_matrix the matrix before the update
+    @param observation the state observed at t
+    @param new_observation the state observed at t+1
+    @param action the action at t
+    @param new_action the action at t+1
+    @param reward the reward observed after the action
+    @param alpha the step size (learning rate)
+    @param gamma the discount factor
+    @return the updated state action matrix
+    '''
+    #Getting the values of Q at t and at t+1
+    col = observation[1] + (observation[0]*4)
+    q = state_action_matrix[action ,col]
+    col_t1 = new_observation[1] + (new_observation[0]*4)
+    q_t1 = state_action_matrix[new_action ,col_t1]
+    #Applying the update rule
+    state_action_matrix[action ,col] += \
+        alpha * (reward + gamma * q_t1 - q)
+    return state_action_matrix
+```
+Here you must remember that we define the **state-action matrix** has having the one state for each column, and one action for each row (see [second post](https://mpatacchiola.github.io/blog/2017/01/15/dissecting-reinforcement-learning-2.html)). For instance, with the query `state_action_matrix[0, 2]` we get the state-action value for the state (3,1) (top-left corner) and action DOWN of the 4x3 grid world. With the query `state_action_matrix[11, 0]` we get the state-action value for the state (4,1) (bottom-right corner) and action UP. As usual we used the convention of Russel and Norvig for naming the states. The bottom-left corner is the state (1,1), while in Python we use the Numpy convention where `[0, 0]` defines the top-left value of the grid world.
+
+**Does SARSA always converge to the optimal policy?** The answer is yes, SARSA converges with probability 1 as long as all the state-action pairs are visited an infinite number of times. In practice it is not possible to run our algorithm forever and for large state-action spaces the convergence is not always guaranteed. Now it is time to introduce a second algorithm for TD control: Q-learning.
+
+Q-learning: off-policy control
 -----------------------------
 
-In the control case we always used the policy $$ \pi $$ to learn on the job, meaning that we learnt about $$ \pi $$ from experiences sampled from $$ \pi $$. This approach is called **on-policy** learning. However there is another way to learn about $$ \pi $$ which is called **off-policy** learning. In off-policy learning the policy $$ \pi $$ is updated based on the observation of a second policy $$ \mu $$. **Which are the advantages of off-policy learning?** First of all using off-policy it is possible to learn about an **optimal policy** while following an **exploratory policy**. Off-policy means **learning by observation**. For example. our cleaning robot could find a policy looking to another robot. It is also possible to learn about **multiple policies** while following one policy (e.g. multi-robot scenario). Moreover in deep reinforcement learning we will see how off-policy allows **re-using old experiences** generated from old policies to improve the current policy (experience replay).
+**Q-learning** is one of the most important algorithm in reinforcement learning. However most of the time it is not explained in details. Understanding how it works means understanding most of the ideas now on. Here I will dissect the algorithm focusing on its deep meaning. Before proceeding you should have clear in your mind the following concepts:
 
-The most famous **off-policy TD algorithm for control** is called **Q-Learning**.
+- The Generalised Policy Iteration (GPI) ([second post](https://mpatacchiola.github.io/blog/2017/01/15/dissecting-reinforcement-learning-2.html))
+- The $$ \text{Target} $$ term in TD learning (first section)
+- The update rule of SARSA (previous section)
+
+Now we can proceed. In the control case we always used the policy $$ \pi $$ to learn on the job, meaning that we updated $$ \pi $$ from experiences sampled from $$ \pi $$. This approach is called **on-policy** learning. However there is another way to learn about $$ \pi $$ which is called **off-policy** learning. In off-policy learning the policy $$ \pi $$ is updated based on the observation of a second policy $$ \mu $$ that is **not updated**. For instance considering the first four iterations in a 4x3 grid world we can see how after the random initialisation of $$ \pi $$ the states are updated step by step, whereas the policy $$ \mu $$ does not change at all.
+
+![Reinforcement Learning Q-learning policies comparison]({{site.baseurl}}/images/reinforcement_learning_model_free_active_td_qlearning_policies_update.png){:class="img-responsive"}
+
+Which are the advantages of off-policy learning? First of all using off-policy it is possible to learn about an **optimal policy** while following an **exploratory policy**. Off-policy means **learning by observation**. For example our cleaning robot could find a policy looking to another robot. It is also possible to learn about **multiple policies** while following one policy (e.g. multi-robot scenario). Moreover in deep reinforcement learning we will see how off-policy allows **re-using old experiences** generated from old policies to improve the current policy (experience replay).
+
+The most famous **off-policy TD algorithm for control** is called **Q-Learning**. To understand how Q-learning works let's consider its update rule:
+
+$$ Q(s_{t}, a_{t}) \leftarrow Q(s_{t}, a_{t}) + \alpha \big[ \text{r}_{t+1} + \gamma \underset{a}{\text{ max }} Q(s_{t+1}, a) - Q(s_{t}, a_{t}) \big] $$
+
+Comparing the update rule of SARSA and the one of Q-learning you will notice that the only difference is in the $$ \text{Target} $$ term. Here I report both of them to simplify the comparison:
+
+$$ \text{Target}[\text{SARSA}] = \text{r}_{t+1} + \gamma Q(s_{t+1}, a_{t+1}) $$
+
+$$ \text{Target}[\text{Q-learning}] = \text{r}_{t+1} + \gamma \underset{a}{\text{ max }} Q(s_{t+1}, a) $$
+
+SARSA uses GPI to improve the policy $$ \pi $$. The $$ \text{Target} $$ is estimated through $$ Q(s_{t+1}, a_{t+1}) $$ which is based on the action $$ a_{t+1} $$ sampled from the policy $$ \pi $$. In SARSA improving $$ \pi $$ means improving the estimation returned by $$ Q(s_{t+1}, a_{t+1}) $$. In Q-learning we have two policies $$ \pi $$ and $$ \mu $$.The value of $$ a_{t} $$ necessary to estimate $$ Q(s_{t},a_{t}) $$ is sampled from the exploratory policy $$ \mu $$. The value of $$a_{t+1} $$ at $$ Q(s_{t+1}, a_{t+1}) $$ cannot be sampled from $$ \mu $$ because $$ \mu $$ is not updated during the training and using it would **break the GPI scheme**. The value of $$a_{t+1} $$ cannot even be sampled from $$ \pi $$ because there would be a difference between the $$ \text{Target} $$ estimated through $$ \pi $$ and the $$ \text{OldEstimate} $$ estimated through $$ \mu $$.  To solve this issue Q-learning gets the Q-value at t+1 through $$ \underset{a}{\text{ max }} Q(s_{t+1}, a) $$. The evaluation of $$ \underset{a}{\text{ max }} Q(s_{t+1}, a) $$ is independent from both $$ \pi $$ and $$ \mu $$, and it is respectful of the GPI because obtained through bootstrapping. Let's see now all the Q-learning **steps**:
+
+1. Move one step selecting $$ a_{t} $$ from $$ \mu(s_{t}) $$
+2. Observe: $$ r_{t+1} $$, $$ s_{t+1} $$
+3. Update the state-action function $$ Q(s_{t}, a_{t}) $$
+4. Update the policy $$ \pi(s_{t}) \leftarrow \underset{a}{\text{ argmax }} Q(s_{t},a_{t}) $$
+
+There are some differences between the steps followed in SARSA and the one followed in Q-learning. Unlike in SARSA in the **step 2** of Q-learning we are not considering $$ a_{t+1} $$ the action at the next step. In this sense Q-learning updates the state-action function using the tuple **State-Action-Reward-State**.
+If you compare **step 1** and **step 4** in SARSA you can see that in **step 1** the action is sampled from $$ \pi $$ and then the same policy is updated at **step 4**. In **step 1** and **step 4** of Q-learning we are sampling the action from the **exploration policy** $$ \mu $$ while we are updating the policy $$ \pi $$ at **step 4**.
+
+An **example** will clarify what expressed until now. Let's suppose our cleaning robot observed the movements of a second robot in the 4x3 grid world. 
+What is interesting about Q-learning is that while following a policy $$ \mu $$ which may be sub-optimal it can estimates the optimal policy $$ \pi^{*} $$. 
 
 
 [MC problem and possible ways to solve them with TD][6.2 pag. 138]

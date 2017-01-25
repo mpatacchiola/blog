@@ -340,17 +340,17 @@ The **first step** makes the utility function consistent with the current policy
 
 ![Active Model-Free RL GPI overview]({{site.baseurl}}/images/reinforcement_learning_gpi_overview.png){:class="img-responsive"}
 
-Examining the second step we notice a new term: greedy. **What does it means greedy?** Greedy means to take for each state the action with the highest utility and update the policy with that action. Later I will show you an example. All reinforcement learning methods can be described in terms of policy iteration and more specifically in terms of GPI. Keeping the GPI idea in your mind will let you understand easily MC method for control. In order to fully understand the MC method for control I have to introduce another argument, which is the $$ Q $$ function.
+Examining the second step we notice a new term: greedy. **What does it means greedy?** Greedy means to take for each state the action with the highest utility and update the policy with that action. Later I will show you an example. All reinforcement learning methods can be described in terms of policy iteration and more specifically in terms of GPI. Keeping the GPI idea in your mind will let you understand easily MC method for control. In order to fully understand the MC method for control I have to introduce another argument, which is the Q-function.
 
-Action Values and the Q function
+Action Values and the Q-function
 --------------------------------
 Until now we used the function $$ U $$ called the utility function (aka value function, state-value function) as a way to estimate the utility (value) of a state. More precisely we used $$ U^{\pi}(s) $$ to estimate the value of a state $$ s $$ under a policy $$ \pi $$. Now it is time to introduce a new function called $$ Q $$ (aka action-value function) and defined as follow:
 
 $$ Q^{\pi}(s, a) = E \big\{ \text{Return}_{t} | s_{t}=s, a_{t}=a \big\} $$
 
-That's it,  the $$ Q $$ function takes the action $$ a $$ in state $$ s $$ under the policy $$ \pi $$ and it returns the utility of that state-action pair. The $$ Q $$ function is defined as the expected return starting from $$ s $$, taking the action $$ a $$ and thereafter following policy $$ \pi $$. 
+That's it,  the Q-function takes the action $$ a $$ in state $$ s $$ under the policy $$ \pi $$ and it returns the utility of that state-action pair. The Q-function is defined as the expected return starting from $$ s $$, taking the action $$ a $$ and thereafter following policy $$ \pi $$. 
 
-**Why do we need the function Q in MC methods?** In model-free reinforcement learning the utility of the states are not sufficient to suggest a policy. One must explicitly estimate the utility of each action, thus the primary goal in MC methods for control is to estimate the function $$ Q^{*} $$. What I said previously about the GPI applies also for the action-value function $$ Q $$. Estimating the optimal action-value function is not different from estimating the utility function. The **first-visit MC method for control estimation** averages the return following the first time a specific **state-action pair** has been visited. We must think in terms of state-action pairs and no more in terms of states. When we estimated the utility function $$ U $$ we stored the utilities in a matrix having the same dimension of the world. Here we need a **new way** to **represent the state-value function** $$ Q $$, because we have to take into account the actions. What we can do is to have a row for each action and a column for each state. Imagine to take all the 12 states of our 4x3 grid world and dispose them along a single row, then repeat the process for all the four possible actions (up, right, down, left). The resulting (empty) matrix is the following:
+**Why do we need the function Q in MC methods?** In model-free reinforcement learning the utility of the states are not sufficient to suggest a policy. One must explicitly estimate the utility of each action, thus the primary goal in MC methods for control is to estimate the function $$ Q^{*} $$. What I said previously about the GPI applies also for the action-value function Q. Estimating the optimal action-value function is not different from estimating the utility function. The **first-visit MC method for control estimation** averages the return following the first time a specific **state-action pair** has been visited. We must think in terms of state-action pairs and no more in terms of states. When we estimated the utility function $$ U $$ we stored the utilities in a matrix having the same dimension of the world. Here we need a **new way** to **represent the state-value function** Q, because we have to take into account the actions. What we can do is to have a row for each action and a column for each state. Imagine to take all the 12 states of our 4x3 grid world and dispose them along a single row, then repeat the process for all the four possible actions (up, right, down, left). The resulting (empty) matrix is the following:
 
 
 ![Active Model-Free RL State-Action Table]({{site.baseurl}}/images/reinforcement_learning_model_free_active_state_action_table.png){:class="img-responsive"}
@@ -505,8 +505,8 @@ It is time to run the script and see what we obtain. Before remember that for th
 ```
 Optimal policy:
 
- >   >   >   *  
- ^   #   ^   *  
+ >   >   >   * 
+ ^   #   ^   * 
  ^   <   <   < 
 ```
 
@@ -516,36 +516,36 @@ In the optimal policy the robot will move far away from the stairs at state (4, 
 ```
 
 Policy after 1 iterations:
- ^   >   v   *  
- <   #   v   *  
+ ^   >   v   * 
+ <   #   v   * 
  v   >   <   >
 
 ...
 
 Policy after 3001 iterations:
- >   >   >   *  
- >   #   ^   *  
+ >   >   >   * 
+ >   #   ^   * 
  >   >   ^   < 
 
 ...
 
 Policy after 78001 iterations:
- >   >   >   *  
- ^   #   ^   *  
+ >   >   >   * 
+ ^   #   ^   * 
  ^   <   ^   <
 
 ...
 
 Policy after 405001 iterations:
- >   >   >   *  
- ^   #   ^   *  
+ >   >   >   * 
+ ^   #   ^   * 
  ^   <   <   <
 
 ...
 
 Policy after 500000 iterations:
- >   >   >   *  
- ^   #   ^   *  
+ >   >   >   * 
+ ^   #   ^   * 
  ^   <   <   < 
 ```
 
