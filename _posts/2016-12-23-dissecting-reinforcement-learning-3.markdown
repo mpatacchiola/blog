@@ -8,7 +8,7 @@ comments: false
 published: false
 ---
 
-Welcome to the third part of the series "Disecting Reinforcement Learning". In the [first](https://mpatacchiola.github.io/blog/2016/12/09/dissecting-reinforcement-learning.html) and [second](https://mpatacchiola.github.io/blog/2017/01/15/dissecting-reinforcement-learning-2.html) post we dissected **dynamic programming** and  **Monte Carlo (MC)** methods. The third group of techniques in reinforcement learning is  called **Temporal Differencing (TD)** methods. TD learning solves some of the problem arising in MC learning. In the conclusions of the [second part](https://mpatacchiola.github.io/blog/2017/01/15/dissecting-reinforcement-learning-2.html) I described one of this problem. Using MC methods it is necessary to wait until the end of the episode before updating the utility function. This is a serious problem because some applications can have very long episodes and delaying learning until the end is too slow. We will see how TD methods solve this issue.
+Welcome to the third part of the series "Disecting Reinforcement Learning". In the [first](https://mpatacchiola.github.io/blog/2016/12/09/dissecting-reinforcement-learning.html) and [second](https://mpatacchiola.github.io/blog/2017/01/15/dissecting-reinforcement-learning-2.html) post we dissected **dynamic programming** and  **Monte Carlo (MC)** methods. The third group of techniques in reinforcement learning is  called **Temporal Differencing (TD)** methods. TD learning solves some of the problem arising in MC learning. In the conclusions of the [second part](https://mpatacchiola.github.io/blog/2017/01/15/dissecting-reinforcement-learning-2.html) I described one of this problem. Using MC methods it is necessary to wait until the end of the episode before updating the utility function. This is a serious problem because some applications can have very long episodes and delaying learning until the end is too slow. Moreover the termination of the episode is not always guaranteed. We will see how TD methods solve these issues.
 
 
 ![Russel and Norvig and Sutton and Barto and Mitchel]({{site.baseurl}}/images/artificial_intelligence_a_modern_approach_reinforcement_learning_an_introduction_machine_learning.png){:class="img-responsive"}
@@ -63,11 +63,11 @@ The update rule found in the previous part is the simplest form of TD learning, 
 
 ![Reinforcement Learning TD(0) first episode]({{site.baseurl}}/images/reinforcement_learning_model_free_passive_td_first_episode.png){:class="img-responsive"}
 
-Applying the TD algorithm means to move step by step considering only the state at t and the state at t+1. That's it, after each step we get the utility value and the reward at t+1 and we update the value at t. The **TD(0)** algorithm **ignores the past states** and this is shown by the shadow I added above those states. Applying the algorithm to the episode leads to the following changes in the utility matrix:
+Applying the TD algorithm means to move step by step considering only the state at t and the state at t+1. That's it, after each step we get the utility value and the reward at t+1 and we update the value at t. The **TD(0)** algorithm **ignores the past states** and this is shown by the shadow I added above those states. Applying the algorithm to the episode ($$ \gamma = 0.9 $$, $$ \alpha = 0.1  $$) leads to the following changes in the utility matrix:
 
 ![Reinforcement Learning TD(0) first episode utilities]({{site.baseurl}}/images/reinforcement_learning_model_free_passive_td_first_episode_utilities.png){:class="img-responsive"}
 
-The red frame highlights the **utility value** that has been **updated at each visit**. The matrix is initialised with zeros. At k=0 the state (1,1) is updated since the robot is in the state (1,2) and the first reward (-0.04) is available. The calculation for updating the utility at (1,1) is: `0.0 + 0.1 (-0.04 + 0.9 (0.0) - 0.0) = -0.004`. Similarly to (1,1) the algorithm updates the state at (1,2). At k=2 the robot goes back and the calculation take the form: `0.0 + 0.1 (-0.04 + 0.9 (-0.004) - 0.0) = -0.00436`. At k=3 the robot changes again its direction. In this case the algorithm update for the second time the state (1,2) as follow: `-0.004 + 0.1 (-0.04 + 0.9 (-0.00436) + 0.004) = -0.0079924`. The same process is applied until the end of the episode.
+The red frame highlights the **utility value** that has been **updated at each visit**. The matrix is initialised with zeros. At k=1 the state (1,1) is updated since the robot is in the state (1,2) and the first reward (-0.04) is available. The calculation for updating the utility at (1,1) is: `0.0 + 0.1 (-0.04 + 0.9 (0.0) - 0.0) = -0.004`. Similarly to (1,1) the algorithm updates the state at (1,2). At k=3 the robot goes back and the calculation take the form: `0.0 + 0.1 (-0.04 + 0.9 (-0.004) - 0.0) = -0.00436`. At k=4 the robot changes again its direction. In this case the algorithm update for the second time the state (1,2) as follow: `-0.004 + 0.1 (-0.04 + 0.9 (-0.00436) + 0.004) = -0.0079924`. The same process is applied until the end of the episode.
 
 In the **Python implementation** we have to create a grid world as we did in the [second post](https://mpatacchiola.github.io/blog/2017/01/15/dissecting-reinforcement-learning-2.html), using the class `GridWorld` contained in the module `gridworld.py`. I will use again the 4x3 world with a charging station at (4,3) and the stairs at (4,2).  The **optimal policy** and the **utility values** of this world are the same we obtained in the previous posts:
 
@@ -186,7 +186,7 @@ we can update the utility function as follow:
 
 $$ U(s_{t}) = U(s_{t}) + \alpha \delta_{t} e_{t}(s) \qquad  \text{for all } s \in S $$
 
-The **Python implementation** of TD(λ) is straightforward. We only need to add an eligibility matrix and a new update rule for the utility matrix.
+The **Python implementation** of TD(λ) is straightforward. We only need to add an eligibility matrix and its update rule.
 
 ```python
 def update_utility(utility_matrix, trace_matrix, alpha, delta):
@@ -283,7 +283,7 @@ $$ Q(s_{t}, a_{t}) \leftarrow Q(s_{t}, a_{t}) + \alpha \big[ \text{r}_{t+1} + \g
 
 That's it, we simply replaced $$ U $$ with $$ Q $$ in our updating rule. We must be careful because there is a difference. Now we need a new value which is the action at t+1. This is not a problem because it is contained in the Q-matrix. In **TD control** the estimation is based on the tuple **State-Action-Reward-State-Action** and this tuple gives the name to the algorithm: **SARSA**.
 
-![Reinforcement Learning SARSA first episode]({{site.baseurl}}/images/reinforcement_learning_model_free_passive_td_sarsa_first_episode.png){:class="img-responsive"}
+![Reinforcement Learning SARSA first episode]({{site.baseurl}}/images/reinforcement_learning_model_free_active_td_sarsa_first_episode.png){:class="img-responsive"}
 
 To get the intuition behind the algorithm we consider again a single episode of the cleaning robot in the grid world. The robot starts at (1,1) and after seven visits it reaches the charging station at (4,3). As you can see for each state we have an action. Moving forward the algorithm takes into account only the state at t and t+1. In the standard implementation of SARSA the **previous states are ignored**, as shown by the shadow on top of them in the graphical illustration. This is in line with the TD framework as explained in the TD(0) section. 
 
@@ -296,11 +296,7 @@ To get the intuition behind the algorithm we consider again a single episode of 
 
 In **step 4** we are using the same mechanism of MC for control (see [second post](https://mpatacchiola.github.io/blog/2017/01/15/dissecting-reinforcement-learning-2.html)), the **policy $$ \pi $$ is updated at each visit** choosing the action with the highest state-action value. We are making the policy **greedy**. 
 
-
-[In the [second post](https://mpatacchiola.github.io/blog/2017/01/15/dissecting-reinforcement-learning-2.html) we used the assumption of **exploring starts** to guarantee a uniform exploration of all the state-action pairs. Without random exploration the policy could get stuck in a sub-optimal solution. However, exploring start is a constraint because in a very big world we cannot easily explore all the possible states. This issue is known as the **exploration-exploitation dilemma**.
-The solution is called **ε-greedy policy**. An ε-greedy policy explores all the states picking an action from a specific probability distribution.] 
-
-The Python implementation of SARSA is based on the same code of TD(0) but with a different update rule.
+The **Python implementation of SARSA** is based on a new update rule for the state-action matrix.
 
 ```python
 def update_state_action(state_action_matrix, observation, new_observation, 
@@ -327,7 +323,88 @@ def update_state_action(state_action_matrix, observation, new_observation,
         alpha * (reward + gamma * q_t1 - q)
     return state_action_matrix
 ```
-Here you must remember that we define the **state-action matrix** has having the one state for each column, and one action for each row (see [second post](https://mpatacchiola.github.io/blog/2017/01/15/dissecting-reinforcement-learning-2.html)). For instance, with the query `state_action_matrix[0, 2]` we get the state-action value for the state (3,1) (top-left corner) and action DOWN of the 4x3 grid world. With the query `state_action_matrix[11, 0]` we get the state-action value for the state (4,1) (bottom-right corner) and action UP. As usual we used the convention of Russel and Norvig for naming the states. The bottom-left corner is the state (1,1), while in Python we use the Numpy convention where `[0, 0]` defines the top-left value of the grid world.
+
+Moreover since we are in the control case and we want to estimate a policy, we need also an update function to achieve this task:
+
+```python
+def update_policy(policy_matrix, state_action_matrix, observation):
+    '''Return the updated policy matrix
+
+    @param policy_matrix the matrix before the update
+    @param state_action_matrix the state-action matrix
+    @param observation the state obsrved at t
+    @return the updated state action matrix
+    '''
+    col = observation[1] + (observation[0]*4)
+    #Getting the index of the action with the highest utility
+    best_action = np.argmax(state_action_matrix[:, col])
+    #Updating the policy
+    policy_matrix[observation[0], observation[1]] = best_action
+    return policy_matrix
+```
+
+The `update_policy` function makes the policy greedy selecting the action with the highest value in accordance with **step 4** of the algorithm. Finally the main loop which updates the `state_action_matrix` and the `policy_matrix` for each visit in the episode.
+
+```python
+for epoch in range(tot_epoch):
+  #Reset and return the first observation
+  observation = env.reset(exploring_starts=True)
+  for step in range(1000):
+    #Take the action from the action matrix
+    action = policy_matrix[observation[0], observation[1]]
+    #Move one step in the environment and get obs,reward and new action
+    new_observation, reward, done = env.step(action)
+    new_action = policy_matrix[new_observation[0], new_observation[1]]
+    #Updating the state-action matrix
+    state_action_matrix = update_state_action(state_action_matrix, 
+                                              observation, new_observation, 
+                                              action, new_action, 
+                                              reward, alpha, gamma)
+    #Updating the policy
+    policy_matrix = update_policy(policy_matrix, 
+                                  state_action_matrix, 
+                                  observation)
+    observation = new_observation
+    if done: break
+```
+
+Here you must remember that we define the **state-action matrix** has having one state for each column, and one action for each row (see [second post](https://mpatacchiola.github.io/blog/2017/01/15/dissecting-reinforcement-learning-2.html)). For instance in the 4x3 grid world, with the query `state_action_matrix[0, 2]` we get the state-action value for the state (3,1) (top-left corner) and action DOWN. With the query `state_action_matrix[11, 0]` we get the state-action value for the state (4,1) (bottom-right corner) and action UP. As usual we used the convention of Russel and Norvig for naming the states. The bottom-left corner is the state (1,1), while in Python we use the Numpy convention where `[0, 0]` defines the top-left value of the grid world.
+
+In the [second post](https://mpatacchiola.github.io/blog/2017/01/15/dissecting-reinforcement-learning-2.html) we used the assumption of **exploring starts** to guarantee a uniform exploration of all the state-action pairs. Without random exploration the policy could get stuck in a sub-optimal solution. However, exploring start is a constraint because in a very big world we cannot easily explore all the possible states. This issue is known as the **exploration-exploitation dilemma**.
+The solution is called **ε-greedy policy**. An ε-greedy policy explores all the states picking an action from a specific probability distribution.
+
+```python
+def return_epsilon_greedy_action(policy_matrix, observation, epsilon=0.1):
+    tot_actions = int(np.nanmax(policy_matrix) + 1)
+    action = int(policy_matrix[observation[0], observation[1]])
+    non_greedy_prob = epsilon / tot_actions
+    greedy_prob = 1 - epsilon + non_greedy_prob
+    weight_array = np.full((tot_actions), non_greedy_prob)
+    weight_array[action] = greedy_prob
+    return np.random.choice(tot_actions, 1, p=weight_array)
+```
+
+In the main loop we have to replace the action selection with the ε-greedy action and set `exploring_starts=False` in the `reset` method. Running the script with `gamma=0.999`, `alpha=0.1` and `epsilon=0.1` we obtain:
+
+```
+Policy matrix after 1 iterations:
+ ^   >   v   *  
+ v   #   ^   *  
+ ^   <   >   ^ 
+
+...
+
+Policy matrix after 300000 iterations:
+ >   >   >   *  
+ ^   #   <   *  
+ ^   <   <   < 
+```
+
+The final policy obtained is slightly different from the optimal policy. comparing the two policy we can notice how the state (3,2) has a different action.
+
+![Reinforcement Learning SARSA Optimal policy VS Estimated Policy]({{site.baseurl}}/images/reinforcement_learning_model_free_active_td_sarsa_optimal_vs_estimated.png){:class="img-responsive"}
+
+The results we obtained is similar to what discussed in the [Sutton and Barto book](https://webdocs.cs.ualberta.ca/~sutton/book/ebook/the-book.html) in chapter 6.5 example 6.6 (Cliff Walking). In that example the authors discus the results obtained by SARSA and Q-learning on a cliff walking world. **The policy estimated by SARSA is not optimal but is the safer**. In our grid world when the robot is in state (3,2) it could follow the optimal policy going UP and reaching the charging station. However this choice is risky. In 10% of the cases the robot can finish in the right state which is the negative terminal state (reward=-1). SARSA estimated a sub-optimal policy which is safer. Moving on the right and hitting the wall can lead in 10% of the cases to go UP and in other 10% of the cases to go DOWN. The risk of falling down stairs has been avoided.
 
 **Does SARSA always converge to the optimal policy?** The answer is yes, SARSA converges with probability 1 as long as all the state-action pairs are visited an infinite number of times. In practice it is not possible to run our algorithm forever and for large state-action spaces the convergence is not always guaranteed. Now it is time to introduce a second algorithm for TD control: Q-learning.
 
@@ -340,7 +417,7 @@ Q-learning: off-policy control
 - The $$ \text{Target} $$ term in TD learning (first section)
 - The update rule of SARSA (previous section)
 
-Now we can proceed. In the control case we always used the policy $$ \pi $$ to learn on the job, meaning that we updated $$ \pi $$ from experiences sampled from $$ \pi $$. This approach is called **on-policy** learning. However there is another way to learn about $$ \pi $$ which is called **off-policy** learning. In off-policy learning the policy $$ \pi $$ is updated based on the observation of a second policy $$ \mu $$ that is **not updated**. For instance considering the first four iterations in a 4x3 grid world we can see how after the random initialisation of $$ \pi $$ the states are updated step by step, whereas the policy $$ \mu $$ does not change at all.
+Now we can proceed. In the control case we always used the policy $$ \pi $$ to learn on the job, meaning that we updated $$ \pi $$ from experiences sampled from $$ \pi $$. This approach is called **on-policy** learning. However there is another way to learn about $$ \pi $$ which is called **off-policy** learning. In off-policy learning the policy $$ \pi $$ is updated based on the observation of a second policy $$ \mu $$ that is **not updated**. For instance considering the first four iterations of an off-policy algorithm applied to the 4x3 grid world we can see how after the random initialisation of $$ \pi $$ the states are updated step by step, whereas the policy $$ \mu $$ does not change at all.
 
 ![Reinforcement Learning Q-learning policies comparison]({{site.baseurl}}/images/reinforcement_learning_model_free_active_td_qlearning_policies_update.png){:class="img-responsive"}
 
@@ -364,11 +441,13 @@ SARSA uses GPI to improve the policy $$ \pi $$. The $$ \text{Target} $$ is estim
 4. Update the policy $$ \pi(s_{t}) \leftarrow \underset{a}{\text{ argmax }} Q(s_{t},a_{t}) $$
 
 There are some differences between the steps followed in SARSA and the one followed in Q-learning. Unlike in SARSA in the **step 2** of Q-learning we are not considering $$ a_{t+1} $$ the action at the next step. In this sense Q-learning updates the state-action function using the tuple **State-Action-Reward-State**.
-If you compare **step 1** and **step 4** in SARSA you can see that in **step 1** the action is sampled from $$ \pi $$ and then the same policy is updated at **step 4**. In **step 1** and **step 4** of Q-learning we are sampling the action from the **exploration policy** $$ \mu $$ while we are updating the policy $$ \pi $$ at **step 4**.
+Comparing **step 1** and **step 4** you can see that in **step 1** of SARSA the action is sampled from $$ \pi $$ and then the same policy is updated at **step 4**. In **step 1** and **step 4** of Q-learning we are sampling the action from the **exploration policy** $$ \mu $$ while we are updating the policy $$ \pi $$ at **step 4**.
 
 An **example** will clarify what expressed until now. Let's suppose our cleaning robot observed the movements of a second robot in the 4x3 grid world. 
-What is interesting about Q-learning is that while following a policy $$ \mu $$ which may be sub-optimal it can estimates the optimal policy $$ \pi^{*} $$. 
+What is interesting about Q-learning is that while following a policy $$ \mu $$ which may be sub-optimal it can estimates the optimal policy $$ \pi^{*} $$ starting from a random policy $$ \pi $$. 
 
+
+![Reinforcement Learning Q-learning example three policies]({{site.baseurl}}/images/reinforcement_learning_model_free_active_td_qlearning_example_three_policies.png){:class="img-responsive"}
 
 [MC problem and possible ways to solve them with TD][6.2 pag. 138]
 [Bootstrapping]
