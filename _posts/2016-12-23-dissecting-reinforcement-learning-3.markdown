@@ -22,15 +22,15 @@ Some parts of this post are based on chapters 6 and 7 of the classical "Reinforc
 Temporal Differencing (and rabbits)
 ------------------------------
 
-The term **Temporal Differencing** was first used by **Sutton** back in 1988. Sutton has such an interesting background. Libertarian, psychologist and Computer scientist interested in understanding what we mean by intelligence and goal-directed behaviour. Give a look to his [personal page](http://richsutton.com) if you want to know more. The interesting thing about Sutton's research is that he motivated and explained TD from the point of view of **animal learning theory** and showed that the TD model solves many problems with a simple time-derivative approach. Many of you heard about the famous [Pavlov's experiment](https://en.wikipedia.org/wiki/Classical_conditioning) in **classical conditioning**. Presenting to a dog some food will cause salivation in the dog's mouth. This association is called **unconditioned response (UR)** and it is caused by an **unconditioned stimulus (US)**. The UR it is a natural reaction that does not depend on previous experience. In a second phase before presenting the food we ring a bell. After a while the dog will associate the ring to the food salivating in advance. The bell is called **conditioned stimulus (CS)** and the response is the **conditioned response (CR)**. 
+The term **Temporal Differencing** was first used by **Sutton** back in 1988. Sutton has such an interesting background. Libertarian, psychologist and Computer scientist interested in understanding what we mean by intelligence and goal-directed behaviour. Give a look to his [personal page](http://richsutton.com) if you want to know more. The interesting thing about Sutton's research is that he motivated and explained TD from the point of view of **animal learning theory** and showed that the TD model solves many problems with a simple time-derivative approach. Many of you heard about the famous [Pavlov's experiment](https://en.wikipedia.org/wiki/Classical_conditioning) in **classical conditioning**. Showing food to a dog elicits a response (salivation). This association is called **unconditioned response (UR)** and it is caused by an **unconditioned stimulus (US)**. The UR it is a natural reaction that does not depend on previous experience. In a second phase we pair the stimulus (food) with a neutral stimulus (e.g. bell). After a while the dog will associate the sound of the bell to the food and this association will elicit the salivation. The bell is called **conditioned stimulus (CS)** and the response is the **conditioned response (CR)**. 
 
 ![Eyeblinking Conditioning in Rabbits]({{site.baseurl}}/images/reinforcement_learning_eyeblink_conditioning_rabbits.png){:class="img-responsive"}
 
-The same effect is studied with [eyeblink conditioning](https://en.wikipedia.org/wiki/Eyeblink_conditioning) in rabbits. A mild puff of air is directed to the rabbit's eyes. The UR in this case is closing the eyelid, whereas the US is the air puff. During conditioning the red light (CS) is turned on before the air puff, forming an association between the light and the eye blinks. There are two types of arrangements of stimuli in classical conditioning experiments. In **delay conditioning**, the CS extends throughout the US without any interval. In **trace conditioning** there is a time interval, called the trace interval, between CS and US. The delay between CS and US is an important variable which is called the **interstimulus interval (ISI)**.
+The same effect is studied with [eyeblink conditioning](https://en.wikipedia.org/wiki/Eyeblink_conditioning) in rabbits. A mild puff of air is directed to the rabbit's eyes. The UR in this case is closing the eyelid, whereas the US is the air puff. During the conditioning a red light (CS) is turned on before the air puff. The conditioning creates an association between the light and the eye blinks. There are two types of arrangements of stimuli in classical conditioning experiments. In **delay conditioning**, the CS extends throughout the US without any interval. In **trace conditioning** there is a time interval, called the trace interval, between CS and US. The delay between CS and US is an important variable which is called the **interstimulus interval (ISI)**.
 
 ![Delay-Trace Conditioning]({{site.baseurl}}/images/reinforcement_learning_delay_trace_conditioning.png){:class="img-responsive"}
 
-Learning about predictive relationships among stimuli is extremely important for surviving, this is the reason why it is widely present among species ranging from mice to humans. **Learning** means to accurately predict at each point in time the **imminence-weighted sum of future US intensity levels**. In the eyblinking experiement has been observed that rabbits learn a weaker prediction for CSs presented far in advance of the US. Studying the results on eyeblink conditioning, Sutton and Barto (1990) found a correlation with the TD framework. Reinforcement is weighted according to its imminence (length of the ISI), when slightly delayed it carries slightly less weight, when long-delayed it carries very little weight, and so on so forth. This assumption is the core of the **TD model of classical conditioning** and it is an extension of the [Rescorla-Wagner model](https://en.wikipedia.org/wiki/Rescorla%E2%80%93Wagner_model) (1972). If you read the previous posts you should find some similarities whit the concept of **discounted rewards**. The general rule behind TD applies to rabbits and to artificial agents. This **general rule** can be expressed as follow:
+Learning about predictive relationships among stimuli is extremely important for surviving, this is the reason why it is widely present among species ranging from mice to humans. **Learning** means to accurately predict at each point in time the **imminence-weighted sum of future US intensity levels**. In the eyblinking experiement has been observed that rabbits learn a weaker prediction for CSs presented far in advance of the US. Studying the results on eyeblink conditioning, Sutton and Barto (1990) found a correlation with the TD framework. Reinforcement is weighted according to its imminence (length of the ISI), when slightly delayed it carries slightly less weight, when long-delayed it carries very little weight, and so on so forth. This assumption is the core of the **TD model of classical conditioning** and it is an extension of the [Rescorla-Wagner model](https://en.wikipedia.org/wiki/Rescorla%E2%80%93Wagner_model) (1972). If you read the previous posts you should find some similarities whit the concept of **discounted rewards**. The general rule behind TD applies to rabbits and to artificial agents. This **general rule** can be summarised as follow:
 
 $$ \text{NewEstimate} \leftarrow \text{OldEstimate} + \text{StepSize} \big[ \text{Target} - \text{OldEstimate} \big] $$
 
@@ -281,22 +281,32 @@ The update rule is based on the tuple **State-Reward-State**. Remember that now 
 
 $$ Q(s_{t}, a_{t}) \leftarrow Q(s_{t}, a_{t}) + \alpha \big[ \text{r}_{t+1} + \gamma Q(s_{t+1}, a_{t+1}) - Q(s_{t}, a_{t}) \big] $$
 
-That's it, we simply replaced $$ U $$ with $$ Q $$ in our updating rule. We must be careful because there is a difference. Now we need a new value which is the action at t+1. This is not a problem because it is contained in the Q-matrix. In **TD control** the estimation is based on the tuple **State-Action-Reward-State-Action** and this tuple gives the name to the algorithm: **SARSA**.
+That's it, we simply replaced $$ U $$ with $$ Q $$ in our updating rule. We must be careful because there is a difference. Now we need a new value which is the action at t+1. This is not a problem because it is contained in the Q-matrix. In **TD control** the estimation is based on the tuple **State-Action-Reward-State-Action** and this tuple gives the name to the algorithm: **SARSA**. SARSA has been introduced in 1994 by Rummery and Niranjan in the article ["On-Line Q-Learning Using Connectionist Systems"](http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.17.2539) and was originally called *modified Q-learning*. In 1996 Sutton introduced the current name.
 
 ![Reinforcement Learning SARSA first episode]({{site.baseurl}}/images/reinforcement_learning_model_free_active_td_sarsa_first_episode.png){:class="img-responsive"}
 
-To get the intuition behind the algorithm we consider again a single episode of the cleaning robot in the grid world. The robot starts at (1,1) and after seven visits it reaches the charging station at (4,3). As you can see for each state we have an action. Moving forward the algorithm takes into account only the state at t and t+1. In the standard implementation of SARSA the **previous states are ignored**, as shown by the shadow on top of them in the graphical illustration. This is in line with the TD framework as explained in the TD(0) section. 
-
-**Which are the steps of the algorithm?** The steps of the algorithm are the following:
+To get the intuition behind the algorithm we consider again a single episode of an agent moving in a world. The robot starts at $$ s_{0} $$ and after seven visits it reaches a terminal state at $$ s_{5} $$. For each state we have an associated action. Moving forward the algorithm takes into account only the state at t and t+1. In the standard implementation of SARSA the **previous states are ignored**, as shown by the shadow on top of them in the graphical illustration. This is in line with the TD framework as explained in the TD(0) section. Now I would like to summarise all the **steps of the algorithm**:
 
 1. Move one step selecting $$ a_{t} $$ from $$ \pi(s_{t}) $$
 2. Observe: $$ r_{t+1} $$, $$ s_{t+1} $$, $$ a_{t+1} $$
 3. Update the state-action function $$ Q(s_{t}, a_{t}) $$
 4. Update the policy $$ \pi(s_{t}) \leftarrow \underset{a}{\text{ argmax }} Q(s_{t},a_{t}) $$
 
-In **step 4** we are using the same mechanism of MC for control (see [second post](https://mpatacchiola.github.io/blog/2017/01/15/dissecting-reinforcement-learning-2.html)), the **policy $$ \pi $$ is updated at each visit** choosing the action with the highest state-action value. We are making the policy **greedy**. 
+In **step 1** the agent select one action from the policy and moves one step forward. In **step 2** the agent observes the reward, the new state and the associated action. In **step 3** the algorithm updates the state-action function using the update rule. In **step 4** we are using the same mechanism of MC for control (see [second post](https://mpatacchiola.github.io/blog/2017/01/15/dissecting-reinforcement-learning-2.html)), the **policy $$ \pi $$ is updated at each visit** choosing the action with the highest state-action value. We are making the policy **greedy**. Here always apply what we saw in MC methods, meaning the exploring starts condition.
 
-The **Python implementation of SARSA** is based on a new update rule for the state-action matrix.
+![Reinforcement Learning SARSA first episode traces]({{site.baseurl}}/images/reinforcement_learning_model_free_active_td_sarsa_first_episode_traces.png){:class="img-responsive"}
+
+Can we apply the TD(λ) ideas to SARSA? Yes we can. **SARSA(λ)** follows the same steps of TD(λ) implementing the **eligibility traces** to speed up the convergence.  The intuition behind the algorithm is the same, however instead of applying the prediction method to states SARSA(λ) applies it to state-action pairs. We have a trace for each state-action and the following rule for updating the Q-function:
+
+$$ Q_{t+1}(s, a) = Q_{t}(s, a) + \alpha \delta_{t} e_{t}(s, a) $$
+
+Considering that in this post I introduced many new concepts I will not proceed with the Python implementation of SARSA(λ). Consider it an homework and try to implement it by yourself. If what explained in the previous sections is not enough you can read the chapter 7.5 of [Sutton and Barto's book](https://webdocs.cs.ualberta.ca/~sutton/book/ebook/the-book.html).
+
+
+SARSA: Python and ε-greedy policy
+------------------------------------------------
+
+The Python implementation of SARSA requires a Numpy matrix called `state_action_matrix` which can be initialised with random values or filled with zeros. Here you must remember that we define `state_action_matrix` has having one state for each column, and one action for each row (see [second post](https://mpatacchiola.github.io/blog/2017/01/15/dissecting-reinforcement-learning-2.html)). For instance in the 4x3 grid world, with the query `state_action_matrix[0, 2]` we get the state-action value for the state (3,1) (top-left corner) and action DOWN. With the query `state_action_matrix[11, 0]` we get the state-action value for the state (4,1) (bottom-right corner) and action UP. As usual we used the convention of Russel and Norvig for naming the states. The bottom-left corner is the state (1,1), while in Python we use the Numpy convention where `[0, 0]` defines the top-left value of the grid world. SARSA is based on the following update rule for the state-action matrix:
 
 ```python
 def update_state_action(state_action_matrix, observation, new_observation, 
@@ -368,50 +378,61 @@ for epoch in range(tot_epoch):
     if done: break
 ```
 
-Here you must remember that we define the **state-action matrix** has having one state for each column, and one action for each row (see [second post](https://mpatacchiola.github.io/blog/2017/01/15/dissecting-reinforcement-learning-2.html)). For instance in the 4x3 grid world, with the query `state_action_matrix[0, 2]` we get the state-action value for the state (3,1) (top-left corner) and action DOWN. With the query `state_action_matrix[11, 0]` we get the state-action value for the state (4,1) (bottom-right corner) and action UP. As usual we used the convention of Russel and Norvig for naming the states. The bottom-left corner is the state (1,1), while in Python we use the Numpy convention where `[0, 0]` defines the top-left value of the grid world.
+The complete Python script is available on the [GitHub repository](https://github.com/mpatacchiola/dissecting-reinforcement-learning) and is called `temporal_differencing_control_sarsa.py`. 
+Running the script with `alpha=0.001` and `gamma=0.999` leads to the optimal policy after 180000 iterations.
 
-In the [second post](https://mpatacchiola.github.io/blog/2017/01/15/dissecting-reinforcement-learning-2.html) we used the assumption of **exploring starts** to guarantee a uniform exploration of all the state-action pairs. Without random exploration the policy could get stuck in a sub-optimal solution. However, exploring start is a constraint because in a very big world we cannot easily explore all the possible states. This issue is known as the **exploration-exploitation dilemma**.
-The solution is called **ε-greedy policy**. An ε-greedy policy explores all the states picking an action from a specific probability distribution.
+```
+Policy matrix after 1 iterations:
+ <   v   >   *  
+ ^   #   v   *  
+ >   v   v   > 
+
+...
+
+Policy matrix after 90001 iterations:
+ >   >   >   *  
+ ^   #   ^   *  
+ ^   <   ^   < 
+
+...
+
+Policy matrix after 180001 iterations:
+ >   >   >   *  
+ ^   #   ^   *  
+ ^   <   <   <  
+``` 
+
+Does SARSA always converge to the optimal policy? The answer is yes, SARSA converges with probability 1 as long as all the state-action pairs are visited an infinite number of times. This assumption is called by [Russel and Norvig](http://aima.cs.berkeley.edu/) **Greedy in the Limit of Infinite Exploration (GLIE)**. A GLIE scheme must try each action in each state an unbounded number of times to avoid having a finite probability that an optimal action is missed because of an unusually bad series of outcomes. In our grid world it can happen that an unlucky initialisation leads to a bad policy which keep the agent far from certain states. In the [second post](https://mpatacchiola.github.io/blog/2017/01/15/dissecting-reinforcement-learning-2.html) we used the assumption of **exploring starts** to guarantee a uniform exploration of all the state-action pairs. However exploring starts can be hard to apply in a large state space. An alternative solution is called **ε-greedy policy**. An ε-greedy policy explores all the states taking the action with the highest value but with a small probability ε it selects an action at random. After defining $$ 0 \leq \sigma \leq 1 $$ as a uniform random number drawn at each time step, we select the action $$ a $$ as follow:
+
+$$\pi(s) = \begin{cases} \underset{a}{\text{ argmax }} Q(s, a) & \text{if}\ \sigma > \epsilon; \\ a \sim A(s) & \text{if}\ \sigma \leq \epsilon; \end{cases}$$
+
+In Python we can easily implement a function which returns an action following the ε-greedy scheme: 
 
 ```python
 def return_epsilon_greedy_action(policy_matrix, observation, epsilon=0.1):
     tot_actions = int(np.nanmax(policy_matrix) + 1)
+    #Getting the greedy action
     action = int(policy_matrix[observation[0], observation[1]])
+    #Probabilities of non-greedy actions
     non_greedy_prob = epsilon / tot_actions
+    #Probability of the greedy action
     greedy_prob = 1 - epsilon + non_greedy_prob
+    #Array containing a weight for each action
     weight_array = np.full((tot_actions), non_greedy_prob)
     weight_array[action] = greedy_prob
+    #Sampling the action based on the weights
     return np.random.choice(tot_actions, 1, p=weight_array)
 ```
 
-In the main loop we have to replace the action selection with the ε-greedy action and set `exploring_starts=False` in the `reset` method. Running the script with `gamma=0.999`, `alpha=0.1` and `epsilon=0.1` we obtain:
-
-```
-Policy matrix after 1 iterations:
- ^   >   v   *  
- v   #   ^   *  
- ^   <   >   ^ 
-
-...
-
-Policy matrix after 300000 iterations:
- >   >   >   *  
- ^   #   <   *  
- ^   <   <   < 
-```
-
-The final policy obtained is slightly different from the optimal policy. comparing the two policy we can notice how the state (3,2) has a different action.
-
-![Reinforcement Learning SARSA Optimal policy VS Estimated Policy]({{site.baseurl}}/images/reinforcement_learning_model_free_active_td_sarsa_optimal_vs_estimated.png){:class="img-responsive"}
-
-The results we obtained is similar to what discussed in the [Sutton and Barto book](https://webdocs.cs.ualberta.ca/~sutton/book/ebook/the-book.html) in chapter 6.5 example 6.6 (Cliff Walking). In that example the authors discus the results obtained by SARSA and Q-learning on a cliff walking world. **The policy estimated by SARSA is not optimal but is the safer**. In our grid world when the robot is in state (3,2) it could follow the optimal policy going UP and reaching the charging station. However this choice is risky. In 10% of the cases the robot can finish in the right state which is the negative terminal state (reward=-1). SARSA estimated a sub-optimal policy which is safer. Moving on the right and hitting the wall can lead in 10% of the cases to go UP and in other 10% of the cases to go DOWN. The risk of falling down stairs has been avoided.
-
-**Does SARSA always converge to the optimal policy?** The answer is yes, SARSA converges with probability 1 as long as all the state-action pairs are visited an infinite number of times. In practice it is not possible to run our algorithm forever and for large state-action spaces the convergence is not always guaranteed. Now it is time to introduce a second algorithm for TD control: Q-learning.
+The exploring starts and ε-greedy policy do not exclude one another, they can coexist. Using the two approaches at the same time can lead to a faster convergence. Let's try to extend the previous script with ε-greedy action selection to see what happens.
+In the main loop we have to replace the action selection with the ε-greedy action. Running the script with `gamma=0.999`, `alpha=0.001` and `epsilon=0.1` leads to the optimal policy in 130000 iterations, meaning 50000 iterations less than in the previous case. The complete code is part of the file `temporal_differencing_control_sarsa.py` you can enable or disable the ε-greedy selection commenting the corresponding line in the main loop.
+**How to choose the value of ε?** Most of the time a value of 0.1 is a good choice. However choosing a value which is too high will cause the algorithm to converge slowly because of too much exploration. On the opposite a value which is too small does not guarantee to visit all the state-action pairs leading to sub-optimal policies. This issue is known as the **exploration-exploitation dilemma** and is one of the problems which afflict reinforcement learning.
+Now it is time to introduce **Q-learning**, another algorithm for TD control estimation.
 
 Q-learning: off-policy control
 -----------------------------
 
-**Q-learning** is one of the most important algorithm in reinforcement learning. However most of the time it is not explained in details. Understanding how it works means understanding most of the ideas now on. Here I will dissect the algorithm focusing on its deep meaning. Before proceeding you should have clear in your mind the following concepts:
+**Q-learning** was introduced by Watkins in his doctoral dissertation [[pdf]](https://www.researchgate.net/profile/Christopher_Watkins2/publication/33784417_Learning_From_Delayed_Rewards/links/53fe12e10cf21edafd142e03/Learning-From-Delayed-Rewards.pdf) and is considered one of the most important algorithm in reinforcement learning. However most of the time it is not explained in details. Understanding how it works means understanding most of the ideas now on. Here I will dissect the algorithm focusing on its deep meaning. Before proceeding you should have clear in your mind the following concepts:
 
 - The Generalised Policy Iteration (GPI) ([second post](https://mpatacchiola.github.io/blog/2017/01/15/dissecting-reinforcement-learning-2.html))
 - The $$ \text{Target} $$ term in TD learning (first section)
@@ -421,13 +442,12 @@ Now we can proceed. In the control case we always used the policy $$ \pi $$ to l
 
 ![Reinforcement Learning Q-learning policies comparison]({{site.baseurl}}/images/reinforcement_learning_model_free_active_td_qlearning_policies_update.png){:class="img-responsive"}
 
-Which are the advantages of off-policy learning? First of all using off-policy it is possible to learn about an **optimal policy** while following an **exploratory policy**. Off-policy means **learning by observation**. For example our cleaning robot could find a policy looking to another robot. It is also possible to learn about **multiple policies** while following one policy (e.g. multi-robot scenario). Moreover in deep reinforcement learning we will see how off-policy allows **re-using old experiences** generated from old policies to improve the current policy (experience replay).
-
+Which are the advantages of off-policy learning? First of all using off-policy it is possible to learn about an **optimal policy** while following an **exploratory policy**. Off-policy means **learning by observation**. For example our cleaning robot could find a policy looking to another robot. It is also possible to learn about **multiple policies** while following one policy (e.g. multi-robot scenario). Moreover in deep reinforcement learning we will see how off-policy allows **re-using old experiences** generated from old policies to improve the current policy (experience replay). 
 The most famous **off-policy TD algorithm for control** is called **Q-Learning**. To understand how Q-learning works let's consider its update rule:
 
 $$ Q(s_{t}, a_{t}) \leftarrow Q(s_{t}, a_{t}) + \alpha \big[ \text{r}_{t+1} + \gamma \underset{a}{\text{ max }} Q(s_{t+1}, a) - Q(s_{t}, a_{t}) \big] $$
 
-Comparing the update rule of SARSA and the one of Q-learning you will notice that the only difference is in the $$ \text{Target} $$ term. Here I report both of them to simplify the comparison:
+Comparing the update rule of SARSA and the one of Q-learning you will notice only one difference: the $$ \text{Target} $$ term. Here I report both of them to simplify the comparison:
 
 $$ \text{Target}[\text{SARSA}] = \text{r}_{t+1} + \gamma Q(s_{t+1}, a_{t+1}) $$
 
@@ -440,49 +460,63 @@ SARSA uses GPI to improve the policy $$ \pi $$. The $$ \text{Target} $$ is estim
 3. Update the state-action function $$ Q(s_{t}, a_{t}) $$
 4. Update the policy $$ \pi(s_{t}) \leftarrow \underset{a}{\text{ argmax }} Q(s_{t},a_{t}) $$
 
-There are some differences between the steps followed in SARSA and the one followed in Q-learning. Unlike in SARSA in the **step 2** of Q-learning we are not considering $$ a_{t+1} $$ the action at the next step. In this sense Q-learning updates the state-action function using the tuple **State-Action-Reward-State**.
-Comparing **step 1** and **step 4** you can see that in **step 1** of SARSA the action is sampled from $$ \pi $$ and then the same policy is updated at **step 4**. In **step 1** and **step 4** of Q-learning we are sampling the action from the **exploration policy** $$ \mu $$ while we are updating the policy $$ \pi $$ at **step 4**.
+There are some differences between the steps followed in SARSA and the one followed in Q-learning. Unlike in SARSA in the **step 2** of Q-learning we are not considering $$ a_{t+1} $$ the action at the next step. In this sense Q-learning updates the state-action function using the tuple State-Action-Reward-State.
+Comparing **step 1** and **step 4** you can see that in step 1 of SARSA the action is sampled from $$ \pi $$ and then the same policy is updated at step 4. In step 1 and step 4 of Q-learning we are sampling the action from the exploration policy $$ \mu $$ while we are updating the policy $$ \pi $$ at step 4.
 
-An **example** will clarify what expressed until now. Let's suppose our cleaning robot observed the movements of a second robot in the 4x3 grid world. 
-What is interesting about Q-learning is that while following a policy $$ \mu $$ which may be sub-optimal it can estimates the optimal policy $$ \pi^{*} $$ starting from a random policy $$ \pi $$. 
 
+Q-learning: Python implementation
+---------------------------------
+
+The Python implementation of the algorithm requires a random policy called `policy_matrix` and an exploratory policy called `exploratory_policy_matrix`. The first can be initialised randomly, whereas the second can be any sub-optimal policy. The action to be executed at each visit are taken from `exploratory_policy_matrix`, whereas the update rule of step 4 is applied to the `policy_matrix`. The code is very similar to the one used in SARSA, the main difference is in the update rule for the state-action matrix:
+
+```python
+def update_state_action(state_action_matrix, observation, new_observation, 
+                        action, reward, alpha, gamma):
+    '''Return the updated utility matrix
+
+    @param state_action_matrix the matrix before the update
+    @param observation the state obsrved at t
+    @param new_observation the state observed at t+1
+    @param action the action at t
+    @param new_action the action at t+1
+    @param reward the reward observed after the action
+    @param alpha the ste size (learning rate)
+    @param gamma the discount factor
+    @return the updated state action matrix
+    '''
+    #Getting the values of Q at t and at t+1
+    col = observation[1] + (observation[0]*4)
+    q = state_action_matrix[action ,col]
+    col_t1 = new_observation[1] + (new_observation[0]*4)
+    q_t1 = np.max(state_action_matrix[: ,col_t1])
+    #Applying the update rule
+    state_action_matrix[action ,col] += alpha * (reward + gamma * q_t1 - q)
+    return state_action_matrix
+```
+
+An **example** will clarify what expressed until now. Let's suppose our cleaning robot observed the movements of a second robot in the 4x3 grid world.
+
+What is interesting about Q-learning is that while following a policy $$ \mu $$ which may be sub-optimal it can estimates the optimal policy $$ \pi^{*} $$ starting from a random policy $$ \pi $$.
 
 ![Reinforcement Learning Q-learning example three policies]({{site.baseurl}}/images/reinforcement_learning_model_free_active_td_qlearning_example_three_policies.png){:class="img-responsive"}
 
-[MC problem and possible ways to solve them with TD][6.2 pag. 138]
-[Bootstrapping]
-[What TD Learning is]
-[TD(0) the simplest form of TD learning][TD(0) was proven to converge by Sutton(1988) pag. 159 6.1-2]
-[TD(lamda) Eligibility traces]
-[TD generally converge faster the MC on stochastic task][Example 6.2 pag. 139]
-[Batch Learning]
-[SARSA (on-policy) TD control]
-[On-Policy and Off-Policy]
-[for "off-policy example" cite Deep Reinforcement Learning for Robotic Manipulation with Asynchronous Off-Policy Updates]
-[Q-Learning]
-[Conclusion][if Mc and TD both converge, which one is faster, and efficient? "pag. 139"]
 
-[Value Function Approximation]
-[Action-Value Function Approximation]
-[Linear Approximation]
-[Neural Network Approximation]
-[Example in python with tensorflow]
-[Policy Gradient][Lesson 7 of David Silver's course][See pong from pixels post]
-[Policy Optimization without gradient (e.g. genetic algoritm which are actor only model)]
+Q-learning converges also when the policy $$ \mu $$ is an **adversarial policy**. Let's suppose that $$ \mu $$ pushes the robot as far as possible from the charging station and as close as possible to the stairs. In this extreme conditions we could expect that the algorithm does not converge at all.
 
-[Deep Reinforcement Learning]
-[Playing Atari with Deep Reinforcement Learning - 2013]
-[Human-level control through deep reinforcement learning - 2015]
-[Replay Memory]
-[Improving Replay Memory with Prioritized Sweeping][9.4, pag 238; cit in "Human level control through deep RL" in section "Training algorithm for deep Q-networks"]
-[Example in Python, cleaning robot 3D]
+![Reinforcement Learning Q-learning example three policies]({{site.baseurl}}/images/reinforcement_learning_model_free_active_td_qlearning_example_three_adversarial_policies.png){:class="img-responsive"}
 
-[Actor-Critic]
-[Mastering the game of Go with deep neural networks and tree search - 2016]
+Running the script with an adversarial policy the algorithm converged to the optimal policy in 583001 iterations.
+
+
+It is Q-learning better than SARSA? It is faster or more efficient?  
+
+Also for Q-learning there is a version based on **eligibility traces**.
+
 
 
 Conclusions
 -----------
+This post has summarised many important concepts in reinforcement learning. TD methods are widely used because of their **simplicity** and **versatility**. As in the second post we divided TD methods in two families: prediction and control. The **prediction** TD algorithm has been called TD(0). I showed how using the eligibility traces it is possible to extend to previous states what learnt in the last. The extension of TD(0) with eligibility traces is called TD(λ). The **control** algorithms in TD are called SARSA and Q-learning. The former is an on-policy algorithm which updates the policy while moving in the environment. The latter is an off-policy algorithm which uses two separate policies, one is updated and the other is used for moving in the world. Do TD methods converge faster than MC methods? There is no mathematical proof but by experience TD methods converge faster.
 
 Index
 ------
@@ -496,7 +530,9 @@ Resources
 
 - The **complete code** for MC prediction and MC control is available on the [dissecting-reinforcement-learning](https://github.com/mpatacchiola/dissecting-reinforcement-learning) official repository on GitHub.
 
-- Dadid Silver's course (DeepMind) in particular **lesson 4** [[pdf]](http://www0.cs.ucl.ac.uk/staff/d.silver/web/Teaching_files/MC-TD.pdf)[[video]](https://www.youtube.com/watch?v=PnHCvfgC_ZA&t=438s) and **lesson 5** [[pdf]](http://www0.cs.ucl.ac.uk/staff/d.silver/web/Teaching_files/control.pdf)[[video]](https://www.youtube.com/watch?v=0g4j2k_Ggc4&t=2s).
+- Dadid Silver's course (DeepMind) in particular **lesson 4** [[pdf]](http://www0.cs.ucl.ac.uk/staff/d.silver/web/Teaching_files/MC-TD.pdf)[[video]](https://www.youtube.com/watch?v=PnHCvfgC_ZA&t=438s) and **lesson 5** [[pdf]](http://www0.cs.ucl.ac.uk/staff/d.silver/web/Teaching_files/control.pdf)[[video]](https://www.youtube.com/watch?v=0g4j2k_Ggc4&t=2s)
+
+- **Christopher Watkins** doctoral dissertation, which introduced the **Q-learning** for the first time [[pdf]](https://www.researchgate.net/profile/Christopher_Watkins2/publication/33784417_Learning_From_Delayed_Rewards/links/53fe12e10cf21edafd142e03/Learning-From-Delayed-Rewards.pdf)
 
 - **Machine Learning** Mitchell T. (1997) [[web]](http://www.cs.cmu.edu/~tom/mlbook.html)
 
@@ -515,9 +551,13 @@ Bellman, R. (1957). A Markovian decision process (No. P-1066). RAND CORP SANTA M
 
 Rescorla, R. A., & Wagner, A. R. (1972). A theory of Pavlovian conditioning: Variations in the effectiveness of reinforcement and nonreinforcement. Classical conditioning II: Current research and theory, 2, 64-99.
 
+Rummery, G. A., & Niranjan, M. (1994). On-line Q-learning using connectionist systems. University of Cambridge, Department of Engineering.
+
 Russell, S. J., Norvig, P., Canny, J. F., Malik, J. M., & Edwards, D. D. (2003). Artificial intelligence: a modern approach (Vol. 2). Upper Saddle River: Prentice hall.
 
 Sutton, R. S. (1988). Learning to predict by the methods of temporal differences. Machine learning, 3(1), 9-44.
 
 Sutton, R. S., & Barto, A. G. (1990). Time-derivative models of pavlovian reinforcement.
+
+Watkins, C. J. C. H. (1989). Learning from delayed rewards (Doctoral dissertation, University of Cambridge).
 
