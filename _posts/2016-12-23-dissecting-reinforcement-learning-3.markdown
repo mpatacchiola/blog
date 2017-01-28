@@ -157,9 +157,14 @@ We can now compare the utility matrix obtained with TD(0) and the one obtained w
 
 ![Reinforcement Learning Dynamic Programming VS TD(0)]({{site.baseurl}}/images/reinforcement_learning_utility_estimation_dp_vs_td.png){:class="img-responsive"}
 
-Most of the values are similar. The main difference between the two table is the **estimation for the two terminal states**. The TD(0) does not work for terminal states because we need reward and utility of the next state at t+1. For definition after a terminal states there is not another state. However this is not a big issue. What we want to know is the utility of the states nearby the terminal states. 
+Most of the values are similar. The main difference between the two table is the **estimation for the two terminal states**. The TD(0) does not work for terminal states because we need reward and utility of the next state at t+1. For definition after a terminal states there is not another state. However this is not a big issue. What we want to know is the utility of the states nearby the terminal states. To overcome the problem it is often used a simple conditional state:
 
-Great we saw how TD(0) works, however there is something I did not talk about: **what the (0) contained in the name of the algorithm means?** To understand what that zero does mean I have to introduce the eligibility traces.
+```python
+if (is_terminal(state) == True):
+    utility_matrix(state) = reward
+```
+
+Great we saw how TD(0) works, however there is something I did not talk about: **what does the *zero* contained in the name of the algorithm means?** To understand what that zero means I have to introduce the eligibility traces.
 
 TD(λ) and eligibility traces
 ----------------------------------------
@@ -185,6 +190,16 @@ $$ \delta_{t} = r_{t+1} + \gamma U(s_{t+1}) - U(s_{t})  $$
 we can update the utility function as follow:
 
 $$ U(s_{t}) = U(s_{t}) + \alpha \delta_{t} e_{t}(s) \qquad  \text{for all } s \in S $$
+
+To better understand the difference between TD(0) and T(λ) I build a 4x3 grid world where the **reward is zero** for all the states but the two terminal states. The **utility matrix** is initialised with **zeros**. The episode I will take into account contains five visits, the robot starts at state (1,1) and it arrives at the charging station (4,3) following the optimal path. 
+
+![Reinforcement Learning TD(0) vs TD(lamda) update rule]({{site.baseurl}}/images/reinforcement_learning_model_free_passive_td_comparing_td_zero_td_lambda_update_rule.png){:class="img-responsive"}
+
+The results of the update for TD(0) and T(λ) are the same (zero) along all the visit but the last one. When the robot reaches the charging station (reward +1.0) the update rule returns a positive value. In TD(0) the result is propagated only to the previous state (3,3). In  T(λ) the result is propagated back to all the previous states thanks to the eligibility traces. The decay value of the traces gives more weight to the last states. As I told you the utility traces mechanism helps to speed up the convergence. It is easy to understand why if you consider that in our example TD(0) needs five episodes in order to reach the same results of T(λ).
+
+![Reinforcement Learning TD(0) update rule propagation]({{site.baseurl}}/images/reinforcement_learning_model_free_passive_td_zero_update_rule_propagation.png){:class="img-responsive"}
+
+
 
 The **Python implementation** of TD(λ) is straightforward. We only need to add an eligibility matrix and its update rule.
 
@@ -212,7 +227,7 @@ def update_eligibility(trace_matrix, gamma, lambda_):
     return trace_matrix
 ```
 
-The main loop introduces some new components compared with the previous TD(0) case. We have the estimation of `delta` in a separate line and the management of the `trace_matrix` in two lines. First of all the states are increased (+1) and then they are decayed.
+The main loop introduces some new components compared to the TD(0) case. We have the estimation of `delta` in a separate line and the management of the `trace_matrix` in two lines. First of all the states are increased (+1) and then they are decayed.
 
 ```python
 for epoch in range(tot_epoch):
@@ -298,7 +313,7 @@ In **step 1** the agent select one action from the policy and moves one step for
 
 Can we apply the TD(λ) ideas to SARSA? Yes we can. **SARSA(λ)** follows the same steps of TD(λ) implementing the **eligibility traces** to speed up the convergence.  The intuition behind the algorithm is the same, however instead of applying the prediction method to states SARSA(λ) applies it to state-action pairs. We have a trace for each state-action and the following rule for updating the Q-function:
 
-$$ Q_{t+1}(s, a) = Q_{t}(s, a) + \alpha \delta_{t} e_{t}(s, a) $$
+$$ Q_{t+1}(s, a) = Q_{t}(s, a) + \alpha \delta_{t} e_{t}(s, a) \qquad  \text{for all } s \in S$$
 
 Considering that in this post I introduced many new concepts I will not proceed with the Python implementation of SARSA(λ). Consider it an homework and try to implement it by yourself. If what explained in the previous sections is not enough you can read the chapter 7.5 of [Sutton and Barto's book](https://webdocs.cs.ualberta.ca/~sutton/book/ebook/the-book.html).
 
@@ -402,7 +417,7 @@ Policy matrix after 180001 iterations:
  ^   <   <   <  
 ``` 
 
-Does SARSA always converge to the optimal policy? The answer is yes, SARSA converges with probability 1 as long as all the state-action pairs are visited an infinite number of times. This assumption is called by [Russel and Norvig](http://aima.cs.berkeley.edu/) **Greedy in the Limit of Infinite Exploration (GLIE)**. A GLIE scheme must try each action in each state an unbounded number of times to avoid having a finite probability that an optimal action is missed because of an unusually bad series of outcomes. In our grid world it can happen that an unlucky initialisation leads to a bad policy which keep the agent far from certain states. In the [second post](https://mpatacchiola.github.io/blog/2017/01/15/dissecting-reinforcement-learning-2.html) we used the assumption of **exploring starts** to guarantee a uniform exploration of all the state-action pairs. However exploring starts can be hard to apply in a large state space. An alternative solution is called **ε-greedy policy**. An ε-greedy policy explores all the states taking the action with the highest value but with a small probability ε it selects an action at random. After defining $$ 0 \leq \sigma \leq 1 $$ as a uniform random number drawn at each time step, we select the action $$ a $$ as follow:
+Does SARSA always converge to the optimal policy? The answer is yes, SARSA converges with probability 1 as long as all the state-action pairs are visited an infinite number of times. This assumption is called by [Russel and Norvig](http://aima.cs.berkeley.edu/) **Greedy in the Limit of Infinite Exploration (GLIE)**. A GLIE scheme must try each action in each state an unbounded number of times to avoid having a finite probability that an optimal action is missed because of an unusually bad series of outcomes. In our grid world it can happen that an unlucky initialisation leads to a bad policy which keep the agent far from certain states. In the [second post](https://mpatacchiola.github.io/blog/2017/01/15/dissecting-reinforcement-learning-2.html) we used the assumption of **exploring starts** to guarantee a uniform exploration of all the state-action pairs. However exploring starts can be hard to apply in a large state space. An alternative solution is called **ε-greedy policy**. An ε-greedy policy explores all the states taking the action with the highest value but with a small probability ε it selects an action at random. After defining $$ 0 \leq \sigma \leq 1 $$ as a uniform random number drawn at each time step, and $$ A $$ as the set containing all the available action, we select the action $$ a $$ as follow:
 
 $$\pi(s) = \begin{cases} \underset{a}{\text{ argmax }} Q(s, a) & \text{if}\ \sigma > \epsilon; \\ a \sim A(s) & \text{if}\ \sigma \leq \epsilon; \end{cases}$$
 
@@ -424,9 +439,10 @@ def return_epsilon_greedy_action(policy_matrix, observation, epsilon=0.1):
     return np.random.choice(tot_actions, 1, p=weight_array)
 ```
 
+In the naive implementation of ε-greedy policy at each non-greedy action it is given the same probability. Actually some actions could be performing better than others. Using a **softmax** distribution (e.g. Boltzmann distribution) it is possible to give the highest probability to the greedy action but do not treat all the others the same way. Here for simplicity I will use the naive approach.
 The exploring starts and ε-greedy policy do not exclude one another, they can coexist. Using the two approaches at the same time can lead to a faster convergence. Let's try to extend the previous script with ε-greedy action selection to see what happens.
 In the main loop we have to replace the action selection with the ε-greedy action. Running the script with `gamma=0.999`, `alpha=0.001` and `epsilon=0.1` leads to the optimal policy in 130000 iterations, meaning 50000 iterations less than in the previous case. The complete code is part of the file `temporal_differencing_control_sarsa.py` you can enable or disable the ε-greedy selection commenting the corresponding line in the main loop.
-**How to choose the value of ε?** Most of the time a value of 0.1 is a good choice. However choosing a value which is too high will cause the algorithm to converge slowly because of too much exploration. On the opposite a value which is too small does not guarantee to visit all the state-action pairs leading to sub-optimal policies. This issue is known as the **exploration-exploitation dilemma** and is one of the problems which afflict reinforcement learning.
+**How to choose the value of ε?** Most of the time a value of 0.1 is a good choice. However choosing a value which is too high will cause the algorithm to converge slowly because of too much exploration. On the opposite a value which is too small does not guarantee to visit all the state-action pairs leading to sub-optimal policies. This issue is known as the **exploration-exploitation dilemma** and is one of the problems which afflicts reinforcement learning.
 Now it is time to introduce **Q-learning**, another algorithm for TD control estimation.
 
 Q-learning: off-policy control
@@ -453,12 +469,25 @@ $$ \text{Target}[\text{SARSA}] = \text{r}_{t+1} + \gamma Q(s_{t+1}, a_{t+1}) $$
 
 $$ \text{Target}[\text{Q-learning}] = \text{r}_{t+1} + \gamma \underset{a}{\text{ max }} Q(s_{t+1}, a) $$
 
-SARSA uses GPI to improve the policy $$ \pi $$. The $$ \text{Target} $$ is estimated through $$ Q(s_{t+1}, a_{t+1}) $$ which is based on the action $$ a_{t+1} $$ sampled from the policy $$ \pi $$. In SARSA improving $$ \pi $$ means improving the estimation returned by $$ Q(s_{t+1}, a_{t+1}) $$. In Q-learning we have two policies $$ \pi $$ and $$ \mu $$.The value of $$ a_{t} $$ necessary to estimate $$ Q(s_{t},a_{t}) $$ is sampled from the exploratory policy $$ \mu $$. The value of $$a_{t+1} $$ at $$ Q(s_{t+1}, a_{t+1}) $$ cannot be sampled from $$ \mu $$ because $$ \mu $$ is not updated during the training and using it would **break the GPI scheme**. The value of $$a_{t+1} $$ cannot even be sampled from $$ \pi $$ because there would be a difference between the $$ \text{Target} $$ estimated through $$ \pi $$ and the $$ \text{OldEstimate} $$ estimated through $$ \mu $$.  To solve this issue Q-learning gets the Q-value at t+1 through $$ \underset{a}{\text{ max }} Q(s_{t+1}, a) $$. The evaluation of $$ \underset{a}{\text{ max }} Q(s_{t+1}, a) $$ is independent from both $$ \pi $$ and $$ \mu $$, and it is respectful of the GPI because obtained through bootstrapping. Let's see now all the Q-learning **steps**:
+SARSA uses GPI to improve the policy $$ \pi $$. The $$ \text{Target} $$ is estimated through $$ Q(s_{t+1}, a_{t+1}) $$ which is based on the action $$ a_{t+1} $$ sampled from the policy $$ \pi $$. In SARSA improving $$ \pi $$ means improving the estimation returned by $$ Q(s_{t+1}, a_{t+1}) $$. In Q-learning we have two policies $$ \pi $$ and $$ \mu $$.The value of $$ a_{t} $$ necessary to estimate $$ Q(s_{t},a_{t}) $$ is sampled from the exploratory policy $$ \mu $$. The value of $$a_{t+1} $$ at $$ Q(s_{t+1}, a_{t+1}) $$ cannot be sampled from $$ \mu $$ because $$ \mu $$ is not updated during the training and using it would **break the GPI scheme**. 
+The value of $$a_{t+1} $$ should be sampled from $$ \pi $$ because this is the policy which is updated. In Q-learning the $$ \text{Target} $$ is obtained through $$ \underset{a}{\text{ max }} Q(s_{t+1}, a) $$. **How $$ \underset{a}{\text{ max }} Q(s_{t+1}, a) $$ is connected with the policy $$ \pi $$?** Let's remember that the policy $$ \pi $$ is **greedy** with respect to the Q-function, meaning that we can define $$ \pi(s_{t+1}) $$ as follow:
+
+$$ \pi(s_{t+1}) = \underset{a}{\text{ argmax }} Q(s_{t+1},a) $$
+
+Based on this definition of $$ \pi(s_{t+1}) $$ we can rewrite the $$ \text{Target} $$ as the discounted Q-value obtained at $$ s_{t+1} $$ following the greedy action sampled from $$ \pi $$ :
+
+$$ \text{Target} = \text{r}_{t+1} + \gamma Q(s_{t+1}, \underset{a}{\text{ argmax }} Q(s_{t+1},a)) $$
+
+The expression below corresponds to the highest Q-value at t+1 meaning that it can be reduced to:
+
+$$ \text{Target} = \text{r}_{t+1} + \gamma \underset{a}{\text{ max }} Q(s_{t+1}, a) $$
+
+That's it, we have the $$ \text{Target} $$ used in the actual update rule and this value follows the GPI scheme. Let's see now all the Q-learning **steps**:
 
 1. Move one step selecting $$ a_{t} $$ from $$ \mu(s_{t}) $$
 2. Observe: $$ r_{t+1} $$, $$ s_{t+1} $$
 3. Update the state-action function $$ Q(s_{t}, a_{t}) $$
-4. Update the policy $$ \pi(s_{t}) \leftarrow \underset{a}{\text{ argmax }} Q(s_{t},a_{t}) $$
+4. Update the policy $$ \pi(s_{t}) \leftarrow \underset{a}{\text{ argmax }} Q(s_{t},a) $$
 
 There are some differences between the steps followed in SARSA and the one followed in Q-learning. Unlike in SARSA in the **step 2** of Q-learning we are not considering $$ a_{t+1} $$ the action at the next step. In this sense Q-learning updates the state-action function using the tuple State-Action-Reward-State.
 Comparing **step 1** and **step 4** you can see that in step 1 of SARSA the action is sampled from $$ \pi $$ and then the same policy is updated at step 4. In step 1 and step 4 of Q-learning we are sampling the action from the exploration policy $$ \mu $$ while we are updating the policy $$ \pi $$ at step 4.
@@ -494,18 +523,21 @@ def update_state_action(state_action_matrix, observation, new_observation,
     return state_action_matrix
 ```
 
-An **example** will clarify what expressed until now. Let's suppose our cleaning robot observed the movements of a second robot in the 4x3 grid world.
+An **example** will clarify what expressed until now. Let's suppose you notice that the cleaning robot bought last week does not follow an optimal policy while going back to the charging station. The robot is following a sub-optimal path which is unsafe. You want to find an optimal policy and propose an upgrade to the manufacturer (and get hired!). There is a problem, you do not have any access to the robot internal firmware. The  robot is following its internal policy $$ \mu $$ and this policy is inaccessible. What to do?
 
-What is interesting about Q-learning is that while following a policy $$ \mu $$ which may be sub-optimal it can estimates the optimal policy $$ \pi^{*} $$ starting from a random policy $$ \pi $$.
+![Reinforcement Learning Q-learning example camera robot]({{site.baseurl}}/images/reinforcement_learning_model_free_passive_td_qlearning_example_camera_robot.png){:class="img-responsive"}
+
+What you can do is to use an off-policy algorithm like Q-learning to estimate an optimal policy. First of all you create a discrete version of the room using the `GridWorld` class. Second, you get a camera and thanks to some markers you estimate the position of the robot in the real world and relocate it in the grid world. At each time step you have the position of the robot and the reward. The camera is connected to your workstation and in the workstation is running the Q-learning Python script. Fortunately you do not have to write the script from scratch because you notice that a good starting script is available on the [dissecting-reinforcement-learning](https://github.com/mpatacchiola/dissecting-reinforcement-learning) official repository on GitHub and is called `temporal_differencing_control_qlearning.py`
 
 ![Reinforcement Learning Q-learning example three policies]({{site.baseurl}}/images/reinforcement_learning_model_free_active_td_qlearning_example_three_policies.png){:class="img-responsive"}
 
-
-Q-learning converges also when the policy $$ \mu $$ is an **adversarial policy**. Let's suppose that $$ \mu $$ pushes the robot as far as possible from the charging station and as close as possible to the stairs. In this extreme conditions we could expect that the algorithm does not converge at all.
+Running the script with `alpha=0.00`, `gamma=0.999` and `epsilon=0.1` the algorithm converged to the optimal policy in 300000 iterations. Great! You got the optimal policy.
+As you can see Q-learning can follow a policy $$ \mu $$ which may be sub-optimal and estimates the optimal policy $$ \pi^{*} $$ starting from a random policy $$ \pi $$.
+What is interesting about Q-learning is that it converges also when the policy $$ \mu $$ is an **adversarial policy**. Let's suppose that $$ \mu $$ pushes the robot as far as possible from the charging station and as close as possible to the stairs. In this extreme conditions we could expect that the algorithm does not converge at all.
 
 ![Reinforcement Learning Q-learning example three policies]({{site.baseurl}}/images/reinforcement_learning_model_free_active_td_qlearning_example_three_adversarial_policies.png){:class="img-responsive"}
 
-Running the script with an adversarial policy the algorithm converged to the optimal policy in 583001 iterations.
+Running the script with the same parameters as before and with an adversarial policy the algorithm converged to the optimal policy in 583001 iterations.
 
 
 It is Q-learning better than SARSA? It is faster or more efficient?  
