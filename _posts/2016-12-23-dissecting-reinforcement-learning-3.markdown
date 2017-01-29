@@ -1,11 +1,11 @@
 ---
 layout: post
 title:  "Dissecting Reinforcement Learning-Part.3"
-date:   2017-01-16 19:00:00 +0000
+date:   2017-01-29 07:00:00 +0000
 description: This blog series explains the main ideas and techniques behind reinforcement learning. In particular Temporal Difference Learning, Animal Learning, Eligibility Traces, Sarsa, Q-Learning, On-Policy and Off-Policy. It includes complete Python code.
 author: Massimiliano Patacchiola
-comments: false
-published: false
+comments: true
+published: true
 ---
 
 Welcome to the third part of the series "Disecting Reinforcement Learning". In the [first](https://mpatacchiola.github.io/blog/2016/12/09/dissecting-reinforcement-learning.html) and [second](https://mpatacchiola.github.io/blog/2017/01/15/dissecting-reinforcement-learning-2.html) post we dissected **dynamic programming** and  **Monte Carlo (MC)** methods. The third group of techniques in reinforcement learning is  called **Temporal Differencing (TD)** methods. TD learning solves some of the problem arising in MC learning. In the conclusions of the [second part](https://mpatacchiola.github.io/blog/2017/01/15/dissecting-reinforcement-learning-2.html) I described one of this problem. Using MC methods it is necessary to wait until the end of the episode before updating the utility function. This is a serious problem because some applications can have very long episodes and delaying learning until the end is too slow. Moreover the termination of the episode is not always guaranteed. We will see how TD methods solve these issues.
@@ -14,7 +14,7 @@ Welcome to the third part of the series "Disecting Reinforcement Learning". In t
 ![Russel and Norvig and Sutton and Barto and Mitchel]({{site.baseurl}}/images/artificial_intelligence_a_modern_approach_reinforcement_learning_an_introduction_machine_learning.png){:class="img-responsive"}
 
 In this post I will start from a **general introduction** to the TD approach and then pass to the most famous (and used) TD techniques, namely **Sarsa** and **Q-Learning**. TD had a huge impact on reinforcement learning and most of the last publications (included Deep Reinforcement Learning) are based on the TD approach.
-We will see how TD is correlated with psychology and neuroscience through **animal learning** experiments. If you want to read more about these topics there is a chapter (14) in the second edition of the Sutton and Barto's book ([pdf](https://webdocs.cs.ualberta.ca/~sutton/book/bookdraft2016sep.pdf)) and another chapter of the same authors entitled *"Time-derivative models of pavlovian reinforcement"* which you can easily find on Google.
+We will see how TD is correlated with psychology through **animal learning** experiments. If you want to read more about TD and animal learning you should read chapter 14 in the second edition of the Sutton and Barto's book ([pdf](https://webdocs.cs.ualberta.ca/~sutton/book/bookdraft2016sep.pdf)) and another chapter of the same authors entitled *"Time-derivative models of pavlovian reinforcement"* which you can easily find on Google.
 Some parts of this post are based on chapters 6 and 7 of the classical "Reinforcement Learning: An Introduction". If after reading this post you are not satisfied I suggest you to give a look to the article of Sutton entitled ["Learning to predict by the methods of temporal differences"](http://link.springer.com/article/10.1007/BF00115009). If you want to read more about **Sarsa** and **Q-learning** you can use the book of Russel and Norvig (chapter 21.3.2). A short introduction to reinforcement learning and Q-Learning is also provided by Mitchell in his book *Machine Learning* (1997) (chapter 13). Links to these resources are available in the last section of the post.
 
 
@@ -282,7 +282,7 @@ Utility matrix after 300000 iterations:
  [ 0.76923169  0.71845851  0.7037472   0.52270127]]
 ```
 
-Comparing the final utility matrix with the one obtained without the use of eligibility traces in TD(0) you will notice similar values. One could ask: **what's the advantage of using eligibility traces?** The advantage become clear when dealing with sparse reward in a large state space. In this case the eligibility trace mechanism can speed up learning propagating what learnt at t+1 back to the last states visited. 
+Comparing the final utility matrix with the one obtained without the use of eligibility traces in TD(0) you will notice similar values. One could ask: **what's the advantage of using eligibility traces?** The eligibility traces version converges faster. This advantage become clear when dealing with sparse reward in a large state space. In this case the eligibility trace mechanism can considerably speeds up the convergence propagating what learnt at t+1 back to the last states visited. 
 
 
 SARSA: Temporal Differencing control
@@ -311,7 +311,11 @@ In **step 1** the agent select one action from the policy and moves one step for
 
 ![Reinforcement Learning SARSA first episode traces]({{site.baseurl}}/images/reinforcement_learning_model_free_active_td_sarsa_first_episode_traces.png){:class="img-responsive"}
 
-Can we apply the TD(λ) ideas to SARSA? Yes we can. **SARSA(λ)** follows the same steps of TD(λ) implementing the **eligibility traces** to speed up the convergence.  The intuition behind the algorithm is the same, however instead of applying the prediction method to states SARSA(λ) applies it to state-action pairs. We have a trace for each state-action and the following rule for updating the Q-function:
+Can we apply the TD(λ) ideas to SARSA? Yes we can. **SARSA(λ)** follows the same steps of TD(λ) implementing the **eligibility traces** to speed up the convergence.  The intuition behind the algorithm is the same, however instead of applying the prediction method to states SARSA(λ) applies it to state-action pairs. We have a trace for each state-action and this trace is updated as following:
+
+$$e_{t}(s,a) = \begin{cases} \gamma \lambda e_{t-1}(s,a)+1 & \text{if}\ s=s_{t} \text{ and } a=a_{t};  \\ \gamma \lambda e_{t-1}(s,a) & \text{otherwise}; \end{cases}$$ 
+
+To update the Q-function we use the following update rule:
 
 $$ Q_{t+1}(s, a) = Q_{t}(s, a) + \alpha \delta_{t} e_{t}(s, a) \qquad  \text{for all } s \in S$$
 
@@ -448,7 +452,7 @@ Now it is time to introduce **Q-learning**, another algorithm for TD control est
 Q-learning: off-policy control
 -----------------------------
 
-**Q-learning** was introduced by Watkins in his doctoral dissertation [[pdf]](https://www.researchgate.net/profile/Christopher_Watkins2/publication/33784417_Learning_From_Delayed_Rewards/links/53fe12e10cf21edafd142e03/Learning-From-Delayed-Rewards.pdf) and is considered one of the most important algorithm in reinforcement learning. However most of the time it is not explained in details. Understanding how it works means understanding most of the ideas now on. Here I will dissect the algorithm focusing on its deep meaning. Before proceeding you should have clear in your mind the following concepts:
+**Q-learning** was introduced by Watkins in his [doctoral dissertation](https://www.researchgate.net/profile/Christopher_Watkins2/publication/33784417_Learning_From_Delayed_Rewards/links/53fe12e10cf21edafd142e03/Learning-From-Delayed-Rewards.pdf) and is considered one of the most important algorithm in reinforcement learning. However most of the time it is not explained in details. Understanding how it works means understanding most of the ideas now on. Here I will dissect the algorithm focusing on its deep meaning. Before proceeding you should have clear in your mind the following concepts:
 
 - The Generalised Policy Iteration (GPI) ([second post](https://mpatacchiola.github.io/blog/2017/01/15/dissecting-reinforcement-learning-2.html))
 - The $$ \text{Target} $$ term in TD learning (first section)
@@ -458,7 +462,7 @@ Now we can proceed. In the control case we always used the policy $$ \pi $$ to l
 
 ![Reinforcement Learning Q-learning policies comparison]({{site.baseurl}}/images/reinforcement_learning_model_free_active_td_qlearning_policies_update.png){:class="img-responsive"}
 
-Which are the advantages of off-policy learning? First of all using off-policy it is possible to learn about an **optimal policy** while following an **exploratory policy**. Off-policy means **learning by observation**. For example our cleaning robot could find a policy looking to another robot. It is also possible to learn about **multiple policies** while following one policy (e.g. multi-robot scenario). Moreover in deep reinforcement learning we will see how off-policy allows **re-using old experiences** generated from old policies to improve the current policy (experience replay). 
+Which are the advantages of off-policy learning? First of all using off-policy it is possible to learn about an **optimal policy** while following an **exploratory policy**. Off-policy means **learning by observation**. For example we can find an optimal policy looking to a robot which is following a sub-optimal policy. It is also possible to learn about **multiple policies** while following one policy (e.g. multi-robot scenario). Moreover in deep reinforcement learning we will see how off-policy allows **re-using old experiences** generated from old policies to improve the current policy (experience replay). 
 The most famous **off-policy TD algorithm for control** is called **Q-Learning**. To understand how Q-learning works let's consider its update rule:
 
 $$ Q(s_{t}, a_{t}) \leftarrow Q(s_{t}, a_{t}) + \alpha \big[ \text{r}_{t+1} + \gamma \underset{a}{\text{ max }} Q(s_{t+1}, a) - Q(s_{t}, a_{t}) \big] $$
@@ -492,6 +496,21 @@ That's it, we have the $$ \text{Target} $$ used in the actual update rule and th
 There are some differences between the steps followed in SARSA and the one followed in Q-learning. Unlike in SARSA in the **step 2** of Q-learning we are not considering $$ a_{t+1} $$ the action at the next step. In this sense Q-learning updates the state-action function using the tuple State-Action-Reward-State.
 Comparing **step 1** and **step 4** you can see that in step 1 of SARSA the action is sampled from $$ \pi $$ and then the same policy is updated at step 4. In step 1 and step 4 of Q-learning we are sampling the action from the exploration policy $$ \mu $$ while we are updating the policy $$ \pi $$ at step 4.
 
+Also for Q-learning there is a version based on **eligibility traces**. Actually there are two versions: Watkins's Q(λ) and Peng's Q(λ). Here I will focus on **Watkins's Q(λ)**. The Q(λ) algorithm was introduced by Watkins in his [doctoral dissertation](https://www.researchgate.net/profile/Christopher_Watkins2/publication/33784417_Learning_From_Delayed_Rewards/links/53fe12e10cf21edafd142e03/Learning-From-Delayed-Rewards.pdf). The idea behind the algorithm is similar to TD(λ) and SARSA(λ). Like in SARSA(λ) we are updating state-action pairs, however there is an important difference. In Q-learning there are two policies, the exploratory policy $$ \mu $$ used to sample actions and the target policy $$ \pi $$ updated at each iteration. Because the action $$ a $$ is chosen ε-greedy there is a chance to select an exploratory action instead of a greedy one. In this case the eligibility traces for all state-action pairs but the current one are set to zero. 
+
+$$e_{t}(s,a) = I_{ss_{t}} \cdot I_{aa_{t}} + \begin{cases} \gamma \lambda e_{t-1}(s,a) & \text{if}\ Q_{t-1}(s_{t},a_{t})= \underset{a}{\text{max }} Q_{t-1}(s_{t},a);  \\ 0 & \text{otherwise}; \end{cases}$$ 
+
+The term $$ I_{ss_{t}} $$ is an identity indicator and it is equal to 1 if $$ s=s_{t} $$. The same for $$ I_{aa_{t}} $$.
+The estimation error $$ \delta $$ is defined as:
+
+$$ \delta_{s} = r_{t+1} + \gamma \underset{a}{\text{max }} Q_{t}(s_{t+1},a) - Q_{t}(s_{t},a_{t}) $$
+
+
+To update the Q-function we use the following update rule:
+
+$$ Q_{t+1}(s, a) = Q_{t}(s, a) + \alpha \delta_{t} e_{t}(s, a) \qquad  \text{for all } s \in S$$
+
+Unfortunately cutting off traces when an exploratory non-greedy action is taken loses much of the advantages of using eligibility traces. Like for SARSA(λ) I will not implement the Q(λ) algorithm in the next section. However a good pseudo-code is present in chapter 7.6 of the Sutton and Barto's book.
 
 Q-learning: Python implementation
 ---------------------------------
@@ -523,26 +542,20 @@ def update_state_action(state_action_matrix, observation, new_observation,
     return state_action_matrix
 ```
 
-An **example** will clarify what expressed until now. Let's suppose you notice that the cleaning robot bought last week does not follow an optimal policy while going back to the charging station. The robot is following a sub-optimal path which is unsafe. You want to find an optimal policy and propose an upgrade to the manufacturer (and get hired!). There is a problem, you do not have any access to the robot internal firmware. The  robot is following its internal policy $$ \mu $$ and this policy is inaccessible. What to do?
+An **example** will clarify what expressed until now. Let's suppose you notice that the cleaning robot bought last week does not follow an optimal policy while going back to the charging station. The robot is following a sub-optimal path which is unsafe. You want to find an optimal policy and propose an upgrade to the manufacturer (and get hired!). There is a problem, you do not have any access to the robot  firmware. The robot is following its internal policy $$ \mu $$ and this policy is inaccessible. What to do?
 
 ![Reinforcement Learning Q-learning example camera robot]({{site.baseurl}}/images/reinforcement_learning_model_free_passive_td_qlearning_example_camera_robot.png){:class="img-responsive"}
 
-What you can do is to use an off-policy algorithm like Q-learning to estimate an optimal policy. First of all you create a discrete version of the room using the `GridWorld` class. Second, you get a camera and thanks to some markers you estimate the position of the robot in the real world and relocate it in the grid world. At each time step you have the position of the robot and the reward. The camera is connected to your workstation and in the workstation is running the Q-learning Python script. Fortunately you do not have to write the script from scratch because you notice that a good starting script is available on the [dissecting-reinforcement-learning](https://github.com/mpatacchiola/dissecting-reinforcement-learning) official repository on GitHub and is called `temporal_differencing_control_qlearning.py`
+What you can do is to use an off-policy algorithm like Q-learning to estimate an optimal policy. First of all you create a discrete version of the room using the `GridWorld` class. Second, you get a camera and thanks to some markers you estimate the position of the robot in the real world and relocate it in the grid world. At each time step you have the position of the robot and the reward. The camera is connected to your workstation and in the workstation is running the Q-learning Python script. Fortunately you do not have to write the code from scratch because you notice that a good starting script is available on the [dissecting-reinforcement-learning](https://github.com/mpatacchiola/dissecting-reinforcement-learning) official repository on GitHub and is called `temporal_differencing_control_qlearning.py`. The script is based on the usual 4x3 grid world, but can be easily extended to more complex scenarios.
 
 ![Reinforcement Learning Q-learning example three policies]({{site.baseurl}}/images/reinforcement_learning_model_free_active_td_qlearning_example_three_policies.png){:class="img-responsive"}
 
-Running the script with `alpha=0.00`, `gamma=0.999` and `epsilon=0.1` the algorithm converged to the optimal policy in 300000 iterations. Great! You got the optimal policy.
-As you can see Q-learning can follow a policy $$ \mu $$ which may be sub-optimal and estimates the optimal policy $$ \pi^{*} $$ starting from a random policy $$ \pi $$.
-What is interesting about Q-learning is that it converges also when the policy $$ \mu $$ is an **adversarial policy**. Let's suppose that $$ \mu $$ pushes the robot as far as possible from the charging station and as close as possible to the stairs. In this extreme conditions we could expect that the algorithm does not converge at all.
+Running the script with `alpha=0.00`, `gamma=0.999` and `epsilon=0.1` the algorithm converged to the optimal policy in 300000 iterations. Great! You got the optimal policy. However there are two important limitations. First, the algorithm converged after 300000 iterations, meaning that you need 300000 episodes. Probably you have to monitor the robot for months in order to get all these episodes. In a deterministic environment you can estimate the policy $$ \mu $$ through observation and then run the 300000 episodes in simulation. However in environments which are non-deterministic you need to spend much more energies in order to find the motion model and it is generally very time consuming. The second limitation is that the optimal policy is valid only for the current room setup. Changing the position of the charging station or the position of the obstacles the policy must be learned again. We will see in a future post how to generalise to much larger state space using **supervised learning** and **neural networks**. For the moment let's focus on the results achieved. Q-learning followed a policy $$ \mu $$ which was sub-optimal and estimated the optimal policy $$ \pi^{*} $$ starting from a random policy $$ \pi $$.
 
 ![Reinforcement Learning Q-learning example three policies]({{site.baseurl}}/images/reinforcement_learning_model_free_active_td_qlearning_example_three_adversarial_policies.png){:class="img-responsive"}
 
-Running the script with the same parameters as before and with an adversarial policy the algorithm converged to the optimal policy in 583001 iterations.
-
-
-It is Q-learning better than SARSA? It is faster or more efficient?  
-
-Also for Q-learning there is a version based on **eligibility traces**.
+What is interesting about Q-learning is that it converges also when the policy $$ \mu $$ is an **adversarial policy**. Let's suppose that $$ \mu $$ pushes the robot as far as possible from the charging station and as close as possible to the stairs. In this extreme conditions we could expect that the algorithm does not converge at all.
+Running the script with the same parameters as before and with an adversarial policy the algorithm converged to the optimal policy in 583001 iterations. We empirically demonstrated that starting from a favourable policy speeds up convergence.
 
 
 
