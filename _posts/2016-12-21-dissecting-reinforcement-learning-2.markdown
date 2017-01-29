@@ -561,6 +561,12 @@ I would like to **reflect for a moment on the beauty of the MC algorithm**. In M
 
 Be careful **the MC methods are not perfect**. For example the fact that we have to save a full episode before updating the utility function is a strong limitation. It means that if you want to train a robot for driving a car you should wait until the robot crashes into a wall in order to update the policy. To overcome this problem we can use another algorithm called **Temporal Differencing (TD) learning**. Using TD methods we can obtain the same result of MC methods but we can update the utility function after a single step. In the next post I will introduce TD methods, which are the foundations of Q-Learning and Deep Reinforcement Learning.
 
+Index
+------
+
+1. [[First Post]]((https://mpatacchiola.github.io/blog/2016/12/09/dissecting-reinforcement-learning.html)) Markov Decision Process, Bellman Equation, Value iteration and Policy Iteration algorithms.
+2. **[Second Post]** Monte Carlo Intuition, Monte Carlo methods, Prediction and Control, Generalised Policy Iteration, Q-function. 
+3. [Third Post](https://mpatacchiola.github.io/blog/2017/01/29/dissecting-reinforcement-learning-3.html) Temporal Differencing intuition, Animal Learning, TD(0), TD(λ) and Eligibility Traces, SARSA, Q-learning.
 
 Resources
 ----------

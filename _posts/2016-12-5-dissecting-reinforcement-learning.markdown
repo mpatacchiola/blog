@@ -576,6 +576,15 @@ Conclusions
 
 In this first part I summarised the fundamental ideas behind Reinforcement learning. As example I used a finite environment with a predefined transition model. **What happen if we do not have the transition model?** In the next part I will introduce model-free reinforcement learning, which answer to this question with a new set of interesting tools. You can find the full [code on my github repository](https://github.com/mpatacchiola/dissecting-reinforcement-learning).
 
+
+Index
+------
+
+1. **[First Post]** Markov Decision Process, Bellman Equation, Value iteration and Policy Iteration algorithms.
+2. [[Second Post]](https://mpatacchiola.github.io/blog/2017/01/15/dissecting-reinforcement-learning-2.html) Monte Carlo Intuition, Monte Carlo methods, Prediction and Control, Generalised Policy Iteration, Q-function. 
+3. [[Third Post]](https://mpatacchiola.github.io/blog/2017/01/29/dissecting-reinforcement-learning-3.html) Temporal Differencing intuition, Animal Learning, TD(0), TD(λ) and Eligibility Traces, SARSA, Q-learning.
+
+
 Resources
 ----------
 
