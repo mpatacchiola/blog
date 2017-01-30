@@ -231,7 +231,7 @@ Now we have all the elements, we can plug in the values in the Bellman equation 
 
 $$ U(s_{11}) = -0.04 + 1.0 \times 0.7456 = 0.7056$$
 
-The Bellman equation works! What we need is a **Python implementation** of the equation to use in our simulated world. We are going to use the same terminology of the first sections. Our world has 4x3=12 possible states. The starting vector contains 12 values and the transition matrix is a huge 12x12x4 matrix (12 starting states, 12 next states, 4 actions) where most of the values are zeros (we can move only from one state to its neighbours). I generated the transition matrix using a script and I saved it as a Numpy matrix ([you can download it here](https://github.com/mpatacchiola/dissecting-reinforcement-learning/raw/master/one/T.npy)).
+The Bellman equation works! What we need is a **Python implementation** of the equation to use in our simulated world. We are going to use the same terminology of the first sections. Our world has 4x3=12 possible states. The starting vector contains 12 values and the transition matrix is a huge 12x12x4 matrix (12 starting states, 12 next states, 4 actions) where most of the values are zeros (we can move only from one state to its neighbours). I generated the transition matrix using a script and I saved it as a Numpy matrix ([you can download it here](https://github.com/mpatacchiola/dissecting-reinforcement-learning/raw/master/1/T.npy)).
 In the script I defined the function `return_state_utility()` which is an implementation of the Bellman equation. Using this function we are going to print the utility of the state (1,1) and check if it is the same we found previously by hand:
 
 ```python
