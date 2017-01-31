@@ -10,6 +10,21 @@ published: false
 
 Here you are, the fourth episode of the "Dissecting Reinforcement Learning" series. In this post I will introduce the last group of techniques used in reinforcement learning: **Actor-Critic (AC) methods**. I often define Actor-Critic as a **meta-technique** which uses the methods introduced in the previous posts in order to learn. 
 
+Policy-gradient-based actor-critic algorithms are among the most popular algorithms in the reinforcement learning framework. For example, the [Deep Determinist Policy Gradient](https://arxiv.org/abs/1509.02971) algorithm (DDPG) introduced recently by some researchers of Google DeepMind is an actor-critic, model-free algorithm. The AC approach has many links with neuroscience and animal learning, in particular with models of basal ganglia. Nevertheless AC methods are not described 
+
+
+[Numerous models have addressed the basal ganglia's role in learning, based on the uncanny resemblance of dopaminergic cell firing to the requirements of an error signal in temporal difference (TD) learning. Such models map the Actor-Critic implementation of TD learning on to the basal ganglia (Barto, 1995; Houk, Adams & Barto, 1995; Montague, Dayan & Sejnowski, 1996; Schultz, Dayan & Montague, 1997), where, roughly, the Actor is mapped on to the selection function of the basal ganglia, and the Critic is mapped on to the RL circuit in Figure 2. As such the dopamine signal is envisaged as the teaching signal that alters the Actor's responses to maximise future reward.
+Joel, Niv and Ruppin (2002) evaluated both anatomical and computational perspectives of Actor-Critic models. They review several models and conclude that they are not compatible with current anatomical data.
+Though computationally elegant in approach, critics of these models have variously argued for its biological implausibility, citing:
+- dopamine cells increase firing to aversive, neutral, and rewarding stimuli, and thus cannot uniquely signal reward prediction error (Pennartz, 1996, however, see Ungless et al. 2004 for claims that the neurons responding to aversive stimuli are, in fact, not dopaminergic)
+- dopamine cells fire before the stimulus can be fully perceived, and thus its value cannot be known at the time (Redgrave, Gurney & Prescott, 1999b)
+- stimulus-reward learning can take place in the absence of dopamine, and thus it is not necessary for learning (Berridge, 2007)]
+
+
+Actor-Critic methods (and monkeys)
+-----------------------------------
+
+
 
 Conclusions
 -----------
@@ -44,17 +59,6 @@ Resources
 References
 ------------
 
-Bellman, R. (1957). A Markovian decision process (No. P-1066). RAND CORP SANTA MONICA CA.
 
-Rescorla, R. A., & Wagner, A. R. (1972). A theory of Pavlovian conditioning: Variations in the effectiveness of reinforcement and nonreinforcement. Classical conditioning II: Current research and theory, 2, 64-99.
-
-Rummery, G. A., & Niranjan, M. (1994). On-line Q-learning using connectionist systems. University of Cambridge, Department of Engineering.
-
-Russell, S. J., Norvig, P., Canny, J. F., Malik, J. M., & Edwards, D. D. (2003). Artificial intelligence: a modern approach (Vol. 2). Upper Saddle River: Prentice hall.
-
-Sutton, R. S. (1988). Learning to predict by the methods of temporal differences. Machine learning, 3(1), 9-44.
-
-Sutton, R. S., & Barto, A. G. (1990). Time-derivative models of pavlovian reinforcement.
-
-Watkins, C. J. C. H. (1989). Learning from delayed rewards (Doctoral dissertation, University of Cambridge).
+Joel, D., Niv, Y., & Ruppin, E. (2002). Actor–critic models of the basal ganglia: New anatomical and computational perspectives. Neural networks, 15(4), 535-547.
 
