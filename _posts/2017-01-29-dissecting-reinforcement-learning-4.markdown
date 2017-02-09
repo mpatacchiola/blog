@@ -142,7 +142,7 @@ def softmax(x):
     return np.exp(x - np.max(x)) / np.sum(np.exp(x - np.max(x)))
 ```
 
-After the action a new state is reached and a reward is available (-0.04). It is time for the critic to update the state value and to estimate the error $$ \delta $$. The value used are $$ \gamma=0.9 $$ and $$ \alpha=0.1 $$. Applying the update rule showed in the previous section we obtain the new value for the state (1,1): `0.0 + 0.1[-0.04 + 0.9(0.0) - 0.0] = -0.004`. At the same time it is possible to calculate the error $$ \delta $$ as follow:  `-0.04 + 0.9(0.0) - 0.0 = -0.04`
+After the action a new state is reached and a reward is available (-0.04). It is time for the critic to update the state value and to estimate the error $$ \delta $$. Here I used the following parameters: $$ \alpha=0.1 $$, $$ \beta=1.0 $$ and $$ \gamma=0.9 $$. Applying the update rule (see  previous section) we obtain the new value for the state (1,1): `0.0 + 0.1[-0.04 + 0.9(0.0) - 0.0] = -0.004`. At the same time it is possible to calculate the error $$ \delta $$ as follow:  `-0.04 + 0.9(0.0) - 0.0 = -0.04`
 
 ![Reinforcement Learning Actor-Critic Robot example critic]({{site.baseurl}}/images/reinforcement_learning_model_free_active_actor_critic_robot_critic.png){:class="img-responsive"}
 
@@ -150,15 +150,130 @@ The robot is in a new state and the critic evaluated the error which now must be
 
 ![Reinforcement Learning Actor-Critic Robot example actor]({{site.baseurl}}/images/reinforcement_learning_model_free_active_actor_critic_robot_actor_2.png){:class="img-responsive"}
 
-Now we can imagine to repeat the same steps until the end of the episode. All the action will be weakened but the last one, which will be strengthened by a factor of +1.0. Repeating the process for many other episodes leads to an optimal utility matrix and an optimal policy. 
+Now we can imagine to repeat the same steps until the end of the episode. All the action will be weakened but the last one, which will be strengthened by a factor of +1.0. Repeating the process for many other episodes leads to an optimal utility matrix and an optimal policy.
 
-Actor-only Critic-only methods
+Now the Python implementation. First of all we have to create a function to update the utility matrix (critic). I called this function `update_critic`. The input are the `utility_matrix`, the `observation` and `new_observation` states, then we have the usual hyper-parameters.
+The function returned an updated utility matrix and the estimation error `delta` to use for updating the actor.
+
+```python
+def update_critic(utility_matrix, observation, new_observation, 
+                   reward, alpha, gamma):
+    '''Return the updated utility matrix
+
+    @param utility_matrix the matrix before the update
+    @param observation the state obsrved at t
+    @param new_observation the state observed at t+1
+    @param reward the reward observed after the action
+    @param alpha the ste size (learning rate)
+    @param gamma the discount factor
+    @return the updated utility matrix
+    @return the estimation error delta
+    '''
+    u = utility_matrix[observation[0], observation[1]]
+    u_t1 = utility_matrix[new_observation[0], new_observation[1]]
+    delta = reward + gamma * u_t1 - u
+    utility_matrix[observation[0], observation[1]] += alpha * (delta)
+    return utility_matrix, delta
+``` 
+
+The function `update_actor` is used in order to update the state-action matrix. The parameter passed to the function are the `state_action_matrix`, the `observation`, the `action`, the estimation error `delta` returned by `update_critic`, and the hyper-parameter beta that can take the form of a matrix where each element counts how many times a particular state-action pair has been visited.
+
+```python
+def update_actor(state_action_matrix, observation, action, 
+                 delta, beta_matrix=None):
+    '''Return the updated state-action matrix
+
+    @param state_action_matrix the matrix before the update
+    @param observation the state obsrved at t
+    @param action taken at time t
+    @param delta the estimation error returned by the critic
+    @param beta_matrix a visit counter for each state-action pair
+    @return the updated matrix
+    '''
+    col = observation[1] + (observation[0]*4)
+    if beta_matrix is None: beta = 1
+    else: beta = 1 / beta_matrix[action,col]
+    state_action_matrix[action, col] += beta * delta
+    return state_action_matrix 
+```
+
+The two functions are used in the main loop. The exploring start assumption is kept in order to guarantee uniform exploration. The `beta_matrix` parameter is not used here it can be easily enabled.
+
+```python
+for epoch in range(tot_epoch):
+  #Reset and return the first observation
+  observation = env.reset(exploring_starts=True)
+  for step in range(1000):
+    #Estimating the action through Softmax
+    col = observation[1] + (observation[0]*4)
+    action_array = state_action_matrix[:, col]
+    action_distribution = softmax(action_array)
+    #Sampling an action using the probability
+    #distribution returned by softmax
+    action = np.random.choice(4, 1, p=action_distribution)
+    #beta_matrix[action,col] += 1 #increment the counter
+    #Move one step in the environment and get obs and reward
+    new_observation, reward, done = env.step(action)
+    #Updating the critic (utility_matrix) and getting the delta
+    utility_matrix, delta = update_critic(utility_matrix, observation, 
+                                          new_observation, reward, 
+                                          alpha, gamma)
+    #Updating the actor (state-action matrix)
+    state_action_matrix = update_actor(state_action_matrix, observation, 
+                                       action, delta, beta_matrix=None)
+    observation = new_observation
+    if done: break
+```
+
+As usual I uploaded the complete code in the official [GitHub repository](https://github.com/mpatacchiola/dissecting-reinforcement-learning) under the name `actor_critic.py`. Running the script with `gamma = 0.999` and `alpha = 0.001` I obtained the following utility matrix:
+
+```
+Utility matrix after 1001 iterations:
+[[-0.02564938  0.07991029  0.53160489  0.        ]
+ [-0.054659    0.          0.0329912   0.        ]
+ [-0.06327405 -0.06371056 -0.0498283  -0.11859039]]
+
+...
+
+Utility matrix after 150001 iterations:
+[[ 0.85010645  0.9017371   0.95437213  0.        ]
+ [ 0.80030524  0.          0.68354459  0.        ]
+ [ 0.72840853  0.55952242  0.60486472  0.39014426]]
+
+...
+
+Utility matrix after 300000 iterations:
+[[ 0.84762914  0.90564964  0.95700181  0.        ]
+ [ 0.79807688  0.          0.69751386  0.        ]
+ [ 0.72844679  0.55459785  0.60332219  0.38933992]]
+```
+
+Comparing the result obtained with AC and the one obtained with dynamic programming in the [first post](https://mpatacchiola.github.io/blog/2016/12/09/dissecting-reinforcement-learning.html) we can notice a few differences.
+
+![Reinforcement Learning Dynamic Programming VS Actor-Critic]({{site.baseurl}}/images/reinforcement_learning_utility_estimation_dp_vs_ac.png){:class="img-responsive"}
+
+Similarly to the estimation of TD(0) in the [third post](https://mpatacchiola.github.io/blog/2017/01/29/dissecting-reinforcement-learning-3.html) the value for the two terminal states are zero. This is the consequence of the fact that we cannot estimate the update value for a terminal state, because after a terminal state there is not another state. As discussed in the [third post](https://mpatacchiola.github.io/blog/2017/01/29/dissecting-reinforcement-learning-3.html) this is not a big issue and does not affect the convergence in any significant way. From a practical point of view the results obtained with the AC algorithm can be unstable because of the higher number of hyper-parameter to tune, however the flexibility of the paradigm can often balance this drawback. 
+ 
+
+Actor-only and Critic-only methods
 -------------------------------
 
-In the article ["Reinforcement Learning in a Nutshell"](http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.69.9557&rep=rep1&type=pdf) the different techniques I introduced until now are divided in three categories: AC methods, Critic-only, Actor-only. Following a similar approach I will briefly introduce some other techniques which are generally not covered in a reinforcement learning course. 
+In the article ["Reinforcement Learning in a Nutshell"](http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.69.9557&rep=rep1&type=pdf) the different techniques I introduced until now are divided in three categories: AC methods, Critic-only, Actor-only. Here I will follow a similar approach to give a larger view on the techniques available out here.
+Until now I always talked about utility function and policy. In dynamic programming these two entities collapsed in the value iteration and the policy iteration algorithms (see [first post](https://mpatacchiola.github.io/blog/2016/12/09/dissecting-reinforcement-learning.html)). However both of them are based on the utility estimation which allows convergence thanks to Generalised Policy Iteration (GPI) mechanism (see [second post](https://mpatacchiola.github.io/blog/2017/01/15/dissecting-reinforcement-learning-2.html)). In fact also in TD learning we are always relying on the utility estimation (see [third post](https://mpatacchiola.github.io/blog/2017/01/29/dissecting-reinforcement-learning-3.html)) even when the emphasis is on the policy (SARSA and Q-learning). All these methods can be broadly grouped in a category called **Critic-only**. Critic-only methods always build a policy on top of a utility function and as I said the utility function is the critic in an AC framework.
+
+![Reinforcement Learning Scheme comparison Actor-Critic Actor-Only Critic-Only]({{site.baseurl}}/images/reinforcement_learning_model_free_active_actor_critic_scheme_actor_only_critic_only.png){:class="img-responsive"}
+
+
+What if we search for an optimal policy without using a utility function? Is that possible? The answer is yes. We can search directly in policy space using an approach called **Actor-only**. 
+
+A class of algorithms called [REINFORCE](http://link.springer.com/article/10.1007/BF00992696)
+
+Since to understand REINFORCE it is necessary to know gradient descent and generalisation thorugh neural networks (which I will cover later in this series) I would like to focus on another kind of Actor-only techniques which are called [evolutionary algorithms](https://en.wikipedia.org/wiki/Evolutionary_algorithm). The *evolutionary algorithm* label can be applied to a wide range of techniques, but in reinforcement learning are often used [genetic algorithms (GA)](https://en.wikipedia.org/wiki/Genetic_algorithm). Using GA means to represent each policy as a possible solution to the agent problem. Imagine to have 10 cleaning robots working in parallel, each one using a different (random initialised policy). After 100 episodes we can have an estimation of how good the policy of each single robot is. We can keep the best robots and randomly mutate their policies in order to generate new ones. After some generations the evolution selects the best policies and among them we can (probably) find the optimal one. During my career as researcher at the [Laboratory of Autonomous Robotics and Artificial Life (LARAL)](http://laral.istc.cnr.it/) I used evolutionary algorithms and in particular GA in [evolutionary robotics](https://en.wikipedia.org/wiki/Evolutionary_robotics) to investigate the [decision making strategies of simulated robots](http://www.sciencedirect.com/science/article/pii/S0376635715000595) moving in different ecologies. For this reason I would like to spend more words on this topic in the next post.
+
 
 Conclusions
 -----------
+
 
 
 Index
@@ -177,7 +292,7 @@ Resources
 
 - **Reinforcement learning: An introduction (second edition).** Sutton, R. S., & Barto, A. G. (in progress). [[pdf]](https://webdocs.cs.ualberta.ca/~sutton/book/bookdraft2016sep.pdf)
 
-
+- **Evolutionary algorithms for reinforcement learning.** Moriarty, D. E., Schultz, A. C., & Grefenstette, J. J. (1999). [[pdf]](https://www.jair.org/media/613/live-613-1809-jair.pdf)
 
 References
 ------------
@@ -189,4 +304,6 @@ Joel, D., Niv, Y., & Ruppin, E. (2002). Actor–critic models of the basal gangl
 Takahashi, Y., Roesch, M. R., Stalnaker, T. A., & Schoenbaum, G. (2007). Cocaine exposure shifts the balance of associative encoding from ventral to dorsolateral striatum. Frontiers in integrative neuroscience, 1(11).
 
 Takahashi, Y., Schoenbaum, G., & Niv, Y. (2008). Silencing the critics: understanding the effects of cocaine sensitization on dorsolateral and ventral striatum in the context of an actor/critic model. Frontiers in neuroscience, 2, 14.
+
+Williams, R. J. (1992). Simple statistical gradient-following algorithms for connectionist reinforcement learning. Machine learning, 8(3-4), 229-256.
 
