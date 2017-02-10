@@ -2,18 +2,18 @@
 layout: post
 title:  "Dissecting Reinforcement Learning-Part.4"
 date:   2017-01-29 07:00:00 +0000
-description: This blog series explains the main ideas and techniques used in reinforcement learning. In this post Actor-Critic methods, Neurobiology of Actor-Critic, animal learning, Actor only and Critic only methods. It includes complete Python code.
+description: This blog series explains the main ideas and techniques used in reinforcement learning. In this post Actor-Critic methods, Neurobiology behind Actor-Critic methods, animal learning, Actor-only and Critic-only methods. It includes complete Python code.
 author: Massimiliano Patacchiola
 comments: false
 published: false
 ---
 
-Here we are, the fourth episode of the "Dissecting Reinforcement Learning" series. In this post I will introduce the last group of techniques used in reinforcement learning: **Actor-Critic (AC) methods**. I often define AC as a **meta-technique** which uses the methods introduced in the previous posts in order to learn.
-AC based algorithms are among the most popular methods in reinforcement learning. For example, the [Deep Determinist Policy Gradient](https://arxiv.org/abs/1509.02971) algorithm introduced recently by some researchers of Google DeepMind is an actor-critic, model-free method. Moreover the AC framework has many links with neuroscience and animal learning, in particular with models of basal ganglia ([Takahashi et al. 2008](http://journal.frontiersin.org/article/10.3389/neuro.01.014.2008/full)). 
+Here we are, the fourth episode of the "Dissecting Reinforcement Learning" series. In this post I will introduce another group of techniques widely used in reinforcement learning: **Actor-Critic (AC) methods**. I often define AC as a **meta-technique** which uses the methods introduced in the previous posts in order to learn.
+AC-based algorithms are among the most popular methods in reinforcement learning. For example, the [Deep Determinist Policy Gradient](https://arxiv.org/abs/1509.02971) algorithm introduced recently by some researchers at Google DeepMind is an actor-critic, model-free method. Moreover the AC framework has many links with neuroscience and animal learning, in particular with models of basal ganglia ([Takahashi et al. 2008](http://journal.frontiersin.org/article/10.3389/neuro.01.014.2008/full)). 
 
 ![Books Reinforcement Learning an Introduction]({{site.baseurl}}/images/books_reinforcement_learning_an_introduction.png){:class="img-responsive"}
 
-AC methods are not accurately described in the books I generally provide. For instance in [Russel and Norvig](http://aima.cs.berkeley.edu/) and in the [Mitchell's](http://www.cs.cmu.edu/~tom/mlbook.html) book they are not covered at all. In the classical [Sutton and Barto's book](https://webdocs.cs.ualberta.ca/~sutton/book/ebook/the-book.html) there are only three short paragraphs (2.8, 6.6, 7.7), however in the [second edition](https://webdocs.cs.ualberta.ca/~sutton/book/bookdraft2016sep.pdf) a wider description of neuronal AC methods has been added in chapter 15 (neuroscience). A meta-classification of reinforcement learning techniques is covered in the article ["Reinforcement Learning in a Nutshell"](http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.69.9557&rep=rep1&type=pdf). Here I will introduce AC methods starting from neuroscience. You can consider this post as the neuro-physiological counterpart of the [third](https://mpatacchiola.github.io/blog/2017/01/29/dissecting-reinforcement-learning-3.html) one, which introduced Temporal Differencing (TD) methods from a psychological and behavioristic point of view.
+AC methods are not accurately described in the books I generally provide. For instance in [Russel and Norvig](http://aima.cs.berkeley.edu/) and in the [Mitchell's](http://www.cs.cmu.edu/~tom/mlbook.html) book they are not covered at all. In the classical [Sutton and Barto's book](https://webdocs.cs.ualberta.ca/~sutton/book/ebook/the-book.html) there are only three short paragraphs (2.8, 6.6, 7.7), however in the [second edition](https://webdocs.cs.ualberta.ca/~sutton/book/bookdraft2016sep.pdf) a wider description of neuronal AC methods has been added in chapter 15 (neuroscience). A meta-classification of reinforcement learning techniques is covered in the article ["Reinforcement Learning in a Nutshell"](http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.69.9557&rep=rep1&type=pdf). Here I will introduce AC methods starting from neuroscience. You can consider this post as the neuro-physiological counterpart of the [third](https://mpatacchiola.github.io/blog/2017/01/29/dissecting-reinforcement-learning-3.html) one, which introduced Temporal Differencing (TD) methods from a psychological and behaviouristic point of view.
 
 
 Actor-Critic methods (and rats)
@@ -21,23 +21,23 @@ Actor-Critic methods (and rats)
 
 Reinforcement learning is deeply connected with **neuroscience**, and often the research in this area pushed the implementation of new algorithms in the computational field. Following this observation I will introduce AC methods with a brief excursion in the neuroscience field. If you have a pure computational background you will learn something new. My objective is to give you a deeper insight into the reinforcement learning (extended) world. 
 To understand this introduction you should be familiar with the basic structure of the nervous system. What is a [neuron](https://en.wikipedia.org/wiki/Neuron)? How do neurons communicate using [synapses](https://en.wikipedia.org/wiki/Synapse) and [neurotransmitters](https://en.wikipedia.org/wiki/Neurotransmitter)? What is the [cerebral cortex](https://en.wikipedia.org/wiki/Cerebral_cortex)? You do not need to know the details, here I want you to get the general scheme. 
-Let's start from Dopamine. **Dopamine** is a [neuromodulator](https://en.wikipedia.org/wiki/Neuromodulation) which is implied in some of the most important process in human and animal brains. You can see the dopamine as a messenger which allows neurons to comunicate. Dopamine has an important role in different processes in the mammalian brain (e.g. learning, motivation, addiction), and it is produced in two specific areas: **substantia nigra pars compacta** and **ventral tegmental area**. These two areas have direct projection to another area of the brain, the **striatum**. The striatum is divided in two parts: **ventral striatum** and **dorsal striatum**. The output of the striatum is directed to **motor areas** and **prefrontal cortex**, and it is involved in motor control and planning. 
+Let's start from Dopamine. **Dopamine** is a [neuromodulator](https://en.wikipedia.org/wiki/Neuromodulation) which is implied in some of the most important process in human and animal brains. You can see the dopamine as a messenger which allows neurons to comunicate. Dopamine has an important role in different processes in the mammalian brain (e.g. learning, motivation, addiction), and it is produced in two specific areas: **substantia nigra pars compacta** and **ventral tegmental area**. These two areas have direct projections to another area of the brain, the **striatum**. The striatum is divided in two parts: **ventral striatum** and **dorsal striatum**. The output of the striatum is directed to **motor areas** and **prefrontal cortex**, and it is involved in motor control and planning. 
 
 ![Reinforcement Learning Actor-Critic Neural Implementation]({{site.baseurl}}/images/reinforcement_learning_model_free_active_actor_critic_neural_implementation_no_group.png){:class="img-responsive"}
 
 Most of the areas cited before are part of the **basal ganglia**.
-There are different models that found a connection between basal ganglia and learning. In particular it seems that the phasic activity of the dopaminergic neurons can deliver an error between an old and a new estimate of expected future rewards. This error is very similar to the error in TD learning which I introduced in the [third post](https://mpatacchiola.github.io/blog/2017/01/29/dissecting-reinforcement-learning-3.html). Before going into details I would like to simplify the basal ganglia mechanism distinguish between two groups:
+There are different models that found a connection between basal ganglia and learning. In particular it seems that the phasic activity of the dopaminergic neurons can deliver an error between an old and a new estimate of expected future rewards. This error is very similar to the error in TD learning which I introduced in the [third post](https://mpatacchiola.github.io/blog/2017/01/29/dissecting-reinforcement-learning-3.html). Before going into details I would like to simplify the basal ganglia mechanism distinguishing between two groups:
 
 
 1. Ventral striatum, substantia nigra, ventral tegmental area
 2. Dorsal striatum and motor areas
 
 There are no specific biological names for these groups but I will create two labels for the occasion.
-Since the first group can evaluate the saliency of a stimulus and the reward associated to it, I will call it the **critic**. The second group has direct access to actions, because of this I will call it the **actor**. 
+The first group can evaluate the saliency of a stimulus based on the associated reward. At the same time it can estimate an error measure comparing the result of the action and the direct consequences, and use this value to calibrate an executor. For these reasons I will call it the **critic**. The second group has direct access to actions but no way to estimate the utility of a stimulus, because of that I will call it the **actor**. 
 
 ![Reinforcement Learning Actor-Critic Neural Implementation]({{site.baseurl}}/images/reinforcement_learning_model_free_active_actor_critic_neural_implementation.png){:class="img-responsive"}
 
-The interaction between actor and critic has an important role in learning. In particular a consistent research showed that it is involved in Pavlovian learning (see [third post](https://mpatacchiola.github.io/blog/2017/01/29/dissecting-reinforcement-learning-3.html)) and in [procedural (explicit) memory](https://en.wikipedia.org/wiki/Procedural_memory), meaning unconscious memories such as skills and habits. On the other hand the acquisition of [declarative (implicit) memory](https://en.wikipedia.org/wiki/Explicit_memory), which is implied in the recollection of factual information, seems to be connected with another area called hippocampus. 
+The **interaction between actor and critic** has an important role in learning. In particular a consistent research showed that basal ganglia are involved in Pavlovian learning (see [third post](https://mpatacchiola.github.io/blog/2017/01/29/dissecting-reinforcement-learning-3.html)) and in [procedural (explicit) memory](https://en.wikipedia.org/wiki/Procedural_memory), meaning unconscious memories such as skills and habits. On the other hand the acquisition of [declarative (implicit) memory](https://en.wikipedia.org/wiki/Explicit_memory), which is implied in the recollection of factual information, seems to be connected with another area called hippocampus. 
 The only way actor and critic can communicate is through the dopamine released from the substantia nigra after the stimulation of the ventral striatum. **Drug abuse** can have an effect on the **dopaminergic system**, altering the communication between actor and critic. 
 Experiments of [Takahashi et al. (2007)](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC2480493/) showed that cocaine sensitisation in rats can have as effect maladaptive decision-making. In particular rather than being influenced by long-term goal the rats are driven by immediate rewards. This issue is present in any standard computational frameworks and is know as the **credit assignment problem**. For example, when playing chess it is not easy to isolate the critical actions that lead to the final victory.
 
@@ -49,11 +49,11 @@ Finally, if the rat does not move (No-Go) then neither reward nor punishment are
 ![Reinforcement Learning Actor-Critic Go No-Go four condition]({{site.baseurl}}/images/reinforcement_learning_model_free_active_actor_critic_go_nogo_rats.png){:class="img-responsive"}
 
 Has been observed that rats pre-sensitised with cocaine do not learn this task, probably because cocaine damages the basal ganglia and the signal returned by the critic became awry. To test this hypothesis [Takahashi et al. (2008)](http://journal.frontiersin.org/article/10.3389/neuro.01.014.2008/full) sensitised a group of rats 1-3 months before the experiment and then compared it with a non-sensitised control group.
-The results of the experiment showed that the **rat in the control group** could **learn how to obtain the reward** when the positive odour was presented and how to avoid the punishment with a no-go strategy when the negative odour was presented. The observation of the basal ganglia showed that the ventral striatum (critic) developed some cue-selectivity neurons, which fired when the odour appeared. This neurons developed during the training and they precede the accurate responding in the dorsal striatum (actor).
+The results of the experiment showed that the **rat in the control group** could **learn how to obtain the reward** when the positive odour was presented and how to avoid the punishment with a no-go strategy when the negative odour was presented. The observation of the basal ganglia showed that the ventral striatum (critic) developed some cue-selectivity neurons, which fired when the odour appeared. This neurons developed during the training and their activity preceded the responding in the dorsal striatum (actor).
 
 ![Reinforcement Learning Actor-Critic Go No-Go normal rats result]({{site.baseurl}}/images/reinforcement_learning_model_free_active_actor_critic_normal_rats.png){:class="img-responsive"}
 
-On the other hand the **sensitised rat** did not show any kind of cue-selectivity during the training. Moreover post-mortem analysis showed that those rats did not developed cue-selective neurons in the ventral striatum (critic). These results confirm the hypothesis that the critic learns the value of the cue and it trains the actor regarding the action to execute.
+On the other hand the **cocaine sensitised rat** did not show any kind of cue-selectivity during the training. Moreover post-mortem analysis showed that those rats did not developed cue-selective neurons in the ventral striatum (critic). These results confirm the hypothesis that the critic learns the value of the cue and it trains the actor regarding the action to execute.
 
 ![Reinforcement Learning Actor-Critic Go No-Go sensitised rats result]({{site.baseurl}}/images/reinforcement_learning_model_free_active_actor_critic_sensitised_rats.png){:class="img-responsive"}
 
@@ -65,7 +65,8 @@ Now it is time to turn our attention to math and code. How can we obtain a gener
 Rewiring Actor-Critic methods
 -----------------------------
 
-In the last section I presented a neuronal model of the basal ganglia based on the AC framework. Here I will rewire that model using the reinforcement learning techniques we studied until now. The objective is to obtain a computational version which can be used in generic cases (e.g. the 4x3 grid world). First of all, **how can we represent the critic?**
+In the last section I presented a neuronal model of the basal ganglia based on the AC framework. Here I will rewire that model using the reinforcement learning techniques we studied until now. The objective is to obtain a computational version which can be used in generic cases (e.g. the 4x3 grid world). The first implementation of an AC algorithm is due to Witten (1977), however the terms Actor and Critic have been introduced later by Barto et al. (1988) to solve the [pole-balancing problem](https://en.wikipedia.org/wiki/Inverted_pendulum).
+First of all, **how can we represent the critic?**
 In the neural version the critic does not have access to the actions. Input to the critic is the information obtained through the cerebral cortex which we can compare to the information obtained by the agent through the sensors (state estimation). Moreover the critic receives as input a reward, which arrives directly from the environment. The critic can be represented by an **utility function**, which is updated based on the reward signal received at each iteration. In model free reinforcement learning we can use the **TD(0) algorithm** to represent the critic. The dopaminergic output from substantia nigra and ventral tegmental area can be represented by the two signals which TD(0) returns, meaning the update value and the error estimation $$ \delta $$. In practice we use the update signal to improve the utility function and the error to update the actor. 
 **How can we represent the actor?** In the neural system the actor receives an input from the cerebral cortex, which we can translate in sensor signals (current state). The dorsal striatum projects to the motor areas and executes an action. Similarly we can use a **state-action matrix** containing the possible actions for each state. The action can be selected with an ε-greedy (or softmax) strategy and then updated using the error returned by the critic. As usual a picture is worth a thousand words:
 
@@ -78,11 +79,15 @@ We can summarise the steps of the AC algorithm as follow:
 3. Update the utility of state $$ s_{t} $$ (critic)
 4. Update the probability of the action using $$ \delta $$ (actor)
 
-In **step 1**, the agent produces an action following the current policy. In **step 2** we observe the new state and the reward. In **step 3** we plug the reward, the utility of $$ s_{t} $$ and $$ s_{t+1} $$ in the standard update formula used in TD(0) (see [third post](https://mpatacchiola.github.io/blog/2017/01/29/dissecting-reinforcement-learning-3.html)):
+In **step 1**, the agent produces an action following the current policy. In the previous posts I used an ε-greedy strategy to select the action and to update the policy. Here I will select a certain action using a [softmax function](https://en.wikipedia.org/wiki/Softmax_function): 
+
+$$ P \big\{ a_{t}=a | s_{t}=s \big\} = \frac{e^{p(s,a)}}{\sum_{b} e^{p(s,b)}}  $$ 
+
+After the action we observe the new state and the reward (**step 2**). In **step 3** we plug the reward, the utility of $$ s_{t} $$ and $$ s_{t+1} $$ in the standard update formula used in TD(0) (see [third post](https://mpatacchiola.github.io/blog/2017/01/29/dissecting-reinforcement-learning-3.html)):
 
 $$ U(s_{t}) \leftarrow U(s_{t}) + \alpha \big[ \text{r}_{t+1} + \gamma U(s_{t+1}) - U(s_{t}) \big] $$
 
-In **step 4** we use the error estimation $$ \delta $$ to update the policy. In the previous posts I used an ε-greedy strategy to selct the action and to update the policy. Here I will select a certain action with probability $$ p(s_{t}, a_{t}) $$ using a [softmax function](https://en.wikipedia.org/wiki/Softmax_function). In this case step 4 consists in strengthening or weakening the probability of the action using the error $$ \delta $$ and a positive step-size parameter $$ \beta $$:
+In **step 4** we use the error estimation $$ \delta $$ to update the policy. In practical terms step 4 consists in strengthening or weakening the probability of the action using the error $$ \delta $$ and a positive step-size parameter $$ \beta $$:
 
 $$ p(s_{t}, a_{t}) \leftarrow p(s_{t}, a_{t}) + \beta \delta_{t} $$
 
@@ -114,9 +119,9 @@ Now it is time for coding. In the next section I will show you how to implement 
 Actor-Critic Python implementation
 ----------------------------------
 
-Using the knowledge acquired in the previous posts we can easily create a Python script to implement an AC agent in the usual 4x3 grid world. As usual I will use the robot cleaning example. To understand this example you have to read the rules of the grid world introduced in the [first post](https://mpatacchiola.github.io/blog/2016/12/09/dissecting-reinforcement-learning.html). First of all I will describe the general architecture, then I will describe a step of the algorithm in a single episode. Finally I will implement everything in Python.
+Using the knowledge acquired in the previous posts we can easily create a Python script to implement an AC algorithm. As usual I will use the robot cleaning example and the 4x3 grid world. To understand this example you have to read the rules of the grid world introduced in the [first post](https://mpatacchiola.github.io/blog/2016/12/09/dissecting-reinforcement-learning.html). First of all I will describe the general architecture, then I will describe step-by-step the algorithm in a single episode. Finally I will implement everything in Python.
 In the complete architecture we can represent the **critic** using a utility function (state matrix). The matrix is initialised with zeros and updated at each iteration through TD learning. For example, after the first step the robot moves from (1,1) to (1,2) and obtains a reward of -0.04.
-The **actor** is represented by a state-action matrix similar to the one introduced to model the Q-function. Each time a new state is observed an action is returned and the robot moves. The values inside the table can be initialised at zero or with random values.
+The **actor** is represented by a state-action matrix similar to the one introduced to model the Q-function. Each time a new state is observed an action is returned and the robot moves. Here for graphical reason I will draw an empty state-action matrix, but imagine that the values inside the table have been initialised randomly sampling real numbers in the range [0,1]. 
 
 
 ![Reinforcement Learning Actor-Critic Robot example overview]({{site.baseurl}}/images/reinforcement_learning_model_free_active_actor_critic_robot_actor_critic.png){:class="img-responsive"}
@@ -126,11 +131,11 @@ In the episode considered here the robot starts in the bottom-left corner at sta
 
 ![Reinforcement Learning Actor-Critic Robot example critic]({{site.baseurl}}/images/reinforcement_learning_model_free_active_actor_critic_robot_first_episode.png){:class="img-responsive"}
 
-The first thing do is to decide an action. A query to the state-action table (actor) allows returning the action vector for the current state which in our case is `[0.48, 0.08, 0.15, 0.37]`. The action vector is passed to the softmax function which returns a probability distribution `[0.30, 0.20, 0.22, 0.27]`. Sampling from the distribution returns UP. 
+The first thing do is to take action. A query to the state-action table (actor) allows returning the action vector for the current state which in our case is `[0.48, 0.08, 0.15, 0.37]`. The action vector is passed to the softmax function which returns a probability distribution `[0.30, 0.20, 0.22, 0.27]`. Sampling from the distribution using the Numpy method `np.random.choice()` returns UP. 
 
 ![Reinforcement Learning Actor-Critic Robot example actor]({{site.baseurl}}/images/reinforcement_learning_model_free_active_actor_critic_robot_actor.png){:class="img-responsive"}
 
-The [softmax function](https://en.wikipedia.org/wiki/Softmax_function) takes as input the N-dimensional action vector $$ \boldsymbol{x} $$, which may contain arbitrary real values, and returns an N-dimensional vector of real values in the range [0, 1] that add up to 1. The softmax function can be easily implemented in Python:
+Here the [softmax function](https://en.wikipedia.org/wiki/Softmax_function) took as input the N-dimensional action vector $$ \boldsymbol{x} $$ and returned an N-dimensional vector of real values in the range [0, 1] that add up to 1. The softmax function can be easily implemented in Python:
 
 ```python
 def softmax(x):
@@ -142,7 +147,7 @@ def softmax(x):
     return np.exp(x - np.max(x)) / np.sum(np.exp(x - np.max(x)))
 ```
 
-After the action a new state is reached and a reward is available (-0.04). It is time for the critic to update the state value and to estimate the error $$ \delta $$. Here I used the following parameters: $$ \alpha=0.1 $$, $$ \beta=1.0 $$ and $$ \gamma=0.9 $$. Applying the update rule (see  previous section) we obtain the new value for the state (1,1): `0.0 + 0.1[-0.04 + 0.9(0.0) - 0.0] = -0.004`. At the same time it is possible to calculate the error $$ \delta $$ as follow:  `-0.04 + 0.9(0.0) - 0.0 = -0.04`
+After the action a new state is reached and a reward is available (-0.04). It is time for the critic to update the state value and to estimate the error $$ \delta $$. Here I used the following parameters: $$ \alpha=0.1 $$, $$ \beta=1.0 $$ and $$ \gamma=0.9 $$. Applying the update rule (step 3 of the algorithm) we obtain the new value for the state (1,1): `0.0 + 0.1[-0.04 + 0.9(0.0) - 0.0] = -0.004`. At the same time it is possible to calculate the error $$ \delta $$ as follow:  `-0.04 + 0.9(0.0) - 0.0 = -0.04`
 
 ![Reinforcement Learning Actor-Critic Robot example critic]({{site.baseurl}}/images/reinforcement_learning_model_free_active_actor_critic_robot_critic.png){:class="img-responsive"}
 
@@ -197,7 +202,7 @@ def update_actor(state_action_matrix, observation, action,
     return state_action_matrix 
 ```
 
-The two functions are used in the main loop. The exploring start assumption is kept in order to guarantee uniform exploration. The `beta_matrix` parameter is not used here it can be easily enabled.
+The two functions are used in the main loop. The exploring start assumption is kept in order to guarantee uniform exploration. The `beta_matrix` parameter is not used here but it can be easily enabled.
 
 ```python
 for epoch in range(tot_epoch):
@@ -252,28 +257,26 @@ Comparing the result obtained with AC and the one obtained with dynamic programm
 
 ![Reinforcement Learning Dynamic Programming VS Actor-Critic]({{site.baseurl}}/images/reinforcement_learning_utility_estimation_dp_vs_ac.png){:class="img-responsive"}
 
-Similarly to the estimation of TD(0) in the [third post](https://mpatacchiola.github.io/blog/2017/01/29/dissecting-reinforcement-learning-3.html) the value for the two terminal states are zero. This is the consequence of the fact that we cannot estimate the update value for a terminal state, because after a terminal state there is not another state. As discussed in the [third post](https://mpatacchiola.github.io/blog/2017/01/29/dissecting-reinforcement-learning-3.html) this is not a big issue and does not affect the convergence in any significant way. From a practical point of view the results obtained with the AC algorithm can be unstable because of the higher number of hyper-parameter to tune, however the flexibility of the paradigm can often balance this drawback. 
+Similarly to the estimation of TD(0) in the [third post](https://mpatacchiola.github.io/blog/2017/01/29/dissecting-reinforcement-learning-3.html) the value for the two terminal states are zero. This is the consequence of the fact that we cannot estimate the update value for a terminal state, because after a terminal state there is not another state. As discussed in the [third post](https://mpatacchiola.github.io/blog/2017/01/29/dissecting-reinforcement-learning-3.html) this is not a big issue and does not affect the convergence in any significant way. From a practical point of view the results obtained with the AC algorithm can be unstable because there are more hyper-parameter to tune, however the flexibility of the paradigm can often balance this drawback. 
  
 
 Actor-only and Critic-only methods
 -------------------------------
 
-In the article ["Reinforcement Learning in a Nutshell"](http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.69.9557&rep=rep1&type=pdf) the different techniques I introduced until now are divided in three categories: AC methods, Critic-only, Actor-only. Here I will follow a similar approach to give a larger view on the techniques available out here.
-Until now I always talked about utility function and policy. In dynamic programming these two entities collapsed in the value iteration and the policy iteration algorithms (see [first post](https://mpatacchiola.github.io/blog/2016/12/09/dissecting-reinforcement-learning.html)). However both of them are based on the utility estimation which allows convergence thanks to Generalised Policy Iteration (GPI) mechanism (see [second post](https://mpatacchiola.github.io/blog/2017/01/15/dissecting-reinforcement-learning-2.html)). In fact also in TD learning we are always relying on the utility estimation (see [third post](https://mpatacchiola.github.io/blog/2017/01/29/dissecting-reinforcement-learning-3.html)) even when the emphasis is on the policy (SARSA and Q-learning). All these methods can be broadly grouped in a category called **Critic-only**. Critic-only methods always build a policy on top of a utility function and as I said the utility function is the critic in an AC framework.
+In the [Sutton and Barto's book](https://webdocs.cs.ualberta.ca/~sutton/book/ebook/the-book.html) AC methods are considered part of TD methods. That makes sense, because the critic is an implementation of the TD(0) algorithm. However in the article ["Reinforcement Learning in a Nutshell"](http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.69.9557&rep=rep1&type=pdf) AC methods are considered as a meta-category which can be used to assign all the techniques I introduced until now to three groups: AC methods, Critic-only, Actor-only. Here I will follow a similar approach to give a wider view on what is available out there.
+In this post I introduced a possible architecture for an AC algorithm. In AC methods the actor and the critic are represented explicitly and trained separately, but **is it possible to use only the actor or only the critic?**
+In the previous posts I always wrote about utility function and policy. In dynamic programming these two entities collapsed in the value iteration and the policy iteration algorithms (see [first post](https://mpatacchiola.github.io/blog/2016/12/09/dissecting-reinforcement-learning.html)). However both of them are based on the utility estimation which allows the policy to converge thanks to the Generalised Policy Iteration (GPI) mechanism (see [second post](https://mpatacchiola.github.io/blog/2017/01/15/dissecting-reinforcement-learning-2.html)). In fact also in TD learning we are always relying on the utility estimation (see [third post](https://mpatacchiola.github.io/blog/2017/01/29/dissecting-reinforcement-learning-3.html)) even when the emphasis is on the policy (SARSA and Q-learning). All these methods can be broadly grouped in a category called **Critic-only**. Critic-only methods always build a policy on top of a utility function and as I said the utility function is the critic in the AC framework.
 
 ![Reinforcement Learning Scheme comparison Actor-Critic Actor-Only Critic-Only]({{site.baseurl}}/images/reinforcement_learning_model_free_active_actor_critic_scheme_actor_only_critic_only.png){:class="img-responsive"}
 
 
-What if we search for an optimal policy without using a utility function? Is that possible? The answer is yes. We can search directly in policy space using an approach called **Actor-only**. 
-
-A class of algorithms called [REINFORCE](http://link.springer.com/article/10.1007/BF00992696)
-
-Since to understand REINFORCE it is necessary to know gradient descent and generalisation thorugh neural networks (which I will cover later in this series) I would like to focus on another kind of Actor-only techniques which are called [evolutionary algorithms](https://en.wikipedia.org/wiki/Evolutionary_algorithm). The *evolutionary algorithm* label can be applied to a wide range of techniques, but in reinforcement learning are often used [genetic algorithms (GA)](https://en.wikipedia.org/wiki/Genetic_algorithm). Using GA means to represent each policy as a possible solution to the agent problem. Imagine to have 10 cleaning robots working in parallel, each one using a different (random initialised policy). After 100 episodes we can have an estimation of how good the policy of each single robot is. We can keep the best robots and randomly mutate their policies in order to generate new ones. After some generations the evolution selects the best policies and among them we can (probably) find the optimal one. During my career as researcher at the [Laboratory of Autonomous Robotics and Artificial Life (LARAL)](http://laral.istc.cnr.it/) I used evolutionary algorithms and in particular GA in [evolutionary robotics](https://en.wikipedia.org/wiki/Evolutionary_robotics) to investigate the [decision making strategies of simulated robots](http://www.sciencedirect.com/science/article/pii/S0376635715000595) moving in different ecologies. For this reason I would like to spend more words on this topic in the next post.
+What if we search for an optimal policy without using a utility function? Is that possible? The answer is yes. We can search directly in policy space using an **Actor-only** approach. A class of algorithms called [REINFORCE](http://link.springer.com/article/10.1007/BF00992696) (REward Increment = Nonnegative Factor x Offset Reinforcement x Characteristic Eligibility) can be considered part of the Actor-only group. REINFORCE measures the correlation between the local behaviour and the global performance of the agent and updates the weights of a neural network. Since to understand REINFORCE it is necessary to know gradient descent and generalisation through neural networks (which I will cover later in this series) I would like to focus on another kind of Actor-only techniques which are called [evolutionary algorithms](https://en.wikipedia.org/wiki/Evolutionary_algorithm). The *evolutionary algorithm* label can be applied to a wide range of techniques, but in reinforcement learning are often used [genetic algorithms](https://en.wikipedia.org/wiki/Genetic_algorithm). Using genetic algorithms means to represent each policy as a possible solution to the agent problem. Imagine to have 10 cleaning robots working in parallel, each one using a different (random initialised policy). After 100 episodes we can have an estimation of how good the policy of each single robot is. We can keep the best robots and randomly mutate their policies in order to generate new ones. After some generations the evolution selects the best policies and among them we can (probably) find the optimal one. In classic reinforcement learning textbooks the genetic algorithms are not covered. During my career as researcher at the [Laboratory of Autonomous Robotics and Artificial Life (LARAL)](http://laral.istc.cnr.it/) I used genetic algorithms in [evolutionary robotics](https://en.wikipedia.org/wiki/Evolutionary_robotics) to investigate the [decision making strategies of simulated robots](http://www.sciencedirect.com/science/article/pii/S0376635715000595) moving in different ecologies. To give a contribution in this sense, I will spend more words on genetic algorithms in the next post.
 
 
 Conclusions
 -----------
-
+Starting from the neurobiology of the mammalian brain I introduced AC methods, a class of reinforcement learning algorithms which is widely used by the research community. The neuronal AC model can describe phenomena like Pavlovian learning and drug addiction, whereas its computational counterpart can be easily applied in robotics and machine learning. The Python implementation is straightforward and is based on the TD(0) algorithm introduced in the [third post](https://mpatacchiola.github.io/blog/2017/01/29/dissecting-reinforcement-learning-3.html). Considering the TD(0) algorithm as part of the AC scheme, could lead us to the conclusion that AC methods are a TD variation. However we can turn it around and consider the AC methods as the largest category and TD methods as a sub-part. From this point of view I categorised TD algorithms as Critic-only methods and techniques such as REINFORCE and genetic algorithm as Actor-only methods.
+In the **next post** I will focus on **genetic algorithms**, a method which allows searching directly in the policy space without the need of a utility function.
 
 
 Index
@@ -282,6 +285,7 @@ Index
 1. [[First Post]](https://mpatacchiola.github.io/blog/2016/12/09/dissecting-reinforcement-learning.html) Markov Decision Process, Bellman Equation, Value iteration and Policy Iteration algorithms.
 2. [[Second Post]](https://mpatacchiola.github.io/blog/2017/01/15/dissecting-reinforcement-learning-2.html) Monte Carlo Intuition, Monte Carlo methods, Prediction and Control, Generalised Policy Iteration, Q-function. 
 3. [[Third Post]](https://mpatacchiola.github.io/blog/2017/01/29/dissecting-reinforcement-learning-3.html) Temporal Differencing intuition, Animal Learning, TD(0), TD(λ) and Eligibility Traces, SARSA, Q-learning.
+4. **[Fourth Post]** Neurobiology behind Actor-Critic methods, computational Actor-Critic methods, Actor-only and Critic-only methods.
 
 Resources
 ----------
@@ -292,10 +296,12 @@ Resources
 
 - **Reinforcement learning: An introduction (second edition).** Sutton, R. S., & Barto, A. G. (in progress). [[pdf]](https://webdocs.cs.ualberta.ca/~sutton/book/bookdraft2016sep.pdf)
 
-- **Evolutionary algorithms for reinforcement learning.** Moriarty, D. E., Schultz, A. C., & Grefenstette, J. J. (1999). [[pdf]](https://www.jair.org/media/613/live-613-1809-jair.pdf)
+- **Reinforcement Learning in a Nutshell.** Heidrich-Meisner, V., Lauer, M., Igel, C., & Riedmiller, M. A. (2007) [[pdf]](http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.69.9557&rep=rep1&type=pdf)
 
 References
 ------------
+
+Barto, A. G., Sutton, R. S., & Anderson, C. W. (1983). Neuronlike adaptive elements that can solve difficult learning control problems. IEEE transactions on systems, man, and cybernetics, (5), 834-846.
 
 Heidrich-Meisner, V., Lauer, M., Igel, C., & Riedmiller, M. A. (2007, April). Reinforcement learning in a nutshell. In ESANN (pp. 277-288).
 
@@ -306,4 +312,6 @@ Takahashi, Y., Roesch, M. R., Stalnaker, T. A., & Schoenbaum, G. (2007). Cocaine
 Takahashi, Y., Schoenbaum, G., & Niv, Y. (2008). Silencing the critics: understanding the effects of cocaine sensitization on dorsolateral and ventral striatum in the context of an actor/critic model. Frontiers in neuroscience, 2, 14.
 
 Williams, R. J. (1992). Simple statistical gradient-following algorithms for connectionist reinforcement learning. Machine learning, 8(3-4), 229-256.
+
+Witten, I. H. (1977). An adaptive optimal controller for discrete-time Markov environments. Information and control, 34(4), 286-295.
 
