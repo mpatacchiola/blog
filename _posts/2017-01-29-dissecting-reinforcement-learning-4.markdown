@@ -4,8 +4,8 @@ title:  "Dissecting Reinforcement Learning-Part.4"
 date:   2017-01-29 07:00:00 +0000
 description: This blog series explains the main ideas and techniques used in reinforcement learning. In this post Actor-Critic methods, Neurobiology behind Actor-Critic methods, animal learning, Actor-only and Critic-only methods. It includes complete Python code.
 author: Massimiliano Patacchiola
-comments: false
-published: false
+comments: true
+published: true
 ---
 
 Here we are, the fourth episode of the "Dissecting Reinforcement Learning" series. In this post I will introduce another group of techniques widely used in reinforcement learning: **Actor-Critic (AC) methods**. I often define AC as a **meta-technique** which uses the methods introduced in the previous posts in order to learn.
