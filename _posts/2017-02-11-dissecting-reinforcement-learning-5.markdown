@@ -13,42 +13,61 @@ Following this train of thoughts Sutton and Barto did not included GAs in the [h
 
 ![Books Genetic Algorithms]({{site.baseurl}}/images/books_genetic_algorithms_in_search_an_introduction_to_ga.png){:class="img-responsive"}
 
-After my graduation I was fascinated by GAs. During that period I started a placement of one year at the [Laboratory of Autonomous Robotics and Artificial Life](http://laral.istc.cnr.it/), where I applied GAs to autonomous [e-puck robots](http://www.e-puck.org/) with the goal of investigating the emergence of complex behaviours from simple interactions. Take a bunch of simple organism controlled by a rudimentary neural network, then let them evolve in the same environment. What is going to happen? In most of the cases nothing special. The worst robots wonder around without goals, whereas the best individuals are extremely selfish. In some cases however it is possible to observe a group behaviour. The robots start to cooperate because they notice that it leads to an higher reward.  Complex behaviours arise through the interaction of simple entities. This is called [Emergence](https://en.wikipedia.org/wiki/Emergence) and it is a well know phenomenon in evolutionary robotics and [swarm robotics](https://en.wikipedia.org/wiki/Swarm_robotics).
+After my graduation I was fascinated by GAs. During that period I started a placement of one year at the [Laboratory of Autonomous Robotics and Artificial Life](http://laral.istc.cnr.it/), where I applied GAs to autonomous robots with the goal of investigating the emergence of complex behaviours from simple interactions. Take a bunch of simple organism controlled by a rudimentary neural network, then let them evolve in the same environment. What is going to happen? In most of the cases nothing special. The worst robots wonder around without goals, whereas the best individuals are extremely selfish. In some cases however it is possible to observe a group behaviour. The robots start to cooperate because they notice that it leads to an higher reward.  Complex behaviours arise through the interaction of simple entities. This is called [Emergence](https://en.wikipedia.org/wiki/Emergence) and it is a well know phenomenon in evolutionary robotics and [swarm robotics](https://en.wikipedia.org/wiki/Swarm_robotics).
 
 
 ![Genetic Algorithms in Evolutionary robotics]({{site.baseurl}}/images/reinforcement_learning_actor_only_genetic_algorithms_evolutionary_robotics.png){:class="img-responsive"}
 
 In the same period I was studying the **decision making** strategies of single robots in [intertemporal choice](https://en.wikipedia.org/wiki/Intertemporal_choice) tasks.
 Intertemporal choices concern options that can be obtained at different points in time: buying a luxury item today or saving the money to ensure a sizable pension in the future.
-In a **first phase** the neural networks controlling the robots were evolved following an evolutionary strategy. The environment could be rich of energetic tokens (green) or it can contains only few of those. In a **second phase** called the **test phase**, the robots had to choose between two tokens, one highly energetic and the other slightly energetic. The tokens are initialised at the same distance from the robot and then one of those is moved far away.
+In those experiments I used simulated [e-puck robots](http://www.e-puck.org/) which were controlled by a simple neural network [see Figures (a) and (b)]. The sensors of the robot can localise the presence of two tokens: green and red. As you can see in figure (c) the sensors return a stronger signal when the token is close to the robot. The sensor signal is the input to the network, whereas the output is the speed of the two wheels of the robot.
+In a **first phase** the neural networks controlling the robots were evolved following an evolutionary strategy. The environment could be rich of energetic tokens (green) or it can contains only few of those. In a **second phase** called the **test phase**, the robots had to choose between two tokens, one highly energetic and the other slightly energetic. The tokens are initialised at the same distance from the robot  and then one of those is moved far away.
 When the tokens were at the same distance from the robot it chose the highly energetic token. However moving the highly energetic token far away increased the preference for the less energetic one. This behaviour has been observed in many animals and especially in rats.
-If you are interested in this topic you can find more in the article I published with my colleagues ["Investigating intertemporal choice through experimental evolutionary robotics"](http://www.sciencedirect.com/science/article/pii/S0376635715000595).
+If you are interested in this topic you can find more in the article I published with my colleagues: ["Investigating intertemporal choice through experimental evolutionary robotics"](http://www.sciencedirect.com/science/article/pii/S0376635715000595). This is one of the practical applications of evolutionary algorithms.
 
 I will start this post with an intuitive introduction which should help the reader who does not have familiarity with evolutionary methods. After the introduction I will dissect the main concepts behind GAs and we will give a look to some Python code. I will introduce many new terms because GAs have a slang which is different from the one used in reinforcement learning.
 
-[This is from Chapter I of Sutton. "Nevertheless, what we mean by reinforcement learning involves learning while interacting with the environment, which evolutionary methods do not do. It is our belief that methods able to take advantage of the details of individual behavioral interactions can be much more efficient than evolutionary methods in many cases. Evolutionary methods ignore much of the useful structure of the reinforcement learning problem: they do not use the fact that the policy they are searching for is a function from states to actions; they do not notice which states an individual passes through during its lifetime, or which actions it selects. In some cases this information can be misleading (e.g., when states are misperceived), but more often it should enable more efficient search. Although evolution and learning share many features and can naturally work together, as they do in nature, we do not consider evolutionary methods by themselves to be especially well suited to reinforcement learning problems. For simplicity, in this book when we use the term "reinforcement learning" we do not include evolutionary methods."]
 
-Genetic Algorithms (and birds)
+Evolutionary Algorithms (and birds)
 ----------------------------------------
-The 27th of December 1831 the ship HMS Beagle sailed from [Plymouth](https://en.wikipedia.org/wiki/Plymouth) in England. Onboard there was [Charles Darwin](https://en.wikipedia.org/wiki/Charles_Darwin), the father of the theory of natural selection. The expedition was planned to last only two years, but it lasted for five. The Beagle visited Brasil, Patagonia, Strait of Magellan, Chile, Galapagos, etc. During the travel Darwin took notes about biology, geology and antropology of those places. Later on he will publish those notes in a book called ["The voyage of the Beagle"](https://en.wikipedia.org/wiki/The_Voyage_of_the_Beagle). What did Darwin discover during the travel? 
+The 27th of December 1831 the ship HMS Beagle sailed from [Plymouth](https://en.wikipedia.org/wiki/Plymouth) in England. Onboard there was [Charles Darwin](https://en.wikipedia.org/wiki/Charles_Darwin), the father of the theory of natural selection. The expedition was planned to last only two years, but it lasted for five. The Beagle visited Brasil, Patagonia, Strait of Magellan, Chile, Galapagos, etc. During the travel Darwin took notes about biology, geology and antropology of those places. Later on he will publish those notes in a book called ["The voyage of the Beagle"](https://en.wikipedia.org/wiki/The_Voyage_of_the_Beagle). What did Darwin discovers during the travel? 
 
 
 ![Genetic Algorithms Darwin Finches]({{site.baseurl}}/images/reinforcement_learning_actor_only_genetic_algorithms_darwin_finches.png){:class="img-responsive"}
 
 When visiting the Galapagos Darwin noticed the presence of some birds that appear to have evolved from a single ancestral flock.
-Those birds shared common features but they were characterised by a remarkable diversity in beak form and function. Darwin hypothesised that the isolation of each species in a different small island was the cause of this high differentiation. In particular the shape of the beak evolved in accordance with the food availability on the island. Species with strong beak could eat hard seeds, whereas species with small beak preferred insects.
+Those birds shared common features but they were characterised by a remarkable diversity in beak form and function. Darwin hypothesised that the isolation of each species in a different small island was the cause of this high differentiation. In particular the shape of the beak evolved in accordance with the food availability on that island. Species with strong beak could eat hard seeds, whereas species with small beak preferred insects.
 
-- **Geospiza magnirostris**: large size flock which can eat hard seeds.
-- **Geospiza fortis**: medium size flock which prefer small and soft seeds.
-- **Geospiza parvula**: small size flock which prefer medium size insects.
-- **Geospiza olivaces**: small size flock which prefer to eat small insects.
+- **Geospiza magnirostris**: large size bird which can eat hard seeds.
+- **Geospiza fortis**: medium size bird which prefer small and soft seeds.
+- **Geospiza parvula**: small size bird which prefer medium size insects.
+- **Geospiza olivacea**: small size bird which prefer to eat small insects.
 
-Gradually Darwin found more and more proofs to this hypothesis and he eventually came out with the [theory of natural selection](https://en.wikipedia.org/wiki/Natural_selection). Today we call the Galapagos birds the [Darwin's_finches](https://en.wikipedia.org/wiki/Darwin's_finches).  
-The Galapagos birds are so isolated that it is possible to observe rapid evolution in a few generations when the environment change. 
-For example, the Geospiza fortis generally prefer soft seeds. However in the Seventies a severe drought reduced the supply of seeds. This finch was forced to turn to harder seeds which led in two generations to a 10% change in the size of the beak.
+Gradually Darwin found more and more proofs to this hypothesis and he eventually came out with the [theory of natural selection](https://en.wikipedia.org/wiki/Natural_selection). Today we call the Galapagos birds the [Darwin's_finches](https://en.wikipedia.org/wiki/Darwin's_finches). These birds are so isolated that it is possible to observe rapid evolution in a few generations when the environment change. For example, the Geospiza fortis generally prefer soft seeds. However in the Seventies a severe drought reduced the supply of seeds. This finch was forced to turn to harder seeds which led in two generations to a 10% change in the size of the beak. What's going on here? How can a population change so rapidly? **How natural selection operates?** 
+
+![Evolutionary algorithms Intuition]({{site.baseurl}}/images/reinforcement_learning_actor_only_evolutionary_algorithms_intuition_drawing.png){:class="img-responsive"}
+
+In the general population the individuals are the results of the **crossover** between two parents. The crossover is a form of **recombination** of the parents' genetic material. In isolated population redundancy of genetic material brings to very similar individuals. However it can happen that a random **mutation** modifies the newborn's genome generating organisms which carry on a new characteristic. For instance, in the Darwin's finches it was a stronger beak. The mutation can bring an advantage for the subject, leading to a longer life and an higher probability of **reproduction**. On the other hand if the mutation does not carry any advantage it is discarded during the selection.
+That's it. Evolution selects individuals with the variations best suited to a specific environment. In this sense evolution is not "the strongest survives" but "the best suited survives".
+
+Evolutionary algorithms uses operators inspired by natural selection (reproduction, mutation, recombination, and selection). They are optimisers, meaning that they search for solutions to a problem directly in the solution space. The candidate solutions are single individuals like the Galapagos birds. In the standard approach a sequence of steps is used in order to evaluate and selects the best solutions:
+
+1. **Fitness function:** it evaluates the performance of each candidate 
+2. **Selection:** it chooses the best individuals based on their fitness score
+3. **Recombination:** it replicates and recombines the individuals
+
+Evolutionary algorithms are part of a broader class called [evolutionary computation](https://en.wikipedia.org/wiki/Evolutionary_computation). The generic label *"evolutionary algorithm"* applies to many techniques, which differ in representation and implementation details. Here I will focus only on **genetic algorithms**, however you should be aware that there are many variations out there.
+
+![Evolutionary algorithms Diagram]({{site.baseurl}}/images/reinforcement_learning_actor_only_evolutionary_algorithms_diagram.png){:class="img-responsive"}
+
+In the next section I will introduce GAs which can be considered a special type of evolutionary algorithms. The metaphor used by GAs is the one of DNA, genotype, genes, etc. I will describe all these new words and I will compare them to the reinforcement learning terminology we encounter in the past episodes.
 
 
+Genetic Algorithms
+-------------------
 
+Genetic Algorithms in Python
+-----------------------------
 
 Conclusions
 -----------
