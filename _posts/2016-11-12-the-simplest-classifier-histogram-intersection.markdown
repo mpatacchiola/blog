@@ -110,7 +110,7 @@ comparison_array = my_classifier.returnHistogramComparisonArray(image, method="i
 The method `returnHistogramComparisonArray()` returns a **numpy array** which contains the result of the intersection between the image and the models. In this function it is possible to specify the comparison method, `intersection` refers to the method we discussed in this article. Other available methods are `correlation` ([Pearson Correlation Coefficient](https://en.wikipedia.org/wiki/Pearson_product-moment_correlation_coefficient)), `chisqr` ([Chi-Square](https://en.wikipedia.org/wiki/Chi-squared_test)) and `bhattacharyya` which is an implementation of the [Bhattacharyya distance measure](https://en.wikipedia.org/wiki/Bhattacharyya_distance). The following table shows the **distance value returned by each method** in case of exact match, half match and mismatch of the two histograms:
 
 {% include add_table_line.html type="style" %}
-{% assign array = "HISTOGRAMS,CORRELATION,CHI SQUARE,INTERSECTION,NHATTACHARYYA" | split: "," %}
+{% assign array = "HISTOGRAMS,CORRELATION,CHI SQUARE,INTERSECTION,BHATTACHARYYA" | split: "," %}
 {% assign k = "header" %}
 {% include add_table_line.html type="header" values=array %}
 {% assign array = "Exact Match,1.0,0.0,1.0,0.0" | split: "," %}
@@ -142,7 +142,7 @@ Now we can say that **the second model has a probability of *35.6%* of being the
 
 ![image-title-here]({{site.baseurl}}/images/batman_histogram_intersection.png){:class="img-responsive"}
 
-With Batman was easy to get an high confidence value because the Batman's multicolor fingerprint is pretty distinctive. Let's test the classifier on something more complicated. I gave as model a frontal image of Ironman with the helmet on. For the test I used an image where Ironman was turned on the right and did not have the helmet. I called the `returnHistogramComparisonArray()` and normalised the output, then with matplotlib I generated a bar chart:
+With Batman was easy to get an high confidence value because Batman's multicolor fingerprint is pretty distinctive. Let's test the classifier on something more complicated. I gave as model a frontal image of Ironman with the helmet on. For the test I used an image where Ironman was turned on the right and did not have the helmet. I called the `returnHistogramComparisonArray()` and normalised the output, then with matplotlib I generated a bar chart:
 
 ![image-title-here]({{site.baseurl}}/images/ironman_b_histogram_intersection.png){:class="img-responsive"}
 
