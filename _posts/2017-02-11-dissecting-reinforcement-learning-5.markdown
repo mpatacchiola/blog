@@ -2,7 +2,7 @@
 layout: post
 title:  "Dissecting Reinforcement Learning-Part.5"
 date:   2017-02-11 10:00:00 +0000
-description: This blog series explains the main ideas and techniques used in reinforcement learning. In this post Evolutionary aglorithms intuition and classification, Genetic Algorithm for policy estimation. It includes complete Python code.
+description: This blog series explains the main ideas and techniques used in reinforcement learning. In this post Evolutionary aglorithms intuition and classification, Genetic Algorithms operators, Genetic Algorithm in reinforcement learning, Genetic Algorithms for policy estimation. It includes complete Python code.
 author: Massimiliano Patacchiola
 comments: false
 published: false
@@ -47,7 +47,7 @@ Gradually Darwin found more and more proofs to this hypothesis and he eventually
 
 ![Evolutionary algorithms Intuition]({{site.baseurl}}/images/reinforcement_learning_actor_only_evolutionary_algorithms_intuition_drawing.png){:class="img-responsive"}
 
-In the general population the individuals are the results of the **crossover** between two parents. The crossover is a form of **recombination** of the parents' genetic material. In isolated population redundancy of genetic material brings to very similar individuals. However it can happen that a random **mutation** modifies the newborn's genome generating organisms which carry on a new characteristic. For instance, in the Darwin's finches it was a stronger beak. The mutation can bring an advantage for the subject, leading to a longer life and an higher probability of **reproduction**. On the other hand if the mutation does not carry any advantage it is discarded during the selection.
+In the general population the individuals are the results of the **crossover** between two parents. The crossover is a form of **recombination** of the parents' genetic material. In isolated population redundancy of genetic material brings to very similar individuals. However it can happen that a random **mutation** modifies the newborn's genotype generating organisms which carry on a new characteristic. For instance, in the Darwin's finches it was a stronger beak. The mutation can bring an advantage for the subject, leading to a longer life and an higher probability of **reproduction**. On the other hand if the mutation does not carry any advantage it is discarded during the selection.
 That's it. Evolution selects individuals with the variations best suited to a specific environment. In this sense evolution is not "the strongest survives" but "the best suited survives".
 
 ![Evolutionary algorithms Operators Intuition]({{site.baseurl}}/images/reinforcement_learning_actor_only_evolutionary_algorithms_intuition_operators_drawing.png){:class="img-responsive"}
@@ -69,12 +69,37 @@ In the next section I will introduce GAs which can be considered a special type 
 Genetic Algorithms
 -------------------
 
-In the last section we saw how evolutionary algorithms works. In this section I will go deeper explaining how GAs work. As the name suggests GAs deals with genes. The generic metaphor of the selection continue to works here but it is applied to genetic material. The idea is to describe each individual of the population with a specific **genome** which is used to express the individual's features. The genome is usually represented by **1-D array** where each value describes a property or a behaviour. 
+In the last section we saw how evolutionary algorithms works. In this section I will go deeper explaining how GAs work. As the name suggests GAs deals with genes. The metaphor of the selection continue to works here but it is applied to genetic material. The idea is to describe each individual of the population with a specific **genotype** (or chromosome) which is used to express the individual's features. The genotype is usually represented by **1-D array** where each value (sometimes called gene) describes a property or a behaviour. To start with something easy to grasp imagine that we want to select
+
+
+
+**Selection:** the selection operator is the core of GAs. Selection is a way to reduce the number of possible solutions choosing the one that led to better results. After fitness evaluation it is possible to order the chromosomes from best to worst. This list is then used by the selection mechanism. There are different types of selection. **Truncated selection** is the simplest form of selection. Only a fraction of the total number of chromosomes is selected, everything else is rejected. 
+
+![Genetic Algorithms Selection]({{site.baseurl}}/images/reinforcement_learning_actor_only_genetic_algorithms_operator_selection.png){:class="img-responsive"}
+
+A more sophisticated form of selection is called **roulette wheel**. To each chromosomes is given a weight and this weight corresponds to a portion of a roulette wheel. Chromosomes with higher fitness will have higher weight and a larger portion of the wheel. Spinning the wheel for different times allows selecting the individuals for the next generation. The roulette wheel is nothing more than a weighted sort mechanism. You must notice that using the roulette wheel the same chromosome can be sorted multiple times and the probability of its presence in the next generation is higher. 
+
+**Mutation**: this operator is used in order to avoid uniformity in the population. The mutation randomly changes one (or more) genes of the genotype. The mutation allows to avoid local minima in the search space, randomly changing the existing solutions. The simplest version of the mutation is called **point mutation** and is similar to the [biological](https://en.wikipedia.org/wiki/Point_mutation) mechanism that operates on DNA.
+
+![Genetic Algorithms Single Point Mutation]({{site.baseurl}}/images/reinforcement_learning_actor_only_genetic_algorithms_single_point_mutation.png){:class="img-responsive"}
+
+
+The probability of a mutation is generally described by a **mutation rate** which must be carefully selected. An high mutation rate can lead to the lost of the best individuals. Whereas a low mutation rate leads to genotypes uniformity.
+
+**Crossover**: this operator is similar to the [biological](https://en.wikipedia.org/wiki/Chromosomal_crossover) counterpart and it is used to recombine the genotype of the parents to generate offspring who have mixed features. The simplest form of crossover is called single-point. Given the two parents' genotypes and a random cutting point, the single-point crossover literally cross the two portions when generating two children.
+
+![Genetic Algorithms Single Point Crossover]({{site.baseurl}}/images/reinforcement_learning_actor_only_genetic_algorithms_single_point_crossover.png){:class="img-responsive"}
+
+Another version of the crossover is called multi-point crossover. The multi-point crossover selects multiple cutting points and recombines those parts in the children's genotype.
+
+![Genetic Algorithms Multi Point Crossover]({{site.baseurl}}/images/reinforcement_learning_actor_only_genetic_algorithms_multi_point_crossover.png){:class="img-responsive"}
+
+There are other crossover solutions that involve multiple parents, however here we will focus only on the single and multi-point versions.
 
 GAs in reinforcement learning
 -----------------------------
-As I stated in the previous sections GAs can be used for **policy estimation** in reinforcement learning. The 1-D genome is a representation of the state-action function Q. For instance, in terms of our usual cleaning robot example we can represent the **genome** as the unrolled **state-action matrix**. 
-Each value in the genome array represent the action taken in that state. A population of robots will have random initilaised genomes, meaning that the behaviour of each robot will be different. 
+As I stated in the previous sections GAs can be used for **policy estimation** in reinforcement learning. The 1-D genotype is a representation of the state-action function Q. For instance, in terms of our usual cleaning robot example we can represent the **genotype** as the unrolled **state-action matrix**. 
+Each value in the genotype array represent the action taken in that state. A population of robots will have random initilaised genotypes, meaning that the behaviour of each robot will be different. 
 
 
 Python implementation
@@ -83,6 +108,10 @@ Python implementation
 Conclusions
 -----------
 
+Acknowledgments
+---------------
+
+The e-puck picture is taken from the cyberbotics website [here](https://www.cyberbotics.com/features)
 
 
 Index
@@ -98,6 +127,8 @@ Resources
 ----------
 
 - The **complete code** for the Genetic Algorithm examples is available on the [dissecting-reinforcement-learning](https://github.com/mpatacchiola/dissecting-reinforcement-learning) official repository on GitHub.
+
+- List of genetic algorithm **applications** [wiki](https://en.wikipedia.org/wiki/List_of_genetic_algorithm_applications)
 
 - **Reinforcement learning: An introduction.** Sutton, R. S., & Barto, A. G. (1998). Cambridge: MIT press. [[html]](https://webdocs.cs.ualberta.ca/~sutton/book/ebook/the-book.html)
 
