@@ -1,11 +1,11 @@
 ---
 layout: post
 title:  "Dissecting Reinforcement Learning-Part.5"
-date:   2017-02-11 10:00:00 +0000
+date:   2017-03-14 09:00:00 +0000
 description: This blog series explains the main ideas and techniques used in reinforcement learning. In this post Evolutionary aglorithms intuition and classification, Genetic Algorithms operators, Genetic Algorithm in reinforcement learning, Genetic Algorithms for policy estimation. It includes complete Python code.
 author: Massimiliano Patacchiola
-comments: false
-published: false
+comments: true
+published: true
 ---
 
 As I promised in this fifth episode of the "Dissecting Reinforcement Learning" series I will introduce **evolutionary algorithms** and in particular **Genetic Algorithms (GAs)**. If you passed through the [fourth post](https://mpatacchiola.github.io/blog/2017/02/11/dissecting-reinforcement-learning-4.html) you know that GAs can be considered Actor-only algorithms, meaning that they search directly in the policy space without the need of a utility function. GAs are often considered separate from reinforcement learning. In fact GAs do not pay attention to the underlying [markov decision process](https://mpatacchiola.github.io/blog/2016/12/09/dissecting-reinforcement-learning.html) and to the actions the agent select during its lifetime. The use of this information can enable more efficient search but in some cases can be missleading. For example when states are misperceived or partially hidden the standard reinforcement learning algorithms may have problems. In the same scenario GAs play it safe, but there is a price to pay. When the search space is large the convergence can be much slower because GAs evaluate any kind of policy.
