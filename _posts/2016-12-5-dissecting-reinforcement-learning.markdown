@@ -177,7 +177,7 @@ A representation of this world and of the Transition Model is reported below. Be
 
 ![Simple World]({{site.baseurl}}/images/reinforcement_learning_simple_world.png){:class="img-responsive"}
 
-I said that the aim of the robot is to find **the best way to reach the charging station**, but what does it mean **the beast way**? Depending on the type of reward the robot is receiving for each intermediate state we can have different optimal policies $$ \pi^{*} $$. 
+I said that the aim of the robot is to find **the best way to reach the charging station**, but what does it mean **the best way**? Depending on the type of reward the robot is receiving for each intermediate state we can have different optimal policies $$ \pi^{*} $$. 
 Let's suppose we are programming the firmware of the robot. Based on the battery level we give a different reward at each time step. The rewards for the two terminal states remain the same (charger=+1, stairs=-1). The obstacle at (2,2) is not a valid state and therefore there is no reward associated to it.
 Given these assumptions we can have four different cases:
 
