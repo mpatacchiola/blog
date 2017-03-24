@@ -205,7 +205,7 @@ The discounted rewards are not the only way we can estimate the utility, but it 
 $$ U(s) = E\bigg[ \sum_{t=0}^{\infty} \gamma^t R(s_t) \bigg] $$
 
 Let's remember that the utility is defined with respect of a policy $$ \pi $$ which for brevity I did not mention.
-Once we have the utilities how can we choose the best action for the next state? Using the **maximum expected utility** principle which says that a rational agent should choose an action that maximise it's expected utility. We are a step closer the Bellman equation. What we missed is to remember that the utility of a state $$ s $$ is correlated with the utility of its neighbours at $$ s^{'} $$, meaning: 
+Once we have the utilities how can we choose the best action for the next state? Using the **maximum expected utility** principle which says that a rational agent should choose an action that maximise its expected utility. We are a step closer to the Bellman equation. What we missed is to remember that the utility of a state $$ s $$ is correlated with the utility of its neighbours at $$ s^{'} $$, meaning: 
 
 $$ U(s) = R(s) + \gamma \underset{a}{\text{ max }}  \sum_{s^{'}}^{} T(s,a,s^{'}) U(s^{'}) $$
 
