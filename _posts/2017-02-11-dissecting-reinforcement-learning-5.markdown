@@ -9,7 +9,7 @@ published: true
 ---
 
 As I promised in this fifth episode of the "Dissecting Reinforcement Learning" series I will introduce **evolutionary algorithms** and in particular **Genetic Algorithms (GAs)**. If you passed through the [fourth post](https://mpatacchiola.github.io/blog/2017/02/11/dissecting-reinforcement-learning-4.html) you know that GAs can be considered Actor-only algorithms, meaning that they search directly in the policy space without the need of a utility function. GAs are often considered separate from reinforcement learning. In fact GAs do not pay attention to the underlying [markov decision process](https://mpatacchiola.github.io/blog/2016/12/09/dissecting-reinforcement-learning.html) and to the actions the agent select during its lifetime. The use of this information can enable more efficient search but in some cases can be missleading. For example when states are misperceived or partially hidden the standard reinforcement learning algorithms may have problems. In the same scenario GAs play it safe, but there is a price to pay. When the search space is large the convergence can be much slower because GAs evaluate any kind of policy.
-Following this train of thoughts Sutton and Barto did not include GAs in the [holy book](https://webdocs.cs.ualberta.ca/~sutton/book/ebook/the-book.html) of reinforcement learning. Our references for this post are two books. The first is *"Genetic Algorithms in Search, Optimization, and Machine Learning"* by Goldberg. The second is ["An Introduction to Genetic Algorithms"](https://mitpress.mit.edu/books/introduction-genetic-algorithms) by Melanie Mitchell. Moreover you may find useful the article ["Evolutionary Algorithms for Reinforcement Learning"](https://www.jair.org/media/613/live-613-1809-jair.pdf) which can give a rapid introduction in a few pages. 
+Following this train of thoughts Sutton and Barto did not include GAs in the [holy book](https://webdocs.cs.ualberta.ca/~sutton/book/ebook/the-book.html) of reinforcement learning. Our references for this post are two books. The first is *"Genetic Algorithms in Search, Optimization, and Machine Learning"* by Goldberg. The second is ["An Introduction to Genetic Algorithms"](https://mitpress.mit.edu/books/introduction-genetic-algorithms) by Melanie Mitchell. Moreover you may find useful the article ["Evolutionary Algorithms for Reinforcement Learning"](https://www.jair.org/media/613/live-613-1809-jair.pdf) which can give a rapid introduction in a few pages. The reader must be aware that [very recent work](https://arxiv.org/abs/1703.03864) highlighted how evolution strategies can be a valid alternative to the most advanced reinforcement learning approaches. How pointed out by [Karpathy et al. in a recent post](https://blog.openai.com/evolution-strategies/) on the OpenAI blog, evolutionary methods are highly parallelisable and when applied to neural networks they do not require the backpropagation step. In this sense evolutionary algorithms can obtain the same performance of state of the art reinforcement learning techniques with a considerable shorter training [[paper]](https://arxiv.org/abs/1703.03864).
 
 ![Books Genetic Algorithms]({{site.baseurl}}/images/books_genetic_algorithms_in_search_an_introduction_to_ga.png){:class="img-responsive"}
 
@@ -494,6 +494,8 @@ Resources
 
 - The **complete code** for the Genetic Algorithm examples is available on the [dissecting-reinforcement-learning](https://github.com/mpatacchiola/dissecting-reinforcement-learning) official repository on GitHub.
 
+- Scholarpedia **article on Neuroevolution** [[web]](http://www.scholarpedia.org/article/Neuroevolution)
+
 - Genetic algorithm **walkers simulator** [[web]](http://rednuht.org/genetic_walkers/)
 
 - Genetic algorithm **cars simulator** [[web]](http://rednuht.org/genetic_cars_2/)
@@ -504,6 +506,7 @@ Resources
 
 - **Reinforcement learning: An introduction (Chapter 1.3)** Sutton, R. S., & Barto, A. G. (1998). Cambridge: MIT press. [[html]](https://webdocs.cs.ualberta.ca/~sutton/book/ebook/the-book.html)
 
+- **Evolution Strategies as a Scalable Alternative to Reinforcement Learning** Salimans, T., Ho, J., Chen, X., & Sutskever, I. (2017). arXiv preprint arXiv:1703.03864. [[pdf]](https://arxiv.org/pdf/1703.03864.pdf)
 
 References
 ------------
@@ -515,4 +518,6 @@ Mitchell, M. (1998). An introduction to genetic algorithms. MIT press.
 Moriarty, D. E., Schultz, A. C., & Grefenstette, J. J. (1999). Evolutionary algorithms for reinforcement learning. J. Artif. Intell. Res.(JAIR), 11, 241-276.
 
 Paglieri, F., Parisi, D., Patacchiola, M., & Petrosino, G. (2015). Investigating intertemporal choice through experimental evolutionary robotics. Behavioural processes, 115, 1-18.
+
+Salimans, T., Ho, J., Chen, X., & Sutskever, I. (2017). Evolution Strategies as a Scalable Alternative to Reinforcement Learning. arXiv preprint arXiv:1703.03864.
 
