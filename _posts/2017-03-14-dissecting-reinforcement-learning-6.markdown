@@ -4,6 +4,7 @@ title:  "Dissecting Reinforcement Learning-Part.6"
 date:   2017-03-14 09:00:00 +0000
 description: This blog series explains the main ideas and techniques used in reinforcement learning. In this post Reinforcement Learning applications, Black jack, Mountain Car, Robotic Arm, Bomb Disposal Rover. It includes complete Python code.
 author: Massimiliano Patacchiola
+category: reinforcement learning
 comments: false
 published: false
 ---

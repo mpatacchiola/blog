@@ -4,6 +4,7 @@ title:  "Dissecting Reinforcement Learning-Part.3"
 date:   2017-01-29 07:00:00 +0000
 description: This blog series explains the main ideas and techniques behind reinforcement learning. In particular Temporal Difference Learning, Animal Learning, Eligibility Traces, Sarsa, Q-Learning, On-Policy and Off-Policy. It includes complete Python code.
 author: Massimiliano Patacchiola
+category: reinforcement learning
 comments: true
 published: true
 ---

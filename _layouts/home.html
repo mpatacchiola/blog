@@ -4,14 +4,28 @@ layout: default
 
 <div class="home">
 
-  <h1 class="page-heading"><b>Blog Posts</b></h1>
+  <h1 class="page-heading"><b>Reinforcement Learning</b></h1>
   
   {{ content }}
 
   <ul class="post-list">
 
     {% for post in site.posts %}
-    {% if post.published== true  %}
+    {% if post.published == true and post.category == 'reinforcement learning'  %}
+      <li><span>{{ post.date | date: "[%Y.%m.%d]" }}</span> &raquo; <a class="post-link" href="{{ post.url | relative_url}}" style="text-decoration: underline; font-size:100%; display: inline;">{{ post.title}}</a></li>
+    {% endif %}
+    {% endfor %}
+
+  </ul>
+
+  <h1 class="page-heading"><b>Computer Vision</b></h1>
+  
+  {{ content }}
+
+  <ul class="post-list">
+
+    {% for post in site.posts %}
+    {% if post.published == true and post.category == 'computer vision'  %}
       <li><span>{{ post.date | date: "[%Y.%m.%d]" }}</span> &raquo; <a class="post-link" href="{{ post.url | relative_url}}" style="text-decoration: underline; font-size:100%; display: inline;">{{ post.title}}</a></li>
     {% endif %}
     {% endfor %}

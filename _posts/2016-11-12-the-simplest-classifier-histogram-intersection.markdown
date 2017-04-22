@@ -4,6 +4,7 @@ title:  "The Simplest Classifier: Histogram Comparison"
 date:   2016-11-12 10:00:00 +0000
 description: Classification of Marvel superheroes using the histogram intersection algorithm
 author: Massimiliano Patacchiola
+category: computer vision
 comments: true
 published: true
 ---

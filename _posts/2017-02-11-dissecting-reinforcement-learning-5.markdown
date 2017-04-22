@@ -4,6 +4,7 @@ title:  "Dissecting Reinforcement Learning-Part.5"
 date:   2017-03-14 09:00:00 +0000
 description: This blog series explains the main ideas and techniques used in reinforcement learning. In this post Evolutionary aglorithms intuition and classification, Genetic Algorithms operators, Genetic Algorithm in reinforcement learning, Genetic Algorithms for policy estimation. It includes complete Python code.
 author: Massimiliano Patacchiola
+category: reinforcement learning
 comments: true
 published: true
 ---
