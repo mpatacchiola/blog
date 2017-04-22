@@ -4,7 +4,7 @@ title:  "Dissecting Reinforcement Learning-Part.2"
 date:   2017-01-15 11:00:00 +0000
 description: Explaining the basic ideas behind reinforcement learning. In particular, Monte Carlo Methods for prediction and control, Generalised Policy Iteration, Q-Function. It includes complete working code written in Python.
 author: Massimiliano Patacchiola
-category: reinforcement learning
+type: reinforcement learning
 comments: true
 published: true
 ---

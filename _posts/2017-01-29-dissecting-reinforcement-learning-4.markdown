@@ -4,7 +4,7 @@ title:  "Dissecting Reinforcement Learning-Part.4"
 date:   2017-02-11 10:00:00 +0000
 description: This blog series explains the main ideas and techniques used in reinforcement learning. In this post Actor-Critic methods, Neurobiology behind Actor-Critic methods, animal learning, Actor-only and Critic-only methods. It includes complete Python code.
 author: Massimiliano Patacchiola
-category: reinforcement learning
+type: reinforcement learning
 comments: true
 published: true
 ---

@@ -4,7 +4,7 @@ title:  "Playing the Google Chrome's dinosaur game using hand-tracking"
 date:   2016-12-1 19:00:00 +0000
 description: Using the backprojection algorithm (Python and OpenCV) it is possible to track the hand and play the Google's Dinosaur Game.
 author: Massimiliano Patacchiola
-category: computer vision
+type: computer vision
 comments: true
 published: true
 ---
