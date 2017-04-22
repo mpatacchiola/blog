@@ -11,7 +11,7 @@ layout: default
   <ul class="post-list">
 
     {% for post in site.posts %}
-    {% if post.published == true and post.category == 'reinforcement learning'  %}
+    {% if post.published == true and post.type == 'reinforcement learning'  %}
       <li><span>{{ post.date | date: "[%Y.%m.%d]" }}</span> &raquo; <a class="post-link" href="{{ post.url | relative_url}}" style="text-decoration: underline; font-size:100%; display: inline;">{{ post.title}}</a></li>
     {% endif %}
     {% endfor %}
@@ -25,7 +25,7 @@ layout: default
   <ul class="post-list">
 
     {% for post in site.posts %}
-    {% if post.published == true and post.category == 'computer vision'  %}
+    {% if post.published == true and post.type == 'computer vision'  %}
       <li><span>{{ post.date | date: "[%Y.%m.%d]" }}</span> &raquo; <a class="post-link" href="{{ post.url | relative_url}}" style="text-decoration: underline; font-size:100%; display: inline;">{{ post.title}}</a></li>
     {% endif %}
     {% endfor %}
