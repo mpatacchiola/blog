@@ -84,7 +84,10 @@ import cv2
 import numpy as np
 from deepgaze.color_classification import HistogramColorClassifier
 
-my_classifier = HistogramColorClassifier(channels=[0, 1, 2], hist_size=[128, 128, 128], hist_range=[0, 256, 0, 256, 0, 256], hist_type='BGR')
+my_classifier = HistogramColorClassifier(channels=[0, 1, 2], 
+                                         hist_size=[128, 128, 128], 
+                                         hist_range=[0, 256, 0, 256, 0, 256], 
+                                         hist_type='BGR')
 ```
 
 Now we have to load the models. You can read the image with the OpenCV function `cv2.imread()` and then load it calling the deepgaze `addModelHistogram()` function. You have to repeat this operation for all the models you want to store in the classifier. In my case I stored eight model in the following order `[Flash, Batman, Hulk, Superman, Capt. America, Wonder Woman, Iron Man, Wolverine]`. For each model I called the `addModelHistogram()` function as follow:
@@ -105,7 +108,8 @@ It is time to test the classifier. For the first trial I used an image of Batman
 
 ```python
 image = cv2.imread('image_2.jpg') #Batman Test
-comparison_array = my_classifier.returnHistogramComparisonArray(image, method="intersection")
+comparison_array = my_classifier.returnHistogramComparisonArray(image, 
+                                                                method="intersection")
 ```
 
 The method `returnHistogramComparisonArray()` returns a **numpy array** which contains the result of the intersection between the image and the models. In this function it is possible to specify the comparison method, `intersection` refers to the method we discussed in this article. Other available methods are `correlation` ([Pearson Correlation Coefficient](https://en.wikipedia.org/wiki/Pearson_product-moment_correlation_coefficient)), `chisqr` ([Chi-Square](https://en.wikipedia.org/wiki/Chi-squared_test)) and `bhattacharyya` which is an implementation of the [Bhattacharyya distance measure](https://en.wikipedia.org/wiki/Bhattacharyya_distance). The following table shows the **distance value returned by each method** in case of exact match, half match and mismatch of the two histograms:
@@ -125,7 +129,14 @@ The method `returnHistogramComparisonArray()` returns a **numpy array** which co
 To check the result of the comparison we can print the values stored in the `comparison_array`:
 
 ```python
-[ 0.00818883  0.55411926  0.12405966  0.07735263  0.34388389  0.12672027 0.09870308  0.2225694 ]
+0.00818883 #Flash
+0.55411926 #Batman
+0.12405966 #Hulk
+0.07735263 #Superman
+0.34388389 #Capt. America
+0.12672027 #Wonder Woman
+0.09870308 #Iron Man
+0.2225694  #Wolverine
 ```
 As you can see the second value (*~0.55*) is the highest one, meaning that the second model (Batman) has the best match with the input image. This value is the raw distance, to obtain a probability distribution we have to normalise the array dividing it by the sum of the values:
 
@@ -136,7 +147,14 @@ probability_array = comparison_array / np.sum(comparison_array)
 The result of this operation is a new vector which values sum up to 1:
 
 ```python
-[ 0.00526411  0.35621003  0.07975051  0.04972536  0.22106232  0.08146086 0.06345029  0.14307651]
+0.00526411 #Flash
+0.35621003 #Batman
+0.07975051 #Hulk
+0.04972536 #Superman
+0.22106232 #Capt. America
+0.08146086 #Wonder Woman
+0.06345029 #Iron Man
+0.14307651 #Wolverine
 ```
 
 Now we can say that **the second model has a probability of *35.6%* of being the correct match**:
