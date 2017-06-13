@@ -239,6 +239,15 @@ In the script I defined the function `return_state_utility()` which is an implem
 import numpy as np
 
 def return_state_utility(v, T, u, reward, gamma):
+    """Return the state utility.
+
+    @param v the value vector
+    @param T transition matrix
+    @param u utility vector
+    @param reward for that state
+    @param gamma discount factor
+    @return the utility of the state
+    """
     action_array = np.zeros(4)
     for action in range(0, 4):
         action_array[action] = np.sum(np.multiply(u, np.dot(v, T[:,:,action])))
