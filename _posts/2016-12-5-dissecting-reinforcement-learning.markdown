@@ -295,6 +295,15 @@ Ok, it's time to implement the algorithm in Python. I will reuse the `return_sta
 import numpy as np
 
 def return_state_utility(v, T, u, reward, gamma):
+    """Return the state utility.
+
+    @param v the value vector
+    @param T transition matrix
+    @param u utility vector
+    @param reward for that state
+    @param gamma discount factor
+    @return the utility of the state
+    """
     action_array = np.zeros(4)
     for action in range(0, 4):
         action_array[action] = np.sum(np.multiply(u, np.dot(v, T[:,:,action])))
@@ -421,6 +430,12 @@ import numpy as np
 def return_policy_evaluation(p, u, r, T, gamma):
   """Return the policy utility.
 
+  @param p policy vector
+  @param u utility vector
+  @param r reward vector
+  @param T transition matrix
+  @param gamma discount factor
+  @return the utility vector u
   """
   for s in range(12):
     if not np.isnan(p[s]):
@@ -430,7 +445,7 @@ def return_policy_evaluation(p, u, r, T, gamma):
       u[s] = r[s] + gamma * np.sum(np.multiply(u, np.dot(v, T[:,:,action])))
   return u
 
-def return_expected_action(p, u, T, v):
+def return_expected_action(u, T, v):
     """Return the expected action.
 
     It returns an action based on the
@@ -438,10 +453,15 @@ def return_expected_action(p, u, T, v):
     according to T and u. This action is
     the one that maximize the expected
     utility.
+    @param u utility vector
+    @param T transition matrix
+    @param v starting vector
+    @return expected action (int)
     """
-    a = np.zeros(4) #action array
-    for i in range(4):         
-         a[i] = np.sum(np.multiply(u, np.dot(v, T[:,:,i])))
+    actions_array = np.zeros(4)
+    for action in range(4):
+         #Expected utility of doing a in state s, according to T and u.
+         actions_array[action] = np.sum(np.multiply(u, np.dot(v, T[:,:,action])))
     return np.argmax(actions_array)
 
 def print_policy(p, shape):
@@ -502,7 +522,7 @@ def main():
                 v = np.zeros((1,12))
                 v[0,s] = 1.0
                 #2- Policy improvement
-                a = return_expected_action(p, u, T, v)         
+                a = return_expected_action(u, T, v)         
                 if a != p[s]: p[s] = a
         print_policy(p, shape=(3,4))
 
