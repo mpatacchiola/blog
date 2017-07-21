@@ -84,7 +84,7 @@ If you compare this equation with the equation used to calculate the return you 
 ```python
 import numpy as np
 
-#Trowing a dice for N times and evaluating the expectation
+# Trowing a dice for N times and evaluating the expectation
 dice = np.random.randint(low=1, high=7, size=3)
 print("Expectation (rolling 3 times): " + str(np.mean(dice)))
 dice = np.random.randint(low=1, high=7, size=10)
@@ -116,41 +116,41 @@ As usual we will implement the algorithm in Python. I wrote a class called `Grid
 import numpy as np
 from gridworld import GridWorld
 
-#Declare our environmnet variable
-#The world has 3 rows and 4 columns
+# Declare our environmnet variable
+# The world has 3 rows and 4 columns
 env = GridWorld(3, 4)
-#Define the state matrix
-#Adding obstacle at position (1,1)
-#Adding the two terminal states
+# Define the state matrix
+# Adding obstacle at position (1,1)
+# Adding the two terminal states
 state_matrix = np.zeros((3,4))
 state_matrix[0, 3] = 1
 state_matrix[1, 3] = 1
 state_matrix[1, 1] = -1
-#Define the reward matrix
-#The reward is -0.04 for all states but the terminal
+# Define the reward matrix
+# The reward is -0.04 for all states but the terminal
 reward_matrix = np.full((3,4), -0.04)
 reward_matrix[0, 3] = 1
 reward_matrix[1, 3] = -1
-#Define the transition matrix
-#For each one of the four actions there is a probability
+# Define the transition matrix
+# For each one of the four actions there is a probability
 transition_matrix = np.array([[0.8, 0.1, 0.0, 0.1],
                               [0.1, 0.8, 0.1, 0.0],
                               [0.0, 0.1, 0.8, 0.1],
                               [0.1, 0.0, 0.1, 0.8]])
-#Define the policy matrix
-#0=UP, 1=RIGHT, 2=DOWN, 3=LEFT, NaN=Obstacle, -1=NoAction
-#This is the optimal policy for world with reward=-0.04
+# Define the policy matrix
+# 0=UP, 1=RIGHT, 2=DOWN, 3=LEFT, NaN=Obstacle, -1=NoAction
+# This is the optimal policy for world with reward=-0.04
 policy_matrix = np.array([[1,      1,  1,  -1],
                           [0, np.NaN,  0,  -1],
                           [0,      3,  3,   3]])
-#Set the matrices 
+# Set the matrices 
 env.setStateMatrix(state_matrix)
 env.setRewardMatrix(reward_matrix)
 env.setTransitionMatrix(transition_matrix)
 ```
 
 In a few lines I defined a grid world with the properties of our example. The policy is the optimal policy for a reward of -0.04 as we saw in the first post.
-Now it is time to reset the environment (move the robot to starting position) and using the `render` method to display the world.
+Now it is time to reset the environment (move the robot to starting position) and using the `render()` method to display the world.
 
 ```python
 #Reset the environment
@@ -194,9 +194,9 @@ Given the transition matrix and the policy the most likely output of the script 
  -  -  -  -      -  -  -  -      -  -  -  -
 ```
 
-You can find the full example in the [GitHub repository](https://github.com/mpatacchiola/dissecting-reinforcement-learning). If you are familiar with [OpenAI Gym](https://gym.openai.com/) you will find many similarities with my code. I used the same structure and I implemented the same methods `step` `reset` and `render`. In particular the method `step` moves forward at t+1 and returns the **reward**, the **observation** (position of the robot), and a variable called `done` which is `True` when the episode is finished (the robot reached a terminal state). 
+You can find the full example in the [GitHub repository](https://github.com/mpatacchiola/dissecting-reinforcement-learning). If you are familiar with [OpenAI Gym](https://gym.openai.com/) you will find many similarities with my code. I used the same structure and I implemented the same methods `step()` `reset()` and `render()`. In particular the method `step()` moves forward at t+1 and returns the **reward**, the **observation** (position of the robot), and a variable called `done` which is `True` when the episode is finished (the robot reached a terminal state). 
 
-Now we have all we need to **implement the MC method**. Here I will use a discount factor of $$ \gamma=1 $$, the best policy $$ \pi^{*} $$ and the same transition model used in the previous post. Remember that with the current transition model the robot will go in the desired direction only in 80% of the cases. First of all I wrote a function to estimate the return:
+Now we have all we need to **implement the MC method**. Here I will use a discount factor of $$ \gamma=0.999 $$, the best policy $$ \pi^{*} $$ and the same transition model used in the previous post. Remember that with the current transition model the robot will go in the desired direction only in 80% of the cases. First of all I wrote a function to estimate the return:
 
 ```python
 def get_return(state_list, gamma):
@@ -208,14 +208,14 @@ def get_return(state_list, gamma):
         counter += 1
     return return_value
 ```
-The function `get_return` takes as input a list containing a tuple `(position, reward)` and the discount factor `gamma`, the output is a value representing the return for that action list. We are going to use the function `get_return` in the following loop in order to get the returns for each episode and estimate the utilities. The following part is crucial, I added many comments to make it more readable. 
+The function `get_return()` takes as input a list containing a tuple `(position, reward)` and the discount factor `gamma`, the output is a value representing the return for that action list. We are going to use the function `get_return()` in the following loop in order to get the returns for each episode and estimate the utilities. The following part is crucial, I added many comments to make it more readable. 
 
 ```python
-#Defining an empty utility matrix
+# Defining an empty utility matrix
 utility_matrix = np.zeros((3,4))
-#init with 1.0e-10 to avoid division by zero
+# init with 1.0e-10 to avoid division by zero
 running_mean_matrix = np.full((3,4), 1.0e-10) 
-gamma = 1.0 #discount factor
+gamma = 0.999 #discount factor
 tot_epoch = 50000
 print_epoch = 1000
 
@@ -225,20 +225,20 @@ for epoch in range(tot_epoch):
     #Reset and return the first observation
     observation= env.reset(exploring_start=False)
     for _ in range(1000):
-        #Take the action from the action matrix
+        # Take the action from the action matrix
         action = policy_matrix[observation[0], observation[1]]
-        #Move one step in the environment and get obs and reward
+        # Move one step in the environment and get obs and reward
         observation, reward, done = env.step(action)
-        #Append the visit in the episode list
+        # Append the visit in the episode list
         episode_list.append((observation, reward))
         if done: break
-    #The episode is finished, now estimating the utilities
+    # The episode is finished, now estimating the utilities
     counter = 0
-    #Checkup to identify if it is the first visit to a state
+    # Checkup to identify if it is the first visit to a state
     checkup_matrix = np.zeros((3,4))
-    #This cycle is the implementation of First-Visit MC.
-    #For each state stored in the episode list it checks if it
-    #is the first visit and then estimates the return.
+    # This cycle is the implementation of First-Visit MC.
+    # For each state stored in the episode list it checks if it
+    # is the first visit and then estimates the return.
     for visit in episode_list:
         observation = visit[0]
         row = observation[0]
@@ -294,7 +294,7 @@ As you can see the utility gets more and more accurate and in the limit to infin
 If you observe the two utility matrices you will notice many similarities but two important differences. The utility estimations for the states (4,1) and (3,1) are zero. This can be considered one of the limitations and at the same time one of the advantage of MC methods.
 The policy we are using, the transition probabilities, and the fact that the robot always start from the same position (bottom-left corner) are responsible of the wrong estimation for those states. **Starting from the state (1,1) the robot will never reach those states** and it cannot estimate the corresponding utilities. As I told you this is a problem because we cannot estimate those values but at the same time it is an advantage. In a very big grid world **we can estimate the utilities only for the states we are interested in**, saving time and resources and focusing only on a particular subspace of the world. 
 
-What we can do to estimate the values for each state? A possible solution is called **exploring starts** and consists in making the robot start from all the available states. This guarantees that all states will be visited in the limit of an infinite number of episodes. To enable the exploring starts in our code the only thing to do is to set the parameter `exploring_strarts` in the `reset` function to `True` as following:
+What we can do to estimate the values for each state? A possible solution is called **exploring starts** and consists in making the robot start from all the available states. This guarantees that all states will be visited in the limit of an infinite number of episodes. To enable the exploring starts in our code the only thing to do is to set the parameter `exploring_strarts` in the `reset()` function to `True` as following:
 
 ```python
 observation = env.reset(exploring_start=True)
@@ -327,7 +327,7 @@ Utility matrix after 50000 iterations:
 
 ```
 
-Has you can see this time we got the right values also for the states (4,1) and (3,1). Until now we assumed that we had a policy and we used that policy to estimate the utility function. What to do when we do not have a policy? In this case there are other methods we can use. Russel and Norvig called this case **active** reinforcement learning. Following the definition of Sutton and Barto I will call this case the **model-free Monte Carlo control** estimation.
+As you can see this time we got the right values also for the states (4,1) and (3,1). Until now we assumed that we had a policy and we used that policy to estimate the utility function. What to do when we do not have a policy? In this case there are other methods we can use. Russel and Norvig called this case **active** reinforcement learning. Following the definition of Sutton and Barto I will call this case the **model-free Monte Carlo control** estimation.
 
 Monte Carlo control
 --------------------
@@ -341,7 +341,13 @@ The **first step** makes the utility function consistent with the current policy
 
 ![Active Model-Free RL GPI overview]({{site.baseurl}}/images/reinforcement_learning_gpi_overview.png){:class="img-responsive"}
 
-Examining the second step we notice a new term: greedy. **What does it means greedy?** Greedy means to take for each state the action with the highest utility and update the policy with that action. Later I will show you an example. All reinforcement learning methods can be described in terms of policy iteration and more specifically in terms of GPI. Keeping the GPI idea in your mind will let you understand easily MC method for control. In order to fully understand the MC method for control I have to introduce another argument, which is the Q-function.
+Examining the second step we notice a new term: greedy. **What does it means greedy?** A [greedy algorithm](https://en.wikipedia.org/wiki/Greedy_algorithm) makes the local optimal choice at each step. In our case greedy means to take for each state the action with the highest utility and update the policy with that action. However, following only local cues does not generally lead to optimal solutions. For example, choosing the highest utility at each step in the following case leads to a negative reward.
+
+![Active Model-Free RL Greedy not optimal]({{site.baseurl}}/images/reinforcement_learning_model_free_passive_monte_carlo_bad_greedy_algorithm.png){:class="img-responsive"}
+
+**How can the greedy strategy work?**
+It works because the local choice is evaluated using the utility function which is adjusted along time. At the beginning the agent will follow many sub-optimal paths but after a while the utilities will start to converge to the true values and the greedy strategy will lead to positive rewards.
+ All reinforcement learning methods can be described in terms of policy iteration and more specifically in terms of GPI. Keeping the GPI idea in your mind will let you understand easily the control methods. In order to fully understand the MC method for control I have to introduce another topic, which is the Q-function.
 
 Action Values and the Q-function
 --------------------------------
@@ -380,14 +386,14 @@ In MC for control it is important to **guarantee a uniform exploration of all th
 Python implementation
 ---------------------
 
-I will use again the function `get_return` but this time the input will be a list containing the tuple `(observation, action, reward)`:
+I will use again the function `get_return()` but this time the input will be a list containing the tuple `(observation, action, reward)`:
 
 ```python
 def get_return(state_list, gamma):
-   '''Get the return for a list of action-state values.
+   """ Get the return for a list of action-state values.
 
    @return get the Return
-   '''
+   """ 
    counter = 0
    return_value = 0
    for visit in state_list:
@@ -397,16 +403,16 @@ def get_return(state_list, gamma):
    return return_value
 ```
 
-I will use another new function called `update_policy` which will make the policy greedy with respect to the current state-action function:
+I will use another new function called `update_policy()` which will make the policy greedy with respect to the current state-action function:
 
 ```python
 def update_policy(episode_list, policy_matrix, state_action_matrix):
-  '''Update a policy 
+  """ Update a policy 
 
   The function makes the policy greedy in respect 
   of the state-action matrix.
   @return the updated policy
-  '''
+  """ 
   for visit in episode_list:
     observation = visit[0]
     col = observation[1] + (observation[0]*4)
@@ -416,16 +422,16 @@ def update_policy(episode_list, policy_matrix, state_action_matrix):
   return policy_matrix
 ```
 
-The `update_policy` function is part of the improvement step of the GPI and it is fundamental in order to get convergence to an optimal policy. I will use also the function `print_policy` which I already used in the previous post in order to print on terminal the policy using the symbols: ^, >, v, <, *, #. In the `main` function I initialised a random policy matrix and the `state_action_matrix` that contains the utilities of each state-action pair. The matrix can be initialised to zeros or to random values, it does not matter.
+The `update_policy()` function is part of the improvement step of the GPI and it is fundamental in order to get convergence to an optimal policy. I will use also the function `print_policy()` which I already used in the previous post in order to print on terminal the policy using the symbols: ^, >, v, <, *, #. In the `main()` function I initialised a random policy matrix and the `state_action_matrix` that contains the utilities of each state-action pair. The matrix can be initialised to zeros or to random values, it does not matter.
 
 ```python
-#Random policy matrix
+# Random policy matrix
 policy_matrix = np.random.randint(low=0, high=4, 
                                   size=(3, 4)).astype(np.float32)
 policy_matrix[1,1] = np.NaN #NaN for the obstacle at (1,1)
 policy_matrix[0,3] = policy_matrix[1,3] = -1 #No action (terminal states)
 
-#State-action matrix (init to zeros or to random values)
+# State-action matrix (init to zeros or to random values)
 state_action_matrix = np.random.random_sample((4,12)) # Q
 ```
 
@@ -433,34 +439,34 @@ Finally we have the main loop of the algorithm, which is not so different from t
 
 ```python
 for epoch in range(tot_epoch):
-#Starting a new episode
+# Starting a new episode
 episode_list = list()
-#Reset and return the first observation
+# Reset and return the first observation
 observation = env.reset(exploring_starts=True)
 is_starting = True
 for _ in range(1000):
-    #Take the action from the action matrix
+    # Take the action from the action matrix
     action = policy_matrix[observation[0], observation[1]]
-    #If the episode just started then it is
-    #necessary to choose a random action (exploring starts)
+    # If the episode just started then it is
+    # necessary to choose a random action (exploring starts)
     if(is_starting): 
         action = np.random.randint(0, 4)
         is_starting = False      
-    #Move one step in the environment and gets 
-    #a new observation and the reward
+    # Move one step in the environment and gets 
+    # a new observation and the reward
     new_observation, reward, done = env.step(action)
     #Append the visit in the episode list
     episode_list.append((observation, action, reward))
     observation = new_observation
     if done: break
-#The episode is finished, now estimating the utilities
+# The episode is finished, now estimating the utilities
 counter = 0
-#Checkup to identify if it is the first visit to a state-action
+# Checkup to identify if it is the first visit to a state-action
 checkup_matrix = np.zeros((4,12))
-#This cycle is the implementation of First-Visit MC.
-#For each state-action stored in the episode list it checks if 
-#it is the first visit and then estimates the return. 
-#This is the Evaluation step of the GPI.
+# This cycle is the implementation of First-Visit MC.
+# For each state-action stored in the episode list it checks if 
+# it is the first visit and then estimates the return. 
+# This is the Evaluation step of the GPI.
 for visit in episode_list:
     observation = visit[0]
     action = visit[1]
@@ -472,11 +478,11 @@ for visit in episode_list:
         state_action_matrix[row, col] += return_value
         checkup_matrix[row, col] = 1
     counter += 1
-#Policy Update (Improvement)
+# Policy Update (Improvement)
 policy_matrix = update_policy(episode_list, 
                               policy_matrix, 
                               state_action_matrix/running_mean_matrix)
-#Printing
+# Printing
 if(epoch % print_epoch == 0):
     print("")
     print("State-Action matrix after " + str(epoch+1) + " iterations:") 
@@ -484,7 +490,7 @@ if(epoch % print_epoch == 0):
     print("Policy matrix after " + str(epoch+1) + " iterations:") 
     print(policy_matrix)
     print_policy(policy_matrix)
-#Time to check the utility matrix obtained
+# Time to check the utility matrix obtained
 print("Utility matrix after " + str(tot_epoch) + " iterations:")
 print(state_action_matrix / running_mean_matrix)
 ```
