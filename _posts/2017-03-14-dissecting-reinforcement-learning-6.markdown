@@ -188,12 +188,12 @@ The policy obtained is a sub-optimal policy. As it is possible to see from the s
 ![Reinforcement Learning Sarsa Policy Mountain Car]({{site.baseurl}}/images/reinforcement_learning_mountain_car_sarsa_final_policy.gif){:class="img-responsive"}
 
 The discretization method worked well in the mountain car problem. 
-However there are some possible issues that may occur. In the next sections we are gonna encounter some of these issues.
+However there are some possible issues that may occur. First of all, it is hard to decide how many bins one should use for the discretization. An high number of bins leads to a fine control but they can cause a [combinatorial explosion](https://en.wikipedia.org/wiki/Combinatorial_explosion). The second issue is that it may be necessary to visit all the states in order to obtain a good policy and this can lead to long training time. We will see in the rest of the series how to deal with these problems. For the moment you should download the complete code, which is called `sarsa_mountain_car.py`, from the [official repository](https://github.com/mpatacchiola/dissecting-reinforcement-learning) and play with it changing the hyper-parameters for obtaining a better performance.
 
 Inverted Pendulum
 ------------------
 The [inverted pendulum](https://en.wikipedia.org/wiki/Inverted_pendulum) is another classical problem, which is considered a benchmark in control theory. [James Roberge](http://ecee.colorado.edu/~taba7194/CPIFAC2oct11.pdf) was probably the first author to present a solution to the problem in his bachelor thesis back in 1960. The problem consists of a pole hinged on a cart which must be moved in order to keep the pole in vertical position. The inverted pendulum is well described in chapter 4.5.1 of [Sugiyama's book](https://www.crcpress.com/Statistical-Reinforcement-Learning-Modern-Machine-Learning-Approaches/Sugiyama/p/book/9781439856895). Here I will use the same mathematical notation.
-The **state space** consists of the **angle** $$ \phi \in [-\pi, \pi] $$ [rad] (which is zero when the pole is perfectly vertical) and the **angular velocity** $$ \dot{\phi} \in [-\pi, \pi]$$ [rad/sec]. The **action space** is discrete and it consists of **three forces** [-50, 0, 50] (Newton) which can be applied to the cart in order to swing the pole up.
+The **state space** consists of the **angle** $$ \phi \in [\frac{-\pi}{2}, \frac{\pi}{2}]$$ (rad) (which is zero when the pole is perfectly vertical) and the **angular velocity** $$ \dot{\phi} \in [-\pi, \pi]$$ (rad/sec). The **action space** is discrete and it consists of **three forces** [-50, 0, 50] (Newton) which can be applied to the cart in order to swing the pole up.
 
 ![Reinforcement Learning Inverted Pendulum Illustration]({{site.baseurl}}/images/reinforcement_learning_discrete_applications_inverted_pendulum_photo.png){:class="img-responsive"}
 
@@ -206,17 +206,37 @@ $$ \phi_{t+1} = \phi_{t} + \dot{\phi}_{t+1} \Delta t $$
 $$ \dot{\phi_{t+1}} = \dot{\phi_{t}} + \frac{g \ sin(\phi_t) - \alpha \ m \ d \ (\dot{\phi}_t)^2 \  sin(2\phi_t)/2 + \alpha \ cos(\phi_t) \ a_t }{ 4l/3 - \alpha \ m \ d \ cos^2(\phi_t)} \Delta t$$
 
 Here $$ \alpha = 1 / M+m $$, and $$ a_t $$ is the action at time $$ t $$.
-The **reward** is updated considering the cosine of the angle $$ \phi $$, meaning larger the angle lower the reward. The reward is 0.0 when the pole is horizontal and 1.0 when vertical. When the pole is completely horizontal the episode finishes. Like in the mountain car example we can use discretization to enclose the continuous state space in pre-defined bins. For example, the **position** is codified with an **angle** in the range $$[-\pi, \pi]$$ and it can be discretized in 4 bins. When the pole has an angle of $$\frac{-\pi}{4}$$ it is in the third bin, when it has an angle of $$\frac{\pi}{6}$$ it is in the second bin, etc.
+The **reward** is updated considering the cosine of the angle $$ \phi $$, meaning larger the angle lower the reward. The reward is 0.0 when the pole is horizontal and 1.0 when vertical. When the pole is completely horizontal the episode finishes. Like in the mountain car example we can use discretization to enclose the continuous state space in pre-defined bins. For example, the **position** is codified with an **angle** in the range $$[\frac{-\pi}{2}, \frac{\pi}{2}]$$ and it can be discretized in 4 bins. When the pole has an angle of $$\frac{-\pi}{5}$$ it is in the third bin, when it has an angle of $$\frac{\pi}{6}$$ it is in the second bin, etc.
 
 ![Reinforcement Learning Pendulum Discretization]({{site.baseurl}}/images/reinforcement_learning_discrete_applications_inverted_pendulum_discretization.png){:class="img-responsive"}
 
-I wrote a special module called `inverted_pendulum.py` containing the class `InvertedPendulum`. Like in the mountain car module there are the methods `reset()`, `step()`, and `render()` which allow starting the episode, moving the pole and saving a gif. The animation is produced using Matplotlib and can be imagined as a camera centred on the cartpole main joint which moves in accordance with it.
-Using a random agent on this task leads to a very short episode of 1.5 seconds. 
+I wrote a special module called `inverted_pendulum.py` containing the class `InvertedPendulum`. Like in the mountain car module there are the methods `reset()`, `step()`, and `render()` which allow starting the episode, moving the pole and saving a gif. The animation is produced using Matplotlib and can be imagined as a camera centred on the cartpole main joint which moves in accordance with it. To create a new environment it is necessary to create a new instance of the `InvertedPendulum` object, defining the main parameters (masses, pole length and time step).
+
+```python
+from inverted_pendulum import InvertedPendulum
+
+# Defining a new environment with pre-defined parameters
+my_pole = InvertedPendulum(pole_mass=2.0, 
+                           cart_mass=8.0, 
+                           pole_lenght=0.5, 
+                           delta_t=0.1)
+```
+
+We can test the performance of an agent which follows a random policy. The code is called `random_agent_inverted_pendulum.py` and is available on the [repository](https://github.com/mpatacchiola/dissecting-reinforcement-learning). Using a random strategy on the pole balancing environment leads to unsatisfactory performances. The best I got running the script multiple times is a very short episode of 1.5 seconds. 
 
 ![Reinforcement Learning Random Inverted Pendulum]({{site.baseurl}}/images/reinforcement_learning_inverted_pendulum_random_agent.gif){:class="img-responsive"}
 
 The **optimal policy** consists in compensating the angle and speed variations keeping the pole as much vertical as possible.
-Like for the mountain car I will deal with this problem using discretization. Both velocity and angle are discretized in bins of equal size and the resulting matrix is used to adjust the policy.
+Like for the mountain car I will deal with this problem using discretization. Both velocity and angle are discretized in bins of equal size and the resulting matrix is used to adjust the policy. As algorithm I will use **first-visit Monte Carlo** for control, which has been introduced in the [second post of the series](https://mpatacchiola.github.io/blog/2017/01/15/dissecting-reinforcement-learning-2.html).
+I trained the policy for $$5 \times 10^5$$ episodes ($$\gamma=0.999$$, `tot_bins`=12). In order to encourage exploration I used an $$\epsilon$$-greedy strategy with $$\epsilon$$ linearly decayed from 0.99 to 0.1. Each episode was 100 steps long (10 seconds). The maximum reward that can be obtained is 100 (the pole is kept perfectly vertical for all the steps). The reward plot shows that the algorithm could rapidly find good solutions, reaching an average score of 45. 
+
+![Reinforcement Learning Inverted Pendulum Reward]({{site.baseurl}}/images/reinforcement_learning_inverted_pendulum_montecarlo_reward_plot.png){:class="img-responsive"}
+
+The final policy has a very good performance and with a favourable starting position can easily manage to keep the pole in balance for 10 seconds.
+
+![Reinforcement Learning Inverted Pendulum Final Policy]({{site.baseurl}}/images/reinforcement_learning_inverted_pendulum_montecarlo_final_policy.gif){:class="img-responsive"}
+
+The complete code is called `montecarlo_control_inverted_pendulum.py` and is included in the [Github repository](https://github.com/mpatacchiola/dissecting-reinforcement-learning) of the project. Feel free to change the parameters and check if they have an impact on the learning. Moreover you should test other algorithms on the pole balancing problem and verify which one gets the best performance.
 
 Acrobot
 --------- 
@@ -243,6 +263,10 @@ Drone landing
 
 In the cleaning robot example the robot moved in a flat 2D environment. Now it is time to add another dimension. We have to train an autonomous **drone** to **land on a ground marker**. The drone moves in a discrete 3D world, representing a cubic room. The marker is always in the same point (the centre of the room). The rules are similar to the gridworld, if the drone hits one of the wall it bounces back to the previous position. Landing on the marker leads to a positive reward of +1.0, while landing on another point leads to a negative reward of -1.0. A negative cost of living of -0.01 is applied at each time step.
 
+Conclusions
+-----------
+
+Here I presented some classical reinforcement learning problems showing how the techniques of the previous posts can be used to obtain stable policies. However we always started from the assumption of a discretized state space which was described by a lookup table or matrix. The main limitation of this approach is that in many application the state space is extremely large and it is not possible to visit all the states. To solve this problem it is possible to use **function approximation**. In the next post I will introduce function approximation and I will show you how a **neural network** can be used in order to describe a large state space. The use of neural networks open up new horizons and it is the first step toward modern methods such as **deep reinforcement learning**.
 
 
 Index
@@ -262,7 +286,7 @@ Resources
 
 - **Reinforcement learning: An introduction (Chapter 11 'Case Studies')** Sutton, R. S., & Barto, A. G. (1998). Cambridge: MIT press. [[html]](https://webdocs.cs.ualberta.ca/~sutton/book/ebook/the-book.html)
 
-- **History of Inverted-Pendulum Systems** Lundberg, K. H., & Barton, T. W. (2010). [pdf](http://ecee.colorado.edu/~taba7194/CPIFAC2oct11.pdf)
+- **History of Inverted-Pendulum Systems** Lundberg, K. H., & Barton, T. W. (2010). [[pdf]](http://ecee.colorado.edu/~taba7194/CPIFAC2oct11.pdf)
 
 
 References
