@@ -184,7 +184,7 @@ In TD(0) we saw that a uniform shadow was added in the graphical illustration to
 
 ![Reinforcement Learning TD(lamda) first episode Eligibility Traces]({{site.baseurl}}/images/reinforcement_learning_model_free_passive_td_first_episode_eligibility_traces.png){:class="img-responsive"}
 
-Graphically we can represent T(λ) with a non-uniform shadow which partially hides the old states and shows the recent ones. Now it's time to define the **update rule for TD(λ)**. Remembering that the estimation error $$ \delta $$ was defined in the previous section as:
+Graphically we can represent TD(λ) with a non-uniform shadow which partially hides the old states and shows the recent ones. Now it's time to define the **update rule for TD(λ)**. Remembering that the estimation error $$ \delta $$ was defined in the previous section as:
 
 $$ \delta_{t} = r_{t+1} + \gamma U(s_{t+1}) - U(s_{t})  $$
 
@@ -192,11 +192,11 @@ we can update the utility function as follow:
 
 $$ U(s_{t}) = U(s_{t}) + \alpha \delta_{t} e_{t}(s) \qquad  \text{for all } s \in S $$
 
-To better understand the difference between TD(0) and T(λ) I build a 4x3 grid world where the **reward is zero** for all the states but the two terminal states. The **utility matrix** is initialised with **zeros**. The episode I will take into account contains five visits, the robot starts at state (1,1) and it arrives at the charging station (4,3) following the optimal path. 
+To better understand the difference between TD(0) and TD(λ) I build a 4x3 grid world where the **reward is zero** for all the states but the two terminal states. The **utility matrix** is initialised with **zeros**. The episode I will take into account contains five visits, the robot starts at state (1,1) and it arrives at the charging station (4,3) following the optimal path. 
 
 ![Reinforcement Learning TD(0) vs TD(lamda) update rule]({{site.baseurl}}/images/reinforcement_learning_model_free_passive_td_comparing_td_zero_td_lambda_update_rule.png){:class="img-responsive"}
 
-The results of the update for TD(0) and T(λ) are the same (zero) along all the visit but the last one. When the robot reaches the charging station (reward +1.0) the update rule returns a positive value. In TD(0) the result is propagated only to the previous state (3,3). In  T(λ) the result is propagated back to all the previous states thanks to the eligibility traces. The decay value of the traces gives more weight to the last states. As I told you the utility traces mechanism helps to speed up the convergence. It is easy to understand why if you consider that in our example TD(0) needs five episodes in order to reach the same results of T(λ).
+The results of the update for TD(0) and TD(λ) are the same (zero) along all the visit but the last one. When the robot reaches the charging station (reward +1.0) the update rule returns a positive value. In TD(0) the result is propagated only to the previous state (3,3). In  TD(λ) the result is propagated back to all the previous states thanks to the eligibility traces. The decay value of the traces gives more weight to the last states. As I told you the utility traces mechanism helps to speed up the convergence. It is easy to understand why if you consider that in our example TD(0) needs five episodes in order to reach the same results of TD(λ).
 
 ![Reinforcement Learning TD(0) update rule propagation]({{site.baseurl}}/images/reinforcement_learning_model_free_passive_td_zero_update_rule_propagation.png){:class="img-responsive"}
 
