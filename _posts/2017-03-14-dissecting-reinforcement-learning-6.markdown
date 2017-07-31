@@ -17,18 +17,26 @@ Now it is time to apply this knowledge to other problems. In each one of the fol
 The references for this post are the [Sutton and Barto's book]((https://webdocs.cs.ualberta.ca/~sutton/book/ebook/the-book.html)) (chapter 11, case studies), and ["Statistical Reinforcement Learning"](https://www.crcpress.com/Statistical-Reinforcement-Learning-Modern-Machine-Learning-Approaches/Sugiyama/p/book/9781439856895) by Masashi Sugiyama which contains a good description of some of the applications we are going to encounter.
 
 
-Blak Jack Monte Carlo
-----------------------
-Discrete state space, discrete action space.
-
 Multi-Armed Bandits
 ---------------
 
-An armed bandit is a fancy way to call slot machines in Las Vegas. The multi-armed bandit problem has been formulated
+An armed bandit is a fancy way to call slot machines in Las Vegas. They are *bandits* because they steal your money!
+In 1950s Mosteller and Bush were studying the effect of reward on mice in a [T-maze](https://en.wikipedia.org/wiki/T-maze). In order to compare the performance with humans they realised a two-armed bandit experiment. The subjects could choose to pull the left or right arm in order to receive a reward. One of the two arm was more generous. 
 
-There are $$N$$ slot machines and each one as a certain probability of returning a prize. Some machines are more generous than others and since we are greedy we want to find those machines. How to do it? We can start from the machine $$n_{1}$$ and check how often it returns the prize, then we can switch to the machine $$n_{2}$$ and count again the number of prizes obtained, then machine $$n_{3}$$, etc. However we must be careful because the machines are stochastic and the best one may not return the prize for a while in a short sequence. 
 
-For years there have been 
+![Reinforcement Learning Multi-Armed Bandit illustration]({{site.baseurl}}/images/reinforcement_learning_multi_armed_bandit_photo.png){:class="img-responsive"}
+
+The subject had to find a good balance between **exploration and exploitation**. Let's suppose the subject play a single round finding out that the left arm is more generous. How to proceed? You must remember that the machines are stochastic and the best one may not return the prize for a while in a short sequence. Should the subject explore the option that looks inferior or exploit the current best option?
+
+During the year has been proposed many solutions to the multi-armed bandit problem.
+In the previous posts we already saw one of those solutions: the **epsilon-greedy** strategy. We can count how many times an arm returns a positive reward. At each time step we are going to select the most generous arm with probability $$p = \epsilon$$ (exploitation) and we are going to randomly choose one of the other arms with probability $$q = 1 - \epsilon$$ (exploration). Which value should we choose for epsilon? The best thing to do is to set $$\epsilon = 1$$ at the beginning and then decrease it linearly during the game. In this way we will explore a lot at the beginning and we will focus on the most generous arm in the end. this strategy is called **epsilon-decreasing**.
+
+
+Formally we can define the problem as a Markov decision process with a single state (see the [first post](https://mpatacchiola.github.io/blog/2016/12/09/dissecting-reinforcement-learning.html)). There are $$N$$ arms which is possible to pull and each one as a certain probability of returning a prize. We have a single state and $$N$$ possible actions (one action for each arm). At each round the agent chooses one arm to pull and it receives a reward. The goal of the agent is to maximise the reward.
+
+We can start from the machine $$n_{1}$$ and check how often it returns the prize, then we can switch to the machine $$n_{2}$$ and count again the number of prizes obtained, then machine $$n_{3}$$, etc. However we must be careful because the machines are stochastic and the best one may not return the prize for a while in a short sequence. 
+
+Multi-armed bandit problems are in our daily life. The doctor that has to choose the best treatment for a patient, the web-designer who has to find the best template for maximising the AdSense clicks, or the entrepreneur who has to decide how to distribute the budget among different companies for maximising the incomes.
 
 Mountain Car
 ------------
@@ -269,7 +277,7 @@ The action space is represented by the amount of torque the robot can apply to t
 The state space of the acrobot is large and it is challenging for our discrete approach. It is like having **two inverted pendula** which interact in the same system. Moreover the positive **reward is sparse**, meaning that it can be obtained only after a long series of coordinated movements.
 The acrobot is described in chapter 11.3 of the [Sutton and Barto's book]((https://webdocs.cs.ualberta.ca/~sutton/book/ebook/the-book.html)). Sutton used SARSA($$\lambda$$) and a **linear approximator** to solve the problem. We still do not have the right tools for mastering this problem, only in the next post we will see what a linear approximator is. If you are interested in the Sutton's solution you can [read this paper]((http://papers.nips.cc/paper/1109-generalization-in-reinforcement-learning-successful-examples-using-sparse-coarse-coding.pdf)).
 
-Following the classical implementation I constrained the angular velocities to $$ \theta_{1} \in [-4 \pi, +4 \pi] $$ and $$ \theta_{2} \in [-9 \pi, +9 \pi] $$. A time step of $$ 0.05 sec $$ was used in all the experiments. The Python implementation of the acrobot may seems complicated because of many mathematical terms. Here I will describe the equations of motion of the acrobot and how it is possible to translate them in code. If you want to understand this part I suggest you to refresh you physics background, in particular [ordinary differential equations (ODEs)](https://en.wikipedia.org/wiki/Ordinary_differential_equation). If you are not interested in the math behind the problem you can skip this part and go directly to the results. The acrobot is a physical system which can be formalised through some parameters. In the real world the links have masses, which I will represent with two constants $$ m_{1} = m_{2} = 1 kg $$. At the same way I define the length of the links as $$ l_{1} = l_{2} = 1 m $$. The gravity constant $$ g $$ is equal to $$ 9.8 m/s^{2} $$.
+[comment]: <> (Following the classical implementation I constrained the angular velocities to $$ \theta_{1} \in [-4 \pi, +4 \pi] $$ and $$ \theta_{2} \in [-9 \pi, +9 \pi] $$. A time step of $$ 0.05 sec $$ was used in all the experiments. The Python implementation of the acrobot may seems complicated because of many mathematical terms. Here I will describe the equations of motion of the acrobot and how it is possible to translate them in code. If you want to understand this part I suggest you to refresh you physics background, in particular [ordinary differential equations (ODEs)](https://en.wikipedia.org/wiki/Ordinary_differential_equation). If you are not interested in the math behind the problem you can skip this part and go directly to the results. The acrobot is a physical system which can be formalised through some parameters. In the real world the links have masses, which I will represent with two constants $$ m_{1} = m_{2} = 1 kg $$. At the same way I define the length of the links as $$ l_{1} = l_{2} = 1 m $$. The gravity constant $$ g $$ is equal to $$ 9.8 m/s^{2} $$.)
 
 Think about videogames. The state space may be very large and hard to formalise using a lookup matrix. Moreover the transition matrix is not given.
 
