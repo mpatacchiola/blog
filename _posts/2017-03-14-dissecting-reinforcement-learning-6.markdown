@@ -26,17 +26,55 @@ In 1950s Mosteller and Bush were studying the effect of reward on mice in a [T-m
 
 ![Reinforcement Learning Multi-Armed Bandit illustration]({{site.baseurl}}/images/reinforcement_learning_multi_armed_bandit_photo.png){:class="img-responsive"}
 
-The subject had to find a good balance between **exploration and exploitation**. Let's suppose the subject play a single round finding out that the left arm is more generous. How to proceed? You must remember that the machines are stochastic and the best one may not return the prize for a while in a short sequence. Should the subject explore the option that looks inferior or exploit the current best option?
+In this experiment the subject has to find a good balance between **exploration and exploitation**. Let's suppose the subject play a single round finding out that the left arm is more generous. How to proceed? You must remember that the machines are stochastic and the best one may not return the prize for a while in a short sequence. Should the subject explore the option that looks inferior or exploit the current best option? 
+Formally we can define this problem as a Markov decision process with a single state (see the [first post](https://mpatacchiola.github.io/blog/2016/12/09/dissecting-reinforcement-learning.html)). There are $$N$$ arms which is possible to pull and each one as a certain probability of returning a prize. We have a single state and $$N$$ possible actions (one action for each arm). At each round the agent chooses one arm to pull and it receives a reward. The goal of the agent is to maximise the reward.
+During the year have been proposed many solutions to the multi-armed bandit problem. In the following part of the post I will show you some of these solutions, and I will show you empirically the results achievable from each one.
 
-During the year has been proposed many solutions to the multi-armed bandit problem.
-In the previous posts we already saw one of those solutions: the **epsilon-greedy** strategy. We can count how many times an arm returns a positive reward. At each time step we are going to select the most generous arm with probability $$p = \epsilon$$ (exploitation) and we are going to randomly choose one of the other arms with probability $$q = 1 - \epsilon$$ (exploration). Which value should we choose for epsilon? The best thing to do is to set $$\epsilon = 1$$ at the beginning and then decrease it linearly during the game. In this way we will explore a lot at the beginning and we will focus on the most generous arm in the end. this strategy is called **epsilon-decreasing**.
+To simplify our lives I created a Python module called `multi_armed_bandit.py` which has a class called `MultiArmedBandit`. The only parameter that must be passed to the object is a list containing the probability $$\in [0,1]$$ of obtaining a positive reward:
+
+```python
+from multi_armed_bandit import MultiArmedBandit
+
+# Creating a bandit with 3 arms
+my_bandit = MultiArmedBandit(reward_probability_list=[0.3, 0.5, 0.8])
+```
+
+The `step()` method takes as input an action which represent the index of the arm that must be pulled. For instance calling `step(actio=3)` will pull the third arm. The `step()` method returns the reward obtained pulling that arm, which can be 1 or 0. The method does not return anything else. Remember that we are not moving here. There is no point in returning the state at t1 or a variable which identifies a terminal state, because as I said the multi-armed bandit has a single state. Now it is time to play! In the next sub-sections I will show you some of the strategies that is possible to use in the multi-armed bandit.
+
+**Omniscient**: first of all, let's suppose that you work for the company that is producing a three armed bandit. Your duty is to realised the firmware of the machine. Since you are the designer you perfectly know the probability of a positive reward for each one of the three arms (let's say: [0.3, 0.5, 0.8]). It's time for vacation and you decide to go to Las Vegas. You enter in a Casino and you see just in front of you the particular machine you worked on. What are you gonna do? Probably you will start pulling the third arm like a crazy until your pocket are full of coins. You know that the best thing to do is to focus on the third arm because it has 80% probability of returning a positive reward. Now let's suppose that the omniscient agent plays for 100 rounds, what's the cumulated reward obtained in the end? If the third arm has 80% probability of obtaining a reward of +1 we can say that after 100 round the player will get approximately 80 coins. Keep in mind this value because it is the upper boundary for the comparison.
 
 
-Formally we can define the problem as a Markov decision process with a single state (see the [first post](https://mpatacchiola.github.io/blog/2016/12/09/dissecting-reinforcement-learning.html)). There are $$N$$ arms which is possible to pull and each one as a certain probability of returning a prize. We have a single state and $$N$$ possible actions (one action for each arm). At each round the agent chooses one arm to pull and it receives a reward. The goal of the agent is to maximise the reward.
+**Random**: the most intuitive strategy is a random strategy. Just pull any arm with the same probability. This is the strategy of a naive gambler. Let's see what a random agent will obtain playing in this way. We can create a random agent in a few line of code:
 
-We can start from the machine $$n_{1}$$ and check how often it returns the prize, then we can switch to the machine $$n_{2}$$ and count again the number of prizes obtained, then machine $$n_{3}$$, etc. However we must be careful because the machines are stochastic and the best one may not return the prize for a while in a short sequence. 
+```python
+from multi_armed_bandit import MultiArmedBandit
+import random
 
-Multi-armed bandit problems are in our daily life. The doctor that has to choose the best treatment for a patient, the web-designer who has to find the best template for maximising the AdSense clicks, or the entrepreneur who has to decide how to distribute the budget among different companies for maximising the incomes.
+my_bandit = MultiArmedBandit(reward_probability_list=[0.3, 0.5, 0.8])
+tot_arms = 3
+tot_steps = 100
+cumulated_reward = 0
+print("Starting random agent...")
+for step in range(tot_steps):
+    action = random.randint(a=0, b=tot_arms-1)
+    reward = my_bandit.step(action)
+    cumulated_reward += reward
+print("Cumulated Reward: " + str(cumulated_reward))
+```
+
+Running the script will pull the arms 100 times, and the reward obtained will be accumulated in the variable called `cumulated_reward`. I run the script several times (it takes just a few milliseconds) and I obtained cumulated rewards of 52, 55, 53, 51, 53, 54. Here I want you to reason on what we got. Why all the cumulated rewards oscillate around a value of 53? The random agent pulled the arms with (approximately) the same probability, meaning that it pulled the first arm 1/3 of the times, the second arm 1/3 of the times, and the third arm 1/3 of the times. The random agent score can be approximated as following: `30/3 + 50/3 + 80/3 = 53.3`. Remember that the process is stochastic and we can have a small fluctuation every time.
+
+
+**Greedy**: the agent that is following a greedy algorithm pulls all the arms in the first turn, then it selects the arm that returned the highest reward. This strategy do not really encourage exploration and this is not surprising. We already seen in the [second post](https://mpatacchiola.github.io/blog/2017/01/15/dissecting-reinforcement-learning-2.html) that a greedy strategy should be part of a larger Generalised Policy Iteration (GPI) scheme in order to converge. Only with constant updates of the utility function it is possible to improve the policy. An agent that uses a greedy strategy can be fooled by random fluctuations and it can think that the second arm is the best one only because in a short series it returned more coins.
+
+**Epsilon-greedy**: we already encountered this strategy. The agent counts how many times an arm returned a positive reward. At each time step the agent is going to select the most generous arm with probability $$p = \epsilon$$ (exploitation) and it will randomly choose one of the other arms with probability $$q = 1 - \epsilon$$ (exploration). A value which is often choose for epsilon is $$\epsilon = 0.1$$.
+
+**Epsilon-decreasing**: using a fixed epsilon value is not always a good choice. In the decreasing strategy we set $$\epsilon = 1$$ at the beginning and then we decrease it linearly during the game. In this way the agent will explore a lot at the beginning and it will focus on the most generous arm in the end.
+
+**Boltzmann sampling**: in the epsilon stategies the random action was sampled randomly from a uniform distribution. In the Boltzmann sampling the distribution is defined on the results of the past rounds.
+
+
+Multi-armed bandit problems are in our daily life. The doctor who has to choose the best treatment for a patient, the web-designer who has to find the best template for maximising the AdSense clicks, or the entrepreneur who has to decide how to distribute the budget among different companies for maximising the incomes.
 
 Mountain Car
 ------------
