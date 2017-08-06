@@ -17,19 +17,25 @@ Now it is time to apply this knowledge to other problems. In each one of the fol
 The references for this post are the [Sutton and Barto's book]((https://webdocs.cs.ualberta.ca/~sutton/book/ebook/the-book.html)) (chapter 11, case studies), and ["Statistical Reinforcement Learning"](https://www.crcpress.com/Statistical-Reinforcement-Learning-Modern-Machine-Learning-Approaches/Sugiyama/p/book/9781439856895) by Masashi Sugiyama which contains a good description of some of the applications we are going to encounter.
 
 
-Multi-Armed Bandits
----------------
+Multi-Armed Bandit
+------------------
 
 An armed bandit is a fancy way to call slot machines in Las Vegas. They are *bandits* because they steal your money!
 In 1950s Mosteller and Bush were studying the effect of reward on mice in a [T-maze](https://en.wikipedia.org/wiki/T-maze). In order to compare the performance with humans they realised a two-armed bandit experiment. The subjects could choose to pull the left or right arm in order to receive a reward. One of the two arm was more generous. 
 
-
 ![Reinforcement Learning Multi-Armed Bandit illustration]({{site.baseurl}}/images/reinforcement_learning_multi_armed_bandit_photo.png){:class="img-responsive"}
 
-In this experiment the subject has to find a good balance between **exploration and exploitation**. Let's suppose the subject play a single round finding out that the left arm is more generous. How to proceed? You must remember that the machines are stochastic and the best one may not return the prize for a while in a short sequence. Should the subject explore the option that looks inferior or exploit the current best option? 
+In this experiment the subject has to find a good balance between **exploration and exploitation**. Let's suppose the subject plays a single round finding out that the left arm is more generous. How to proceed? You must remember that the machines are stochastic and the best one may not return the prize for a while in a short sequence. Should the subject explore the option that looks inferior or exploit the current best option? 
 Formally we can define this problem as a Markov decision process with a single state (see the [first post](https://mpatacchiola.github.io/blog/2016/12/09/dissecting-reinforcement-learning.html)). There are $$N$$ arms which is possible to pull and each one as a certain probability of returning a prize. We have a single state and $$N$$ possible actions (one action for each arm). At each round the agent chooses one arm to pull and it receives a reward. The goal of the agent is to maximise the reward.
 During the year have been proposed many solutions to the multi-armed bandit problem. In the following part of the post I will show you some of these solutions, and I will show you empirically the results achievable from each one.
 
+![Reinforcement Learning Multi-Armed Bandit state graph]({{site.baseurl}}/images/reinforcement_learning_multi_armed_bandit_state_utility.png){:class="img-responsive"}
+
+Here I will consider the case were $$N=3$$ meaning that we have 3 possible actions (3 arms). I will call this example a **three-armed testbed**. Moreover I will use a [Bernoulli distribution](https://en.wikipedia.org/wiki/Bernoulli_distribution) for the reward function, meaning that the rewards are either 0 or 1. From the initial state $$s_{0}$$ we can choose one of three arms (A, B, C). The first arm (A) return a positive reward of 1 with 30% probability, and it returns 0 with 70% probability. The second arm (B) returns a positive reward in 50% of the cases. The third arm (C) returns a positive reward with 80% probability. The utility of each action is: 0.3, 0.5, 0.8. The utility can be estimated at runtime using an **action-utility (or action-value) method**. If the action $$a$$ has been chosen $$k_{a}$$ times leading to a series of reward $$r_{1}, r_{2},...,r_{k_{a}}$$ then the utility of this specific action can be estimated through:
+
+$$ Q(a) = \frac{r_{1}, r_{2},...,r_{k_{a}}}{k_{a}} $$
+
+It is helpful to play with this example and try different strategies. A similar case has been considered by Sutton and Barto in [chapter 2.1 of their book]((https://webdocs.cs.ualberta.ca/~sutton/book/ebook/the-book.html)).
 To simplify our lives I created a Python module called `multi_armed_bandit.py` which has a class called `MultiArmedBandit`. The only parameter that must be passed to the object is a list containing the probability $$\in [0,1]$$ of obtaining a positive reward:
 
 ```python
@@ -39,46 +45,140 @@ from multi_armed_bandit import MultiArmedBandit
 my_bandit = MultiArmedBandit(reward_probability_list=[0.3, 0.5, 0.8])
 ```
 
-The `step()` method takes as input an action which represent the index of the arm that must be pulled. For instance calling `step(actio=3)` will pull the third arm. The `step()` method returns the reward obtained pulling that arm, which can be 1 or 0. The method does not return anything else. Remember that we are not moving here. There is no point in returning the state at t1 or a variable which identifies a terminal state, because as I said the multi-armed bandit has a single state. Now it is time to play! In the next sub-sections I will show you some of the strategies that is possible to use in the multi-armed bandit.
+The `step()` method takes as input an action which represent the index of the arm that must be pulled. For instance calling `my_bandit.step(action=0)` will pull the first arm, and calling `my_bandit.step(action=2)` will pull the third. The `step()` method returns the reward obtained pulling that arm, which can be 1 or 0. The method does not return anything else. Remember that we are not moving here. There is no point in returning the state at t+1 or a variable which identifies a terminal state, because as I said the multi-armed bandit has a single state. Now it is time to play! In the next sub-sections I will show you some of the strategies that is possible to use in the three-armed testbed.
 
-**Omniscient**: first of all, let's suppose that you work for the company that is producing a three armed bandit. Your duty is to realised the firmware of the machine. Since you are the designer you perfectly know the probability of a positive reward for each one of the three arms (let's say: [0.3, 0.5, 0.8]). It's time for vacation and you decide to go to Las Vegas. You enter in a Casino and you see just in front of you the particular machine you worked on. What are you gonna do? Probably you will start pulling the third arm like a crazy until your pocket are full of coins. You know that the best thing to do is to focus on the third arm because it has 80% probability of returning a positive reward. Now let's suppose that the omniscient agent plays for 100 rounds, what's the cumulated reward obtained in the end? If the third arm has 80% probability of obtaining a reward of +1 we can say that after 100 round the player will get approximately 80 coins. Keep in mind this value because it is the upper boundary for the comparison.
+**Omniscient**: the word omniscient derives from Medieval Latin and it means *all-knowing*. An omniscient agent knows the utility distribution before playing. Let's suppose that you work for the company that is producing the three-armed bandit. Your duty is to realise the firmware of the machine. Since you are the designer you perfectly know the probability of a positive reward for each one of the three arms. It's time for vacation and you decide to go to Las Vegas. You enter in a Casino and you see just in front of you the particular machine you worked on. What are you gonna do? Probably you will start pulling the third arm (C) like a crazy until your pockets are full of coins. You know that the best thing to do is to focus on the third arm because it has 80% probability of returning a positive reward. Now let's suppose that the omniscient agent plays for 1000 rounds, what's the cumulated reward obtained in the end? If the third arm has 80% probability of obtaining a coin we can say that after 1000 round the player will get approximately 800 coins. Keep in mind this value because it is the upper boundary for the comparison.
 
 
-**Random**: the most intuitive strategy is a random strategy. Just pull any arm with the same probability. This is the strategy of a naive gambler. Let's see what a random agent will obtain playing in this way. We can create a random agent in a few line of code:
+**Random**: the most intuitive strategy is a random strategy. Just pull any arm with the same probability. This is the strategy of a naive gambler. Let's see what a random agent will obtain playing this way. We can create a random agent in a few line of code:
 
 ```python
 from multi_armed_bandit import MultiArmedBandit
-import random
+import numpy as np
 
 my_bandit = MultiArmedBandit(reward_probability_list=[0.3, 0.5, 0.8])
 tot_arms = 3
-tot_steps = 100
+tot_steps = 1000
 cumulated_reward = 0
 print("Starting random agent...")
 for step in range(tot_steps):
-    action = random.randint(a=0, b=tot_arms-1)
+    action = np.random.randint(low=0, high=tot_arms)
     reward = my_bandit.step(action)
     cumulated_reward += reward
 print("Cumulated Reward: " + str(cumulated_reward))
 ```
 
-Running the script will pull the arms 100 times, and the reward obtained will be accumulated in the variable called `cumulated_reward`. I run the script several times (it takes just a few milliseconds) and I obtained cumulated rewards of 52, 55, 53, 51, 53, 54. Here I want you to reason on what we got. Why all the cumulated rewards oscillate around a value of 53? The random agent pulled the arms with (approximately) the same probability, meaning that it pulled the first arm 1/3 of the times, the second arm 1/3 of the times, and the third arm 1/3 of the times. The random agent score can be approximated as following: `30/3 + 50/3 + 80/3 = 53.3`. Remember that the process is stochastic and we can have a small fluctuation every time.
+Running the script will pull the arms 1000 times, and the reward obtained will be accumulated in the variable called `cumulated_reward`. I run the script several times (it takes just a few milliseconds) and I obtained cumulated rewards of 527, 551, 533, 511, 538, 540. Here I want you to reason on what we got. Why all the cumulated rewards oscillate around a value of 530? The random agent pulled the arms with (approximately) the same probability, meaning that it pulled the first arm 1/3 of the times, the second arm 1/3 of the times, and the third arm 1/3 of the times. The final score can be approximated as follows: `300/3 + 500/3 + 800/3 = 533.3`. Remember that the process is stochastic and we can have a small fluctuation every time. To neutralise this fluctuation I introduced another loop of 2000 iterations, which repeats the script 2000 times. The average value for the cumulated reward is 532.9, which is very close to the estimation we made. The complete code is in the official repository and is called `random_agent_bandit.py`.
 
 
-**Greedy**: the agent that is following a greedy algorithm pulls all the arms in the first turn, then it selects the arm that returned the highest reward. This strategy do not really encourage exploration and this is not surprising. We already seen in the [second post](https://mpatacchiola.github.io/blog/2017/01/15/dissecting-reinforcement-learning-2.html) that a greedy strategy should be part of a larger Generalised Policy Iteration (GPI) scheme in order to converge. Only with constant updates of the utility function it is possible to improve the policy. An agent that uses a greedy strategy can be fooled by random fluctuations and it can think that the second arm is the best one only because in a short series it returned more coins.
+**Greedy**: the agent that is following a greedy strategy pulls all the arms in the first turn, then it selects the arm that returned the highest reward. This strategy do not really encourage exploration and this is not surprising. We have already seen in the [second post](https://mpatacchiola.github.io/blog/2017/01/15/dissecting-reinforcement-learning-2.html) that a greedy strategy should be part of a larger Generalised Policy Iteration (GPI) scheme in order to converge. Only with constant updates of the utility function it is possible to improve the policy. An agent that uses a greedy strategy can be fooled by random fluctuations and it can think that the second arm is the best one only because in a short series it returned more coins. Running the script for 2000 episodes, each one having 1000 rounds, we get:
 
-**Epsilon-greedy**: we already encountered this strategy. The agent counts how many times an arm returned a positive reward. At each time step the agent is going to select the most generous arm with probability $$p = \epsilon$$ (exploitation) and it will randomly choose one of the other arms with probability $$q = 1 - \epsilon$$ (exploration). A value which is often choose for epsilon is $$\epsilon = 0.1$$.
+```
+Average cumulated reward: 665.26
+Average utility distribution: [ 0.20180302  0.36213794  0.68261723]
+```
+The result on our test is 665.26 which is significantly over the random score, but far from the omniscient player. We said that the true utility distribution is `[0.3, 0.5, 0.8]`. The greedy agent has an average utility distribution of `[0.2, 0.36, 0.68]`, meaning that it underestimates the utilities because of its blind strategy which does not encourage exploration.
 
-**Epsilon-decreasing**: using a fixed epsilon value is not always a good choice. In the decreasing strategy we set $$\epsilon = 1$$ at the beginning and then we decrease it linearly during the game. In this way the agent will explore a lot at the beginning and it will focus on the most generous arm in the end.
+**Epsilon-greedy**: we already encountered this strategy. At each time step the agent is going to select the most generous arm with probability $$p = \epsilon$$ (exploitation) and it will randomly choose one of the other arms with probability $$q = 1 - \epsilon$$ (exploration). A value which is often choose for epsilon is $$\epsilon = 0.1$$.
+I created a script for testing this agent that you will find on the official repository and is called `epsilon_greedy_agent_bandit.py`. Using a value of epsilon equal to 0.1, and running the script for 1000 steps and 2000 episodes I got the following results:
 
-**Boltzmann sampling**: in the epsilon stategies the random action was sampled randomly from a uniform distribution. In the Boltzmann sampling the distribution is defined on the results of the past rounds.
+```
+Average cumulated reward: 613.169
+Average utility distribution: [ 0.29674172  0.49597571  0.79796952]
+```
+
+The average cumulated reward is 613.17 which is higher than the random agent but lower respect to the greedy agent. In the three-arm testbed the greedy agent can have an higher score. However the utility distribution estimated by the epsilon-greedy agent is very close to the true one. The exploration helps the convergence to the true utility function and this is the reason why we should encourage it.
 
 
-Multi-armed bandit problems are in our daily life. The doctor who has to choose the best treatment for a patient, the web-designer who has to find the best template for maximising the AdSense clicks, or the entrepreneur who has to decide how to distribute the budget among different companies for maximising the incomes.
+**Epsilon-decreasing**: using a fixed epsilon value is not always a good choice. In the decreasing strategy we set $$\epsilon = 1$$ at the beginning and then we decrease it linearly during the game. In this way the agent will explore a lot at the beginning and it will focus on the most generous arm in the end. The script `epsilon_decresing_agent_bandit.py` run the strategy with a linearly decreasing epsilon that starts at 0.9 and reach 0.01 at the last step of the episode. The results running the script is:
+
+```
+Average cumulated reward: 665.3755
+Average utility distribution: [ 0.29974979  0.49968188  0.79904347]
+```
+
+The average cumulated reward is 665.37 which is similar to the one obtained with the greedy strategy. At the same time the utility distribution is close to the original one and is similar to what we got with the epsilon-greedy strategy. What we got using the epsilon-decreasing is something in between the greedy and epsilon strategies.
+
+
+**Boltzmann sampling**: in the epsilon-greedy strategy the action is sampled randomly from a uniform distribution. The Boltzmann sampling goes a step further. We already used a Boltzmann strategy in the [fourth post](https://mpatacchiola.github.io/blog/2017/02/11/dissecting-reinforcement-learning-4.html) when talking about actor-critic methods. This strategy is based on a [softmax function](https://en.wikipedia.org/wiki/Softmax_function) and for this reason it is said to be part of the sofmax action selection rules. In the softmax sampling the action distribution is defined on the results obtained playing that action in the previous rounds. We keep a counter of how many reward has been obtained pulling each arm and when we have to sample an action we use the counter for estimating a probability distribution. Actions that lead to more reward are sampled with an higher probability. In Boltzmann sampling the softmax function is used in order to estimate the probability $$P(a)$$ of a specific action $$a$$ based on the probability of the other $$N$$ actions, as follows:
+
+$$ P(a) = \frac{e^{Q(a) / \tau}}{\sum_{b=1}^{N} e^{Q(b) / \tau}} $$
+
+where $$\tau > 0$$ is a parameter called temperature. High temperatures generate a distribution where all the actions have approximately the same probability to be sampled, whereas in the limit of $$\tau \rightarrow 0$$ the action selection becomes greedy. We can easily implement Boltzmann sampling in python:
+
+```python
+def boltzmann(x, temperature):
+    """Compute boltzmann distribution of array x.
+
+    @param x the input array
+    @param temperature
+    @return the boltzmann array
+    """
+    exponent = np.true_divide(x - np.max(x), temperature)
+    return np.exp(exponent) / np.sum(np.exp(exponent))
+```
+
+The function `boltzmann()` takes in input an array and the temperature, and returns the Boltzmann distribution of that array. Once we have the Boltzmann distribution we can use the Numpy method `numpy.random.choice()` to sample an action. The complete script is called `boltzmann_agent_bandit.py` and is in the official repository of the project. Running the script with $$\tau$$ decreased linearly from 10 to 0.01 leads to the following result:
+
+```
+Average cumulated reward: 763.16
+Average utility distribution: [ 0.28465323  0.4803597   0.79661667]
+```
+
+The strategy reached the top score of 763.16 which is very close to the omniscient player. It seems great but there are some drawbacks. It is generally easy to choose a value for $$\epsilon$$ in the epsilon-based strategies, but we cannot say the same for $$\tau$$. Setting $$\tau$$ may require a fine hand tuning which is not always possible in some problems. I suggest you to run the script with different temperature values to see the difference.
+
+
+
+**Thompson sampling**:
+to understand this strategy it is necessary some knowledge of [probability theory](https://en.wikipedia.org/wiki/Probability_theory) and [Bayesian statistics](https://en.wikipedia.org/wiki/Bayesian_statistics). In particular you should know the most common probability distributions, and how [Bayes' theorem](https://en.wikipedia.org/wiki/Bayes%27_theorem) works. In the Boltzmann sampling we considered only the success rate related to every action. There is another information which may be useful, meaning the failure rate. Taking into account the number of successes and failures obtained pulling each arm, we can approximate the Bernoulli distribution of that arm.
+Using a Bayesian approach it is possible to define a prior distribution on the parameters of the reward distribution of every arm, and sample an action according to the posterior probability of being the best action. This approach is called Thompson sampling and was published by [William Thompson in 1993](http://www.jstor.org/stable/2332286). In the three-armed bandit testbed I defined the bandit as a Bernoulli bandit, meaning that the reward given by each arm is obtained through a [Bernoulli distribution](https://en.wikipedia.org/wiki/Bernoulli_distribution). Each arm can return a positive reward with probability of success $$q$$ and probability of failure $$1-q$$. By definition the Bernoulli distribution describes the binary outcome of a single experiment, for example a single coin toss (0=tail, 1=head). Using a Bayesian terminology we say that the Bernoulli distribution associated with each arm is the *posterior*, which is what we are looking for. Knowing the posterior we know which arm returns the highest reward and we can play like an omniscient agent. How can we find the posterior? We can use the [Bayes' theorem](https://en.wikipedia.org/wiki/Bayes%27_theorem). Using this theorem we can do an optimal approximation of the posterior based on the data collected in the previous rounds. Here I define $$s$$ and $$f$$ as the number of successes and failures accumulated in previous trials for a specific arm, and $$q$$ as the probability of success given by the underlying Bernoulli distribution for that arm. The posterior can be estimated through Bayes' theorem as follows:
+
+$$P(q \vert s,f) = \frac{P(s,f \vert q)P(q)}{\int{}{} P(s,f \vert q) P(q) dx} $$
+
+The main problem here is to find the term $$P(s,f \vert q)$$ (*likelihood*), and the term $$P(q)$$ (*prior*). Let's start from the likelihood. As I said the Bernoulli distribution represents the outcome of a single experiment. In order to represent the outcome of multiple independent experiments we have to use the [Binomial distribution](https://en.wikipedia.org/wiki/Binomial_distribution). This distribution can tell us what is the probability of having $$s$$ successes in $$s + f$$ trials. The distribution is represented as follows:
+
+$$ P(s,f \vert q) = \binom{s+f}{s} q^{s} (1-q)^{f} $$
+
+Great, we got the first missing term. Now we have to find the prior. Fortunately the Bernoulli distribution has a [conjugate prior](https://en.wikipedia.org/wiki/Conjugate_prior) which is the [Beta distribution](https://en.wikipedia.org/wiki/Beta_distribution):
+
+$$ P(q) = \frac{q^{\alpha-1} (1 - q)^{\beta - 1}}{B(\alpha, \beta)}$$
+
+where $$\alpha, \beta > 0$$ are parameters representing the success and failure rate, and $$B$$ is a normalization constant (Beta function) which ensures that the probability integrates to 1. 
+Now we have all the missing terms. Going back to the Bayes' theorem, we can plug the Binomial distribution in place of the likelihood, and the Beta distribution in place of the prior. After some reductions we come out with the following result:
+
+$$P(q \vert s,f) = \frac{q^{s+ \alpha-1} (1-q)^{f+ \beta-1}}{B(s+ \alpha, f+ \beta))} $$
+
+If you give a look to the result you will notice that this is another Beta distribution. That's a really clean solution to our problem. In order to obtain the posterior distribution we simply have to plug the parameters $$(\alpha + s, \beta + f)$$ into a Beta distribution. Moreover we are going to have better estimates of the posterior when the number of successes and failures increases. For example, let's say that we start with $$\alpha = \beta = 1 $$ meaning that we suppose a uniform distribution for the prior. That's reasonable because we do not have any previous knowledge about the arm. Let's suppose we pull the arm three times and we obtain two successes and one failure, we can obtain the estimation of the Bernoulli distribution for that arm through $$Beta(\alpha + 2, \beta + 1) $$. This is the best estimation we can do after three rounds. As we keep playing the posterior will get more and more accurate.
+
+In python we can easily implement the Thompson agent for the three-armed bandit testbed. It is necessary to keep a record of successes and failures in two Numpy arrays. Those arrays are passed to the following function:
+
+```python
+def return_thompson_action(success_counter_array, failure_counter_array):
+    """Return an action using Thompson sampling
+
+    @param success_counter_array (alpha) success rate for each action
+    @param failure_counter_array (beta) failure rate for each action
+    @return the action selected
+    """
+    beta_sampling_array = np.random.beta(success_counter_array, 
+                                         failure_counter_array)
+    return np.argmax(beta_sampling_array)
+```
+
+Numpy implements the method `numpy.random.beta()` which takes in input the two arrays ($$\alpha+s, \beta+f$$) and returns an array containing the values sampled from the underlying Beta distributions. Once we have the samples we only have to take the action with the highest value using `np.argmax()`. Running the script `thompson_agent_bandit.py` we get the following results:
+
+```
+Average cumulated reward: 790.514
+Average utility distribution: [ 0.38970782  0.51040237  0.80102084]
+```
+
+The average cumulated reward obtained is 790.51. This score is the highest reached so far and it is very close to the optimal strategy of the omniscient player. Thompson sampling can be extremely powerful but there are some drawbacks. In our example we used a Bernoulli distribution as posterior, but it was an oversimplification. It can be difficult to approximate the posterior distribution when the underlying function is completely unknown, moreover the evaluation of the posterior requires an integration which may be computationally expensive.
+
+Multi-armed bandit problems are in our daily life. The doctor who has to choose the best treatment for a patient, the web-designer who has to find the best template for maximising the AdSense clicks, or the entrepreneur who has to decide how to distribute the budget among different companies for maximising the incomes. Now you know some strategies for dealing with this problems.
 
 Mountain Car
 ------------
-The mountain car is a classic reinforcement learning problem. This problem was first described by [Andrew Moore in his PhD thesis](http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.17.2654) and is defined as following: a mountain car is moving on a two-hills landscape. The engine of the car does not have enough power to cross a steep climb. The driver has to find a way to reach the top of the hill. 
+The mountain car is a classic reinforcement learning problem. This problem was first described by [Andrew Moore in his PhD thesis](http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.17.2654) and is defined as follows: a mountain car is moving on a two-hills landscape. The engine of the car does not have enough power to cross a steep climb. The driver has to find a way to reach the top of the hill. 
 
 ![Reinforcement Learning Mountain Car illustration]({{site.baseurl}}/images/reinforcement_learning_discrete_applications_mountain_car_photo.png){:class="img-responsive"}
 
@@ -221,18 +321,18 @@ Epsilon: 0.1
 Episode steps: 67
 Cumulated Reward: 0.34
 Policy matrix: 
- O   <   O   O   O   <   >   <   >   O   O   <  
- <   <   >   <   <   >   <   <   >   >   O   >  
- O   >   <   <   <   <   <   <   >   <   O   <  
- O   <   <   <   >   >   <   <   >   >   <   O  
- O   >   <   <   >   >   >   <   >   O   >   >  
- O   >   >   <   >   O   >   <   >   >   <   <  
- <   O   >   <   >   >   <   <   >   >   >   >  
- O   >   <   <   >   >   >   >   >   >   >   >  
- <   >   >   >   >   >   >   >   >   >   >   >  
- O   >   >   >   >   >   >   >   >   >   O   >  
- <   <   >   >   >   >   O   >   >   >   >   >  
- >   O   >   >   >   >   >   >   >   <   >   < 
+ O   <   O   O   O   <   >   <   >   O   O   <
+ <   <   >   <   <   >   <   <   >   >   O   >
+ O   >   <   <   <   <   <   <   >   <   O   <
+ O   <   <   <   >   >   <   <   >   >   <   O
+ O   >   <   <   >   >   >   <   >   O   >   >
+ O   >   >   <   >   O   >   <   >   >   <   <
+ <   O   >   <   >   >   <   <   >   >   >   >
+ O   >   <   <   >   >   >   >   >   >   >   >
+ <   >   >   >   >   >   >   >   >   >   >   >
+ O   >   >   >   >   >   >   >   >   >   O   >
+ <   <   >   >   >   >   O   >   >   >   >   >
+ >   O   >   >   >   >   >   >   >   <   >   <
 ```
 
 The policy obtained is a sub-optimal policy. As it is possible to see from the step plot (light-blue curve) there are policies that can reach the goal in around 40 steps (4 seconds). The policy can be observed in the gif generated at the end of the training:
@@ -251,7 +351,7 @@ The **state space** consists of the **angle** $$ \phi \in [\frac{-\pi}{2}, \frac
 
 
 The system has different parameters which can decide the dynamics. The mass $$ m = 2 kg $$ of the pole, the mass $$ M = 8 kg $$ of the cart, the lengh $$ d = 0.5 m $$ of the pole, and time step $$ \Delta t = 0.1 s $$.
-Given these parameters the angle $$ \phi $$ and the angular velocity $$ \dot{\phi} $$ at $$ t+1 $$ are update as following:
+Given these parameters the angle $$ \phi $$ and the angular velocity $$ \dot{\phi} $$ at $$ t+1 $$ are update as follows:
 
 $$ \phi_{t+1} = \phi_{t} + \dot{\phi}_{t+1} \Delta t $$
 
@@ -290,15 +390,11 @@ The final policy has a very good performance and with a favourable starting posi
 
 The complete code is called `montecarlo_control_inverted_pendulum.py` and is included in the [Github repository](https://github.com/mpatacchiola/dissecting-reinforcement-learning) of the project. Feel free to change the parameters and check if they have an impact on the learning. Moreover you should test other algorithms on the pole balancing problem and verify which one gets the best performance.
 
-Bomb disposal autonomous robot
--------------------------------------
-There are plenty of possible applications for reinforcement learning. One of the most interesting is robot control. Reinforcement learning offers a wide set of techniques for the implementation of complex policies for [humanoid control](https://repository.tudelft.nl/islandora/object/uuid:986ea1c5-9e30-4aac-ab66-4f3b6b6ca002/datastream/OBJ), [helicopter acrobatic maneuvers](http://heli.stanford.edu/papers/nips06-aerobatichelicopter.pdf). For a recent survey I suggest you to read the article of [Kober et at. (2013)](http://journals.sagepub.com/doi/full/10.1177/0278364913495721).
-
-
-When I was working as robotics engineer I was part of the team involved in the realisation of an **autonomous robot** used for bomb disposal. The robot had a sensor which allowed finding land mine concealed under the ground. This sensor had a limited operative range and it was very important to carefully read it in order to control the robot movements. The goal of the robot was to find the bomb and sign the position with a red mark using a sprayer. Here I will reproduce the same scenario using a modified version of the gridworld module developed in the previous posts.
 
 Drone landing
 --------------
+
+There are plenty of possible applications for reinforcement learning. One of the most interesting is robots control. Reinforcement learning offers a wide set of techniques for the implementation of complex policies for [humanoid control](https://repository.tudelft.nl/islandora/object/uuid:986ea1c5-9e30-4aac-ab66-4f3b6b6ca002/datastream/OBJ), [helicopter acrobatic maneuvers](http://heli.stanford.edu/papers/nips06-aerobatichelicopter.pdf). For a recent survey I suggest you to read the article of [Kober et at. (2013)](http://journals.sagepub.com/doi/full/10.1177/0278364913495721).
 
 In the cleaning robot example the robot moved in a flat 2D environment. Now it is time to add another dimension. We have to train an autonomous **drone** to **land on a ground marker**. The drone moves in a discrete 3D world, representing a cubic room. The marker is always in the same point (the centre of the room). The rules are similar to the gridworld, if the drone hits one of the wall it bounces back to the previous position. Landing on the marker leads to a positive reward of +1.0, while landing on another point leads to a negative reward of -1.0. A negative cost of living of -0.01 is applied at each time step.
 
@@ -358,5 +454,7 @@ Kober, J., Bagnell, J. A., & Peters, J. (2013). Reinforcement learning in roboti
 Lundberg, K. H., & Barton, T. W. (2010). History of inverted-pendulum systems. IFAC Proceedings Volumes, 42(24), 131-135.
 
 Sutton, R. S. (1996). Generalization in reinforcement learning: Successful examples using sparse coarse coding. In Advances in neural information processing systems (pp. 1038-1044).
+
+Thompson, W. R. (1933). On the likelihood that one unknown probability exceeds another in view of the evidence of two samples. Biometrika, 25(3/4), 285-294.
 
 
