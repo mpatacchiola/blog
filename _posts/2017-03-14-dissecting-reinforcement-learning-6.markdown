@@ -1,12 +1,12 @@
 ---
 layout: post
 title:  "Dissecting Reinforcement Learning-Part.6"
-date:   2017-05-30 09:00:00 +0000
-description: This blog series explains the main ideas and techniques used in reinforcement learning. In this post Reinforcement Learning applications, Black jack, Mountain Car, Robotic Arm, Bomb Disposal Rover. It includes complete Python code.
+date:   2017-08-14 09:00:00 +0000
+description: This blog series explains the main ideas and techniques used in reinforcement learning. In this post Reinforcement Learning applications, Multi-Armed Bandit, Mountain Car, Inverted Pendulum, Drone Landing, Hard Problems. It includes complete Python code.
 author: Massimiliano Patacchiola
 type: reinforcement learning
-comments: false
-published: false
+comments: true
+published: true
 ---
 
 Hello folks! Welcome to the sixth episode of the "Dissecting Reinforcement Learning" series. Until now we saw how reinforcement learning works. However we applied most of the techniques to the robot cleaning example. I decided to follow this approach because I think that the same example applied to different techniques can help the reader to better understand what changes from one scenario to the other.
@@ -14,7 +14,7 @@ Now it is time to apply this knowledge to other problems. In each one of the fol
 
 ![Books Reinforcement Learning]({{site.baseurl}}/images/books_reinforcement_learning_an_introduction_statistical_reinforcement_learning.png){:class="img-responsive"}
 
-The references for this post are the [Sutton and Barto's book]((https://webdocs.cs.ualberta.ca/~sutton/book/ebook/the-book.html)) (chapter 11, case studies), and ["Statistical Reinforcement Learning"](https://www.crcpress.com/Statistical-Reinforcement-Learning-Modern-Machine-Learning-Approaches/Sugiyama/p/book/9781439856895) by Masashi Sugiyama which contains a good description of some of the applications we are going to encounter.
+The references for this post are the [Sutton and Barto's book]((https://webdocs.cs.ualberta.ca/~sutton/book/ebook/the-book.html)) (chapter 11, case studies), and ["Statistical Reinforcement Learning"](https://www.crcpress.com/Statistical-Reinforcement-Learning-Modern-Machine-Learning-Approaches/Sugiyama/p/book/9781439856895) by Masashi Sugiyama which contains a good description of some of the applications we are going to encounter. In this post **I want you to get your hands dirty!** There is a lot of code to run, parameters to change and graphs to plot. You should learn by doing. Fork the [Github repository](https://github.com/mpatacchiola/dissecting-reinforcement-learning) if you have a Github account, or download the latest [zip archive from here](https://github.com/mpatacchiola/dissecting-reinforcement-learning/archive/master.zip) if you haven't.
 
 
 Multi-Armed Bandit
@@ -26,8 +26,8 @@ In 1950s Mosteller and Bush were studying the effect of reward on mice in a [T-m
 ![Reinforcement Learning Multi-Armed Bandit illustration]({{site.baseurl}}/images/reinforcement_learning_multi_armed_bandit_photo.png){:class="img-responsive"}
 
 In this experiment the subject has to find a good balance between **exploration and exploitation**. Let's suppose the subject plays a single round finding out that the left arm is more generous. How to proceed? You must remember that the machines are stochastic and the best one may not return the prize for a while in a short sequence. Should the subject explore the option that looks inferior or exploit the current best option? 
-Formally we can define this problem as a Markov decision process with a single state (see the [first post](https://mpatacchiola.github.io/blog/2016/12/09/dissecting-reinforcement-learning.html)). There are $$N$$ arms which is possible to pull and each one as a certain probability of returning a prize. We have a single state and $$N$$ possible actions (one action for each arm). At each round the agent chooses one arm to pull and it receives a reward. The goal of the agent is to maximise the reward.
-During the years have been proposed many solutions to the multi-armed bandit problem. In the following part of the post I will show you some of these solutions, and I will show you empirically the results achievable from each one.
+Formally we can define this problem as a **Markov decision process with a single state** (see the [first post](https://mpatacchiola.github.io/blog/2016/12/09/dissecting-reinforcement-learning.html)). There are $$N$$ arms which is possible to pull and each one as a certain probability of returning a prize. We have a single state and $$N$$ possible actions (one action for each arm). At each round the agent chooses one arm to pull and it receives a reward. The goal of the agent is to maximise the reward.
+During the years have been proposed many solutions to the multi-armed bandit problem. In the following part of the post I will show you some of these solutions, and I will show you empirically the results obtained from each one.
 
 ![Reinforcement Learning Multi-Armed Bandit state graph]({{site.baseurl}}/images/reinforcement_learning_multi_armed_bandit_state_utility.png){:class="img-responsive"}
 
@@ -232,7 +232,23 @@ The average cumulated reward obtained is 791 which is the highest score reached 
 
 ![Reinforcement Learning Bandit results comparison]({{site.baseurl}}/images/reinforcement_learning_bandit_barplot_comparison_results.png){:class="img-responsive"}
 
-Comparing the results of the different strategies on a barchart we can see at a glance the performances obtained. Strategies such as Boltzamnn and Thompson sampling are the best in term of score, but in practical terms they are difficult to apply. The epsilong-decreesing strategy is most of the time a secure choice, since it has been widely adopted and it is clear the dynamics on a wide variety of cases. For instance, modern approaches such as deep reinforcement learning use epsilon strategies. In this section we saw how exploration can affect the results in a simple three-armed testbed. **Multi-armed bandit problems are in our daily life**. The doctor who has to choose the best treatment for a patient, the web-designer who has to find the best template for maximising the AdSense clicks, or the entrepreneur who has to decide how to manage budget for maximising the incomes. Now you know some strategies for dealing with these problems. In the next section I will introduce the mountain car problem, and I will show you how to use reinforcement learning to tackle it.
+Comparing the results of the different strategies on a barchart we can see at a glance the performances obtained. Thompson sampling seems to be the best strategy in term of score, but in practical terms it is difficult to apply. Softmax-greedy and epsilon-greedy are pretty similar, and choosing the one or the other depends how much you want to encourage exploration.
+The epsilong-decreesing strategy is most of the time a secure choice, since it has been widely adopted and it has a clear dynamic on a wide variety of cases. For instance, modern approaches (e.g. DQN, Double DQN, etc.) use epsilon-based strategies. The homework for this section is to **increase the number of arms** and run the algorithms to see which one performs better. To change the number of arms you simply have to modify the very first line in main function:
+
+```python
+reward_distribution = [0.3, 0.5, 0.8]
+```
+
+To generate a 10-armed bandit you can modify the variable in this way:
+
+```python
+reward_distribution = [0.7, 0.4, 0.6, 0.1, 0.8, 0.05, 0.2, 0.3, 0.9, 0.1]
+```
+
+Once you have a new distribution you can run the script and register the performances of each strategy. Increasing the number of arms should make the exploration more important. A larger state space requires more exploration in order to get an higher reward.
+
+In this section we saw how exploration can affect the results in a simple three-armed testbed. **Multi-armed bandit problems are in our daily life**. The doctor who has to choose the best treatment for a patient, the web-designer who has to find the best template for maximising the AdSense clicks, or the entrepreneur who has to decide how to manage budget for maximising the incomes. Now you know some strategies for dealing with these problems. In the next section I will introduce the mountain car problem, and I will show you how to use reinforcement learning to tackle it.
+
 
 Mountain Car
 ------------
@@ -493,12 +509,36 @@ Running the script several times you can have an idea of how difficult is the ta
 
 ![Reinforcement Learning Drone Landing Random Agent]({{site.baseurl}}/images/reinforcement_learning_application_drone_landing_random_agent.gif){:class="img-responsive"}
 
-The drone is represented with a red dot, the red surface represents the area where landing leads to a negative reward, and the green square in the centre is the platform. As you can see the drone keeps moving in the same part of the room and complete the episode without landing at all. 
+The drone is represented with a red dot, the red surface represents the area where landing leads to a negative reward, and the green square in the centre is the platform. As you can see the drone keeps moving in the same part of the room and complete the episode without landing at all. Here I will tackle the problem using Q-learning, a technique that has been introduced in the [third post of the series](https://mpatacchiola.github.io/blog/2017/01/29/dissecting-reinforcement-learning-3.html). The code is pretty similar to the one used for the gridworld and you can find it in the official repository in the file called `qlearning_drone_landing.py`. The average cumulated reward for each episode (50 steps) is maximum 1.0 (if the drone land at the very first step), it is -1.5 if the drone is so unlucky to land outside of the platform at the very last step, and it is -0.5 if the drone keeps moving without landing at all (sum of the negative cost of living -0.01 for the 50 steps). Running the script for $$5 \times 10^{5}$$ episodes, using an epsilon-greedy strategy (epsilon=0.1) I got the following result:
+
+
+![Reinforcement Learning Drone Landing Q-learning Agent]({{site.baseurl}}/images/reinforcement_learning_drone_landing_qlearning_reward_plot.png){:class="img-responsive"}
+
+
+The algorithm converged pretty rapidly. The reward passed from negative (in the first 1000 episodes) to positive and it kept growing until reaching an average value of 0.9. The training took approximately 3 minutes on my laptop (Intel quad-core i5). 
+Giving a look to the gif generated with the method `render()` we can see how the drone immediately moves toward the platform, reaching it in only 10 seconds.
+
+![Reinforcement Learning Drone Landing Q-Learning Agent]({{site.baseurl}}/images/reinforcement_learning_application_drone_landing_qlearning_agent.gif){:class="img-responsive"}
+
+Using a world of 11 meter was pretty easy to get a stable policy. Let's try now with a world of 21 meters. In the script `qlearning_drone_landing.py` you simply have set the parameter `world_size=21`. In this new environment the probability of obtaining a reward goes down to 0.01%. I will not change any other parameter, because in this way we can compare the performance of the algorithm on this world with the performance on the previous one.
+
+![Reinforcement Learning Drone Landing Q-Learning Reward Large]({{site.baseurl}}/images/reinforcement_learning_drone_landing_qlearning_large_reward_plot.png){:class="img-responsive"}
+
+If you look to the plot you will notice two things. First, the reward grows extremely slowly, reaching an average of 0.6. Second, the number of episodes is much higher. I had to train the policy for $$25 \times 10^{5}$$ episodes, four times more than in the previous environment. It took 40 minutes on the same laptop of the previous experiment. Giving a look to the gif created at the end of the training, we can see that eventually the policy is robust enough to guarantee the landing on the platform.
+
+![Reinforcement Learning Drone Landing Q-Learning Agent]({{site.baseurl}}/images/reinforcement_learning_application_drone_landing_qlearning_large_agent.gif){:class="img-responsive"}
+
+At this point it should be clear why  using a lookup table for storing the state-action utilities is a limited approach. 
+When the state-space grows we need to increase the size of the table. Starting from a world of size 11 and 6 total actions, we need a lookup table of size $$11 \times 11 \times 11 = 1331$$ in order to store all the states, and a table of size $$11 \times 11 \times 11 \times 6 = 7986$$ in order to store all the state-action pairs. Doubling the size of the world to 21 we have to increase the table of approximately 9 times. Moving to a world of size 31 we need a table which is 25 times larger. In the following image I summarized these observations. The orange squares represent the size of the lookup table required to store the state-action pairs, darker the square larger the table.
+
+![Reinforcement Learning Drone Landing Worlds Comparison]({{site.baseurl}}/images/reinforcement_learning_drone_landing_world_comparison.png){:class="img-responsive"}
+
+The problem related to explore a large dimensional space get worst and worst with the number of dimensions considered. In our case we had only three-dimensions to take into account, but considering larger hyper-spaces makes everything more complicated. This is a well known problem named [curse of dimensionality](https://en.wikipedia.org/wiki/Curse_of_dimensionality), a term which has been coined by **Richard Bellman** (a guy that you should know, [go to the first post](https://mpatacchiola.github.io/blog/2016/12/09/dissecting-reinforcement-learning.html) to recall who is he). Only in the next post we will see how to overcome this problem using an approximator. In the last section I want to introduce other problems, problems which are considered extremely hard and that cannot be solved so easily.
+
 
 Hard problems
 --------------
-
-The problem that I described above are difficult but not extremely difficult. In the end we managed to find good policies using a tabular approach. Which kind of problems are hard to solve using reinforcement learning? 
+The problem that I described above are difficult but not extremely difficult. In the end we managed to find good policies using a tabular approach. **Which kind of problems are hard to solve using reinforcement learning?** 
 
 ![Reinforcement Learning Acrobot]({{site.baseurl}}/images/reinforcement_learning_discrete_applications_acrobot_photo.png){:class="img-responsive"}
 
