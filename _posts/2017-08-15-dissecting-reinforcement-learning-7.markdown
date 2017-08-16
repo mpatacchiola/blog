@@ -13,18 +13,25 @@ So far we have represented the utility function by a lookup table (or matrix if 
 
 ![Books Reinforcement Learning]({{site.baseurl}}/images/books_reinforcement_learning_an_introduction.png){:class="img-responsive"}
 
-The references for this post is chapter 8 for the [Sutton and Barto's book]((https://webdocs.cs.ualberta.ca/~sutton/book/ebook/the-book.html)) called "Generalization and Function Approximation". Moreover a good resource is the video of [lesson 6 of David Silver's course](https://www.youtube.com/watch?v=UoPei5o4fps&t=5217s).
+The reference for this post is chapter 8 for the [Sutton and Barto's book]((https://webdocs.cs.ualberta.ca/~sutton/book/ebook/the-book.html)) called "Generalization and Function Approximation". Moreover a good resource is the video of [lesson 6 of David Silver's course](https://www.youtube.com/watch?v=UoPei5o4fps&t=5217s).
 
-Defining the problem
----------------------
+Defining the function approximator
+----------------------------------
 
+I define with $$U(s)$$ our usual utility function, and with $$Q(s,a)$$ the state-action function.
+Let's suppose we are in a discrete rectangular state space, having $$c$$ columns and $$r$$ rows. Using a tabular approach we can represent $$U(s)$$  using a matrix containing $$r \times c = N$$, where $$N$$ represent the total number of states. To represent $$Q(s,a)$$ we need a table of size $$N \times M$$, where $$M$$ is the total number of actions. In the cleaning robot example I represented the lookup tables using matrices. As utility function I used a matrix having the same size of the world, whereas for the state-action function I used a matrix having $$N$$ columns (states) and $$M$$ rows (actions). In the first case, to get the utility we have to access the location of the matrix corresponding to the particular state where we are. In the second case, we use the state as index to access the column in the state-action matrix and from that column we return the utilities of all the available actions.
 
-I define with $$U(s)$$ our usual utility function, and $$\hat{U}(s,\boldsymbol{w})$$ a utility function approximator having parameters stored in a vector $$\boldsymbol{w}$$.
+![Function Approximation Lookup Tables]({{site.baseurl}}/images/reinforcement_learning_function_approximation_lookup_tables.png){:class="img-responsive"}
+
+How can we fit the function approximation mechanism inside this scheme?
+Let's start with some definitions. Defining as $$S= \{ s_{1}, s_{2}, ... , s_{N} \} $$ the set of possible states, and as $$A= \{ a_{1}, a_{2}, ... , s_{M} \} $$ the set of possible actions, we define a utility function approximator $$\hat{U}(S,\boldsymbol{w})$$ having parameters stored in a vector $$\boldsymbol{w}$$. Here I use the hat on top of $$\hat{U}$$ to differentiate this function from the tabular version $$U$$.
+
+Before going into details on how to create a function approximator it is helpful to visualise it as a **black box**. The black box takes as input the current state and returns the utility of the state or the state-action utilities. That's it. The main advantage is that we can approximate (with an arbitrary small error) the utilities using less parameters respect to the tabular approach. We can say that the number of elements stored in the vector $$\boldsymbol{w}$$ is smaller than $$N$$ the number of values in the tabular counterpart.
 
 ![Function Approximation Black Boxes]({{site.baseurl}}/images/reinforcement_learning_function_approximation_black_boxes.png){:class="img-responsive"}
 
-
-**Choosing the features** is a crucial point for an effective function approximation. Features can be the position of a robot, position and speed of an inverted pendulum, configurations of the stones in a Go game, etc. To simplify the explanation I will cast the features into a vector $$\boldsymbol{x}$$ containing the value observed at state $$s$$. For instance in the cleaning robot example a possible feature vector could be $$\boldsymbol{x}=(5,4)$$, this vector contains the two values that identify the position of the robot in the environment (column and row).
+As you can see there is a price to pay, the value returned by the black box are not so precise as the tabular ones. However the price we pay is lower than the reward we get. With an approximator problems that were extremely hard become manageable.
+I guess there is a question that came to your head: **what there is inside the black box?** This is a legitimate question and now I will try to give you the intuition.
 
 
 There are many different function approximators: linear combination of features, neural networks, decision trees, nearest neighbour, etc.
@@ -32,6 +39,11 @@ Here We will consider only **differentiable** function approximators such as the
 
 Linear function approximation
 ------------------------------
+
+
+Let's suppose we are in a very large state space, let's say a massive factory, and the cleaning robot has to find the charging stations which are in the corners on the right side of the room. At the centre of the factory there are some machines, we consider them as obstacles. On the left side there is movement of trucks and forklift, better don't go there. In this scenario there is an high redundancy in storing all the possible states. What we need to know is a pattern: the right corners of the room have maximum utility, the left corners of the room have negative utility. 
+
+![Function Approximation Linear OR]({{site.baseurl}}/images/reinforcement_learning_function_approximation_linear_function_or_world.png){:class="img-responsive"}
 
 In Linear function approximation our goal is to represent the utility function or the state-action function through a linear combination of features. I defined $$\boldsymbol{x}$$ as the feature vector, and $$\boldsymbol{w}$$ as a vector of weights (or parameters) having the same dimension of $$\boldsymbol{x}$$. The utility can be estimated through the dot product between $$\boldsymbol{x}$$ and $$\boldsymbol{w}$$, as follows:
 
@@ -44,6 +56,8 @@ $$ \hat{U}(s, \boldsymbol{w}) = x_{1} w_{1} + x_{2} w_{2} + ... + x_{N} w_{N} $$
 where $$N$$ is the total number of features. 
 
 The **Generalised Policy Iteration (GPI)** (see [second post](https://mpatacchiola.github.io/blog/2017/01/15/dissecting-reinforcement-learning-2.html)) applies here as well. Let's suppose we start with a random set of weights. At the very first step the agent follows an epsilon-greedy strategy. After the first step it is possible to update the weights using gradient descent. What's the effect of this adjustment? The effect is to slightly improve the utility function. At the next step the agent follows again a greedy strategy, then the weights are updated through gradient descent, and so on and so forth. As you can see we are applying the GPI scheme again. 
+
+**Choosing the features** is a crucial point for an effective function approximation. Features can be the position of a robot, position and speed of an inverted pendulum, configurations of the stones in a Go game, etc. To simplify the explanation I will cast the features into a vector $$\boldsymbol{x}$$ containing the value observed at state $$s$$. For instance in the cleaning robot example a possible feature vector could be $$\boldsymbol{x}=(5,4)$$, this vector contains the two values that identify the position of the robot in the environment (column and row).
 
 Conclusions
 -----------
