@@ -136,7 +136,7 @@ The first thing do is to take action. A query to the state-action table (actor) 
 
 ![Reinforcement Learning Actor-Critic Robot example actor]({{site.baseurl}}/images/reinforcement_learning_model_free_active_actor_critic_robot_actor.png){:class="img-responsive"}
 
-Here the [softmax function](https://en.wikipedia.org/wiki/Softmax_function) took as input the N-dimensional action vector $$ \boldsymbol{x} $$ and returned an N-dimensional vector of real values in the range [0, 1] that add up to 1. The softmax function can be easily implemented in Python:
+Here the [softmax function](https://en.wikipedia.org/wiki/Softmax_function) took as input the N-dimensional action vector $$ \boldsymbol{x} $$ and returned an N-dimensional vector of real values in the range [0, 1] that add up to 1. The softmax function can be easily implemented in Python, however differently from the original [softmax equation](https://en.wikipedia.org/wiki/Softmax_function) here I will use `numpy.max()` in the exponents to avoid approximation errors:
 
 ```python
 def softmax(x):

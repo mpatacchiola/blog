@@ -9,11 +9,14 @@ comments: false
 published: false
 ---
 
-So far we have represented the utility function by a lookup table (or matrix if you prefer). This approach has a problem. When the underlying Markov decision process is large there are too many states and actions to store in memory. Moreover in this case it is extremely difficult to visit all the possible states, meaning that we cannot estimate the utility values for those states.
+So far we have represented the utility function by a lookup table (or matrix if you prefer). This approach has a problem. When the underlying Markov decision process is large there are too many states and actions to store in memory. Moreover in this case it is extremely difficult to visit all the possible states, meaning that we cannot estimate the utility values for those states. The key issue is **generalization**, meaning how to produce a good approximation of a large state space experiencing only a small subset.
+In this post I will show you how to use a **linear combination of features** in order to approximate the utility function.
+This new technique will allow us to master new and old problems more efficiently.
 
 ![Books Reinforcement Learning]({{site.baseurl}}/images/books_reinforcement_learning_an_introduction.png){:class="img-responsive"}
 
-The reference for this post is chapter 8 for the [Sutton and Barto's book]((https://webdocs.cs.ualberta.ca/~sutton/book/ebook/the-book.html)) called "Generalization and Function Approximation". Moreover a good resource is the [video-lesson 6 of David Silver's course](https://www.youtube.com/watch?v=UoPei5o4fps&t=5217s). I want to start this post with (another) brief excursion in the neuroscience world. Let's see how the function approximator concept relates to biological brains.
+The reference for this post is chapter 8 for the [Sutton and Barto's book]((https://webdocs.cs.ualberta.ca/~sutton/book/ebook/the-book.html)) called "Generalization and Function Approximation". Moreover a good resource is the [video-lesson 6 of David Silver's course](https://www.youtube.com/watch?v=UoPei5o4fps&t=5217s). A wider introduction to function approximation is given by any good machine learning textbook, I suggest [Pattern Recognition and Machine Learning](https://books.google.co.uk/books/about/Pattern_Recognition_and_Machine_Learning.html?id=kTNoQgAACAAJ&redir_esc=y) by Christopher Bishop.
+I want to start this post with (another) brief excursion in the neuroscience world. Let's see how the function approximator concept relates to biological brains.
 
 
 Approximators (and grandmothers)
@@ -25,7 +28,7 @@ You couldn't read this post without using a powerful approximator: your brain. T
 During the 1970s the grandmother cell moved into neuroscience journals and a proper scientific discussion started. In the same period [Gross et al. (1972)](http://jn.physiology.org/content/jn/35/1/96.full.pdf) observed neurons in the inferior temporal cortex of the monkey that fired selectively to hands and faces. The grandmother cell theory started to be seriously taken into account. The theory was appealing because simple to grasp and pretty intuitive. However a theoretical analysis of the grandmother cell confirmed many underlying weaknesses.
 For instance, in this framework the loss of a cell means the loss of a specific chunk of information. Basic neurobiological observations strongly suggest the opposite. It is possible to hypothesise multiple grandmother cells, which codify the same information in a distributed way. Redundancy prevents loss. This explanation complicate even more the situation, because storing a single state requires multiple entries in the lookup table. To store $$N$$ states without the risk of information loss, at least $$2 \times N$$ cells are required. The paradox of the grandmother cell is that trying to simplify the brain functioning, it finishes to complicate it.
 
-Which is the alternative to the grandmother cell hypothesis? We can suppose that information is stored in a distributed way, and that each single concept is represented through a **pattern of activity**. This theory was strongly sustained by researchers such as [Geoffrey Hinton](https://en.wikipedia.org/wiki/Geoffrey_Hinton) (one of the "godfather" of deep learning), and [James McClelland](https://stanford.edu/~jlmcc/). The **distributed representation** theory gives a big advantage. Having $$N$$ cells it is possible to represent more than $$N$$ states, whereas this is not true for a local representation. Moreover a distributed representation is robust against loss and it can guaranties an implicit redundancy. Even though each active unit is less specific in its meaning, the combination of active units is far more specific.
+Which is the alternative to the grandmother cell hypothesis? We can suppose that information is stored in a distributed way, and that each single concept is represented through a **pattern of activity**. This theory was strongly sustained by researchers such as [Geoffrey Hinton](https://en.wikipedia.org/wiki/Geoffrey_Hinton) (one of the "godfather" of deep learning), and [James McClelland](https://stanford.edu/~jlmcc/). The **distributed representation** theory gives a big advantage. Having $$N$$ cells it is possible to represent more than $$N$$ states, whereas this is not true for a local representation. Moreover a distributed representation is robust against loss and it guaranties an implicit redundancy. Even though each active unit is less specific in its meaning, the combination of active units is far more specific.
 In the image below (inspired by Hinton, 1984) is represented how two stimuli (red and gren dots) are codified in a local and distributed scheme. The local scheme is represented as a two dimensional grid. In the local framework it is always necessary to have two active units to codify a stimulus. We can think the distributed representation as an overlapping between radial units. The two stimuli are codified through an high level pattern, which is given by the units enclosed in a specific activation radius.
 
 ![Function Approximation local vs distributed]({{site.baseurl}}/images/reinforcement_learning_function_approximation_local_vs_distributed_representation.png){:class="img-responsive"}
@@ -33,41 +36,66 @@ In the image below (inspired by Hinton, 1984) is represented how two stimuli (re
 How is it possible to justify the monkey selective-neurons using a distributed representation? A selective-neuron can be the visible part of an underlying network which encapsulate the information. Further research showed that those selective neurons had a large variation in their responsiveness and that it was connected to different aspects of faces. This observation suggested that those neurons embedded a distributed representation of faces. 
 
 
-If you think that the grandmother cell theory is something born and dead in the Seventies you are wrong. In recent years the local representation theory received support from biological observations (see [Bowers 2009](http://web.stanford.edu/class/psych209a/ReadingsByDate/02_01/Bowers09GrandMotherCells.pdf)), however these results have been strongly criticised by [Plaut and McClelland (2009)](http://cnbc.cmu.edu/~plaut/papers/pdf/PlautMcClelland10PR.comment-on-Bowers.pdf). From a machine learning perspective we know that the distributed representation works. The success of deep learning is based on neural networks, which encode the distributed theory. Moreover different methods, such as dropout, are tightly related to the distributed representation theory. Now it's time to go back to reinforcement learning, and see how a distributed representation can solve the problems due to local representation.
+If you think that the grandmother cell theory is something born and dead in the Seventies you are wrong. In recent years the local representation theory received support from biological observations (see [Bowers 2009](http://web.stanford.edu/class/psych209a/ReadingsByDate/02_01/Bowers09GrandMotherCells.pdf)), however these results have been strongly criticised by [Plaut and McClelland (2009)](http://cnbc.cmu.edu/~plaut/papers/pdf/PlautMcClelland10PR.comment-on-Bowers.pdf). From a machine learning perspective we know that the distributed representation works. The success of deep learning is based on neural networks, which are based on a distributed paradigm. Moreover different methods, such as dropout, are tightly related to the distributed representation theory. Now it's time to go back to reinforcement learning, and see how a distributed representation can solve the problems due to local representation.
 
 
 
-Function approximation intuition
-----------------------------------------
+Intuition
+-------------------------
 
 I define with $$U(s)$$ our usual utility function, and with $$Q(s,a)$$ the state-action function.
-Let's suppose we are in a discrete rectangular state space, having $$c$$ columns and $$r$$ rows. Using a tabular approach we can represent $$U(s)$$  using a matrix containing $$r \times c = N$$, where $$N$$ represent the total number of states. To represent $$Q(s,a)$$ we need a table of size $$N \times M$$, where $$M$$ is the total number of actions. In the cleaning robot example I represented the lookup tables using matrices. As utility function I used a matrix having the same size of the world, whereas for the state-action function I used a matrix having $$N$$ columns (states) and $$M$$ rows (actions). In the first case, to get the utility we have to access the location of the matrix corresponding to the particular state where we are. In the second case, we use the state as index to access the column in the state-action matrix and from that column we return the utilities of all the available actions.
+Let's suppose we are in a discrete rectangular state space, having $$c$$ columns and $$r$$ rows. Using a tabular approach we can represent $$U(s)$$  using a table containing $$r \times c = N$$ elements, where $$N$$ represent the total number of states. To represent $$Q(s,a)$$ we need a table of size $$N \times M$$, where $$M$$ is the total number of actions. In the cleaning robot example I represented the lookup tables using matrices. As utility function I used a matrix having the same size of the world, whereas for the state-action function I used a matrix having $$N$$ columns (states) and $$M$$ rows (actions). In the first case, to get the utility we have to access the location of the matrix corresponding to the particular state where we are. In the second case, we use the state as index to access the column in the state-action matrix and from that column we return the utilities of all the available actions.
 
 ![Function Approximation Lookup Tables]({{site.baseurl}}/images/reinforcement_learning_function_approximation_lookup_tables.png){:class="img-responsive"}
 
 How can we fit the function approximation mechanism inside this scheme?
 Let's start with some definitions. Defining as $$S= \{ s_{1}, s_{2}, ... , s_{N} \} $$ the set of possible states, and as $$A= \{ a_{1}, a_{2}, ... , s_{M} \} $$ the set of possible actions, we define a utility function approximator $$\hat{U}(S,\boldsymbol{w})$$ having parameters stored in a vector $$\boldsymbol{w}$$. Here I use the hat on top of $$\hat{U}$$ to differentiate this function from the tabular version $$U$$.
 
-Before going into details on how to create a function approximator it is helpful to visualise it as a **black box**. The black box takes as input the current state and returns the utility of the state or the state-action utilities. That's it. The main advantage is that we can approximate (with an arbitrary small error) the utilities using less parameters respect to the tabular approach. We can say that the number of elements stored in the vector $$\boldsymbol{w}$$ is smaller than $$N$$ the number of values in the tabular counterpart.
+Before going into details on how to create a function approximator it is helpful to visualise it as a **black box**. The method described below can be used on different approximators and for this reason we can easily apply it to the box content.
+The black box takes as input the current state and returns the utility of the state or the state-action utilities. That's it. The main advantage is that we can approximate (with an arbitrary small error) the utilities using less parameters respect to the tabular approach. We can say that the number of elements stored in the vector $$\boldsymbol{w}$$ is smaller than $$N$$ the number of values in the tabular counterpart.
 
 ![Function Approximation Black Boxes]({{site.baseurl}}/images/reinforcement_learning_function_approximation_black_boxes.png){:class="img-responsive"}
 
-As you can see there is a price to pay, the value returned by the black box are not so precise as the tabular ones. However the price we pay is lower than the reward we get. With an approximator problems that were extremely hard become manageable.
+As you can see there is a price to pay, the value returned by the black box are not so precise as the tabular ones. 
+
 I guess there is a question that came to your head: **what there is inside the black box?** This is a legitimate question and now I will try to give you the intuition.
 
+![Function Approximation Methods]({{site.baseurl}}/images/reinforcement_learning_function_approximation_methods_overview.png){:class="img-responsive"}
 
-There are many different function approximators: linear combination of features, neural networks, decision trees, nearest neighbour, etc.
-Here We will consider only **differentiable** function approximators such as the linear combination and neural networks.
+Function approximation is an instance of [supervised learning](https://en.wikipedia.org/wiki/Supervised_learning). In principle all the supervised learning techniques could be used in function approximation. However here we will consider only **differentiable** function approximators such as linear combination of features and neural networks. In this post I will focus on linear combination of features. Before describing the simplest case **the linear approximator**, I would like to introduce the general methodology used to adjust the approximator weights. The goal in function approximation is to move as close as possible to the real distribution adjusting the internal parameters stored in $$\boldsymbol{w}$$. To achieve this goal we need two thing, first an **error measure** which can give a feedback on how good we are adjusting the parameters inside the black box, second a parameters **update rule** that allows adjusting the parameters inside the black box. In the next section I will describe these two components.
 
-Linear function approximation
-------------------------------
+Methods
+-----------
 
+To improve the performance of our function approximator we need an error measure and an optimization algorithm.
+A common **error measure** is given by the [Mean Squared Error (MSE)](https://en.wikipedia.org/wiki/Mean_squared_error) between two quantities. For instance, if we have the optimal utility function $$U^{*}(S)$$ and an approximator function $$\hat{U}(s, \boldsymbol{w})$$, then the MSE is defined as follows:
 
-Let's suppose we are in a very large state space, let's say a massive factory, and the cleaning robot has to find the charging stations which are in the corners on the right side of the room. At the centre of the factory there are some machines, we consider them as obstacles. On the left side there is movement of trucks and forklift, better don't go there. In this scenario there is an high redundancy in storing all the possible states. What we need to know is a pattern: the right corners of the room have maximum utility, the left corners of the room have negative utility. 
+$$ \text{MSE}( \boldsymbol{w} ) = \frac{1}{N} \sum_{s \in S} \big[ U^{*}(s) - \hat{U}(s, \boldsymbol{w}) \big]^{2}  $$
+
+[comment]: <> (where $$P(s)$$ is a distribution weighting the errors of different states, such that $$\sum_{s} P(s) = 1$$. The number of parameters $$\boldsymbol{w}$$ is lower that the number of total states $$N$$. The function $$P(s)$$ allows gaining accuracy on some states instead of others.)
+
+that's it, the MSE is given by the expectation $$\mathop{\mathbb{E}}[ (U^{*}(s) - \hat{U}(s, \boldsymbol{w}) \big)^{2} ]$$. 
+
+The parameters **update rule** for differentiable approximator is [gradient descent](https://en.wikipedia.org/wiki/Gradient_descent). 
+
+$$\begin{eqnarray} 
+\boldsymbol{w}_{t+1} &=&  \boldsymbol{w}_{t}  - \frac{1}{2} \alpha \nabla_{\boldsymbol{w}} \text{MSE}(\boldsymbol{w}) \\
+&=& \boldsymbol{w}_{t}  - \frac{1}{2} \alpha \nabla_{\boldsymbol{w}} \mathop{\mathbb{E}} \big[ (U^{*}(s) - \hat{U}(s, \boldsymbol{w}) \big)^{2} \big]\\
+&=& \boldsymbol{w}_{t}  + \alpha \mathop{\mathbb{E}} \big[ (U^{*}(s) - \hat{U}(s, \boldsymbol{w})) \nabla_{\boldsymbol{w}} \hat{U}(s, \boldsymbol{w}) \big] \\
+&=&  \boldsymbol{w}_{t} + \alpha [ U^{*}(s) - \hat{U}(s, \boldsymbol{w}) ] \nabla_{\boldsymbol{w}} \hat{U}(s, \boldsymbol{w})
+\end{eqnarray}$$
+
+Linear approximator
+--------------------
+
+Here I will describe a **linear approximator** which is the simplest case of linear combinations, whereas in the next section I will describe a quadratic approximator. Before describing a liner approximator I want to clarify a crucial point. The linear approximator is a particular case of the broader class of linear combination of features.
+A liner combination is based on a **polynomial** which can be or not a line. Using only a line to discriminate between states would be very limited. **Linear combination** means that the **parameters are linearly combined**. We are not saying anything about the input features, which in fact may be represented by and high-order polynomial.
+
+To describe the linear approximator I will start from the usual robot cleaning example. Let's suppose we are in a very large state space, let's say a massive factory, and the cleaning robot has to find the charging stations which are in the corners on the right side of the room. At the centre of the factory there are some machines, we consider them as obstacles. On the left side there is the main entrance with many trucks and forklift moving around, better don't go there. In this scenario there is an high redundancy in storing all the possible states in a lookup table. What the robot has to learn is a pattern: the right corners of the room have maximum utility, the left corners of the room have negative utility. 
 
 ![Function Approximation Linear OR]({{site.baseurl}}/images/reinforcement_learning_function_approximation_linear_function_or_world.png){:class="img-responsive"}
 
-In Linear function approximation our goal is to represent the utility function or the state-action function through a linear combination of features. **Choosing the features** is a crucial point for an effective function approximation. Features can be the position of a robot, position and speed of an inverted pendulum, configurations of the stones in a Go game, etc. Here I define $$\boldsymbol{x}$$ as the feature vector, and $$\boldsymbol{w}$$ as a vector of weights (or parameters) having the same dimension of $$\boldsymbol{x}$$. The feature vector contains the features isolated from the state-space. For instance in the cleaning robot example $$\boldsymbol{x}$$ may contain the position in terms of row and column indices.
+**Choosing the features** is a crucial point. Features can be the position of a robot, position and speed of an inverted pendulum, configurations of the stones in a Go game, etc. Here I define $$\boldsymbol{x}$$ as the feature vector, and $$\boldsymbol{w}$$ as a vector of weights (or parameters) having the same dimension of $$\boldsymbol{x}$$. The feature vector contains the features isolated from the state-space. For instance in the cleaning robot example $$\boldsymbol{x}$$ may contain the position in terms of row and column indices.
 
 The utility can be estimated through the dot product between $$\boldsymbol{x}$$ and $$\boldsymbol{w}$$, as follows:
 
@@ -77,9 +105,24 @@ If you are not used to linear algebra notation don't get scared. This is equival
 
 $$ \hat{U}(s, \boldsymbol{w}) = x_{1} w_{1} + x_{2} w_{2} + ... + x_{N} w_{N} $$
 
-where $$N$$ is the total number of features. 
+where $$N$$ is the total number of features. Geometrically this solution is represented by a line (in two-dimensional space), a plane (in a three-dimensional space), or an hyper-plane (in hyper-spaces).  Now we know the content of the black box, which is given by the product of the vectors $$\boldsymbol{x}$$ and $$\boldsymbol{w}$$. However in order to apply the method described in the previous section we still need the MSE. I said that it can be estimated from the difference between the optimal function $$U^{*}(S)$$ and the content of the black box $$\hat{U}(s, \boldsymbol{w})$$. Now we have the content of the black box $$\hat{U}(s, \boldsymbol{w}) = \boldsymbol{x}(s)^{T} \boldsymbol{w}$$, but we do not have the optimal function. What we have is a rough approximation of the optimal function, which is given by our estimator. The formula for the RMSE reduces to:
+
+$$ \text{MSE}( \boldsymbol{w} ) = \sum_{s \in S} \big[ \hat{U}(s, \boldsymbol{w}) - \boldsymbol{x}(s)^{T} \boldsymbol{w} \big]^{2}  $$
+
+In the previous section I said that the MSE can be used as a feedback to adjust the values inside the balck box.
+However in our case we do not have the optimal utility function $$U^{*}(S)$$, what we have is an approximation of this function, given by the content of the black box $$\hat{U}(s, \boldsymbol{w})$$. In this sense we can write 
 
 The **Generalised Policy Iteration (GPI)** (see [second post](https://mpatacchiola.github.io/blog/2017/01/15/dissecting-reinforcement-learning-2.html)) applies here as well. Let's suppose we start with a random set of weights. At the very first step the agent follows an epsilon-greedy strategy. After the first step it is possible to update the weights using gradient descent. What's the effect of this adjustment? The effect is to slightly improve the utility function. At the next step the agent follows again a greedy strategy, then the weights are updated through gradient descent, and so on and so forth. As you can see we are applying the GPI scheme again. 
+
+
+Quadratic approximator
+------------------------
+
+$$ \hat{U}(s, \boldsymbol{w}) = x_{1} w_{1} + x_{2} w_{2} + x_{1}^{2} w_{3} + x_{2}^{2} w_{4} +... + x_{N-1} w_{M-1} + x_{N}^{2} w_{M} $$
+
+
+High-order approximator
+-----------------------
 
 
 Conclusions
