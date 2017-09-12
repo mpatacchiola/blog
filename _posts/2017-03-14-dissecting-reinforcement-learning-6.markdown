@@ -554,7 +554,7 @@ A humanoid puppet has many degrees of freedom, and coordinating all of them is r
 
 ![Reinforcement Learning Atari problems]({{site.baseurl}}/images/reinforcement_learning_applications_hard_problems_atari.png){:class="img-responsive"}
 
-If you played with the [2600 Atari games](https://en.wikipedia.org/wiki/List_of_Atari_2600_games) you may have noticed that some of them are really hard. How can an algorithm play those games? Well, we can cheat. If the game can be reduced to a limited set of features, it is possible to use model based reinforcement learning to solve it. However most of the time the reward function and the transition matrix are unknown. In this cases the only solution is to use the **raw coulour image** as **state space**.
+If you played with the [2600 Atari games](https://en.wikipedia.org/wiki/List_of_Atari_2600_games) you may have noticed that some of them are really hard. How can an algorithm play those games? Well, we can cheat. If the game can be reduced to a limited set of features, it is possible to use model based reinforcement learning to solve it. However most of the time the reward function and the transition matrix are unknown. In these cases the only solution is to use the **raw coulour image** as **state space**.
 The state space represented by a raw image is extremely large. There is no point in using a lookup table for such a big space because most of the states will remain unvisited. We should use an approximator which can describe with a reduced set of parameters the state space. Soon I will show you how **deep reinforcement learning** can use neural networks to master this kind of problems.
 
 Conclusions
