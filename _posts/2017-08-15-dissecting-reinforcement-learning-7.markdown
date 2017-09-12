@@ -6,7 +6,7 @@ description: This blog series explains the main ideas and techniques used in rei
 author: Massimiliano Patacchiola
 type: reinforcement learning
 comments: false
-published: true
+published: false
 ---
 
 So far we have represented the utility function by a lookup table (or matrix if you prefer). This approach has a problem. When the underlying Markov decision process is large there are too many states and actions to store in memory. Moreover in this case it is extremely difficult to visit all the possible states, meaning that we cannot estimate the utility values for those states. The key issue is **generalization**, meaning how to produce a good approximation of a large state space experiencing only a small subset.
