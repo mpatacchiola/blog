@@ -19,7 +19,7 @@ The reference for this post is chapter 8 for the [Sutton and Barto's book]((http
 I want to start this post with (another) brief excursion in the neuroscience world. Let's see how the function approximator concept relates to biological brains.
 
 
-Brains (and grandmothers)
+Approximators (and grandmothers)
 ------------------------------------------ 
 You couldn't read this post without using a powerful approximator: your brain. The first primordial brains, a bunch of nerve cells, gave a great advantage allowing elementary creatures to better perceive and react, considerably extending their lifespan. Evolution shaped brains for thousands of years optimising size, modularity, and connectivity. Having a brain seems a big deal. Why? **What's the purpose of having a brain?** We can consider the world as a huge and chaotic state-space, where the correct evaluation of a specific stimulus makes the difference between life and death. The brain stores information about the environment and allows an effective interaction with it. Let suppose that our brain is a massive lookup table, which can store in a single neuron (or cell) a single state. This is known as **local representation**. This theory is often called the [grandmother cell](https://en.wikipedia.org/wiki/Grandmother_cell). A grandmother cell is a hypothetical neuron that responds only to a specific and meaningful stimulus, such as the image of one's grandmother. The term is due to the cognitive scientist [Jerry Lettvin](https://en.wikipedia.org/wiki/Jerome_Lettvin) who used it to illustrate the inconsistency of the concept during a lecture at MIT. To describe the grandmother cell theory I will use the following example. Let's suppose we bring an experimental subject in an isolated room. The activity of a group of neurons in the subject brain is constantly monitored. In front of the subject there is a screen. Showing to the subject the picture of his grandmother we notice that a specific neuron fires. Showing the grandmother in different contexts (e.g. in a group picture) activates again the neuron. However showing on screen a neutral stimulus does not activate the neuron.
 
@@ -66,12 +66,15 @@ Using a more formal view we can say that the vector $$\boldsymbol{w}$$ is adjust
 
 ![Function Approximation Methods]({{site.baseurl}}/images/reinforcement_learning_function_approximation_methods_overview.png){:class="img-responsive"}
 
-Function approximation is an instance of [supervised learning](https://en.wikipedia.org/wiki/Supervised_learning). In principle all the supervised learning techniques could be used in function approximation. However here I will consider only **differentiable** function approximators such as linear combination of features and neural networks. In this post I will focus on linear combination of features. Before describing the simplest case **the linear approximator**, I would like to introduce the general methodology used to adjust the vector of weights. The goal in function approximation is to move as close as possible to the real utility function adjusting the internal parameters stored in $$\boldsymbol{w}$$. To achieve this goal we need two things, first an **error measure** which can give us a feedback on how close we are to the target, second an **update rule** for adjusting the weights. In the next section I will describe these two components.
+Function approximation is an instance of [supervised learning](https://en.wikipedia.org/wiki/Supervised_learning). In principle all the supervised learning techniques could be used in function approximation. The vector $$\boldsymbol{w}$$ may be the set of connection weights of a neural network or the split points and leaf values of a decision tree. However here I will consider only **differentiable** function approximators such as linear combination of features and neural networks, which represents the most promising techniques nowadays. In this post I will focus on linear combination of features. Before describing the simplest case **the linear approximator**, I would like to introduce the general methodology used to adjust the vector of weights. The goal in function approximation is to move as close as possible to the real utility function adjusting the internal parameters stored in $$\boldsymbol{w}$$. To achieve this goal we need two things, first an **error measure** which can give us a feedback on how close we are to the target, second an **update rule** for adjusting the weights. In the next section I will describe these two components.
 
 Method
 --------
 
 To improve the performance of our function approximator we need an error measure and an update rule. These two parts work tightly in the learning cycle of every supervised learning technique. Their use in reinforcement learning is not much different from how they are used in a classification task. In order to understand this section you need to refresh some concepts of [multivariable calculus](https://en.wikipedia.org/wiki/Multivariable_calculus) such as the [partial derivative](https://en.wikipedia.org/wiki/Partial_derivative) and [gradient](https://en.wikipedia.org/wiki/Gradient).
+
+
+![Function Approximation Training]({{site.baseurl}}/images/reinforcement_learning_function_approximation_training_cycle.png){:class="img-responsive"}
 
 **Error Measure**: a common error measure is given by the [Mean Squared Error (MSE)](https://en.wikipedia.org/wiki/Mean_squared_error) between two quantities. For instance, if we have the optimal utility function $$U^{*}(S)$$ and an approximator function $$\hat{U}(s, \boldsymbol{w})$$, then the MSE is defined as follows:
 
@@ -79,23 +82,42 @@ $$ \text{MSE}( \boldsymbol{w} ) = \frac{1}{N} \sum_{s \in S} \big[ U^{*}(s) - \h
 
 [comment]: <> (where $$P(s)$$ is a distribution weighting the errors of different states, such that $$\sum_{s} P(s) = 1$$. The number of parameters $$\boldsymbol{w}$$ is lower that the number of total states $$N$$. The function $$P(s)$$ allows gaining accuracy on some states instead of others.)
 
-that's it, the MSE is given by the expectation $$\mathop{\mathbb{E}}[ (U^{*}(s) - \hat{U}(s, \boldsymbol{w}) \big)^{2} ]$$. 
+that's it, the MSE is given by the expectation $$\mathop{\mathbb{E}}[ (U^{*}(s) - \hat{U}(s, \boldsymbol{w}) \big)^{2} ]$$ which quantifies the difference between the target and the approximator output. When the training is working correctly the MSE will decrease meaning that we are getting closer to the optimal utility function. The MSE is a common loss function used in supervised learning. However, in reinforcement learning it is often used a reinterpretation of the MSE called **Mean Squared Value Error (MSVE)**. The MSVE introduce a distribution $$\mu(s) \geq 0$$ which specifies how much we care about each state $$s$$. As I told you the function approximator is based on a set of weights $$\boldsymbol{w}$$ which contains less elements that the total number of states. For this reason adjusting a subset of the weights means improving the utility prediction of some states but loosing precision in others. We have limited resources and we have to manage them carefully. The function $$\mu(s)$$ gives us an explicit solution and using it we can rewrite the previous equation as follows:
 
-**Update rule**: the update rule for differentiable approximator is [gradient descent](https://en.wikipedia.org/wiki/Gradient_descent). The [gradient](https://en.wikipedia.org/wiki/Gradient) is a generalisation of the concept of derivative which applies to functions of several variables. You can imagine the gradient as the vector that points in the direction of the greatest rate of increase. Intuitively, if you want to reach the top of a mountain the gradient is an arrow that in each moment show you in which direction you should to go. The gradient is generally represented with the operator $$\nabla$$ and is also called **nabla**. 
-The goal in gradient descent is to minimise the error measure. We can achieve this goal moving in the direction of the negative gradient vector, meaning that we are not moving anymore to the top of the mountain but downslope. At each step we adjust the parameter vector $$\boldsymbol{w}$$ moving a step closer to the valley.
+$$ \text{MSVE}( \boldsymbol{w} ) = \frac{1}{N} \sum_{s \in S}  \mu(s) \big[ U^{*}(s) - \hat{U}(s, \boldsymbol{w}) \big]^{2}  $$
+
+
+**Update rule**: the update rule for differentiable approximator is [gradient descent](https://en.wikipedia.org/wiki/Gradient_descent). The [gradient](https://en.wikipedia.org/wiki/Gradient) is a generalisation of the concept of derivative which applies to functions of several variables. You can imagine the gradient as the vector that points in the direction of the greatest rate of increase. Intuitively, if you want to reach the top of a mountain the gradient is an arrow that in each moment show you in which direction you should walk. The gradient is generally represented with the operator $$\nabla$$ and is also called **nabla**. 
+The goal in gradient descent is to minimise the error measure. We can achieve this goal moving in the direction of the negative gradient vector, meaning that we are not moving anymore to the top of the mountain but downslope. At each step we adjust the parameter vector $$\boldsymbol{w}$$ moving a step closer to the valley. First of all, we have to estimate the gradient vector for $$ \text{MSE}( \boldsymbol{w} )$$ or $$ \text{MSVE}( \boldsymbol{w} )$$. Those error functions are based on $$\boldsymbol{w}$$. In order to get the gradient vector we have to calculate the partial derivative of each weight with respect to all the other weights. Secondly, once we have the gradient vector we have to adjust the value of all the weights in accordance with the negative direction of the gradient.
+In mathematical terms, we can update the vector $$\boldsymbol{w}$$ at $$t+1$$ as follows:
 
 $$\begin{eqnarray} 
 \boldsymbol{w}_{t+1} &=&  \boldsymbol{w}_{t}  - \frac{1}{2} \alpha \nabla_{\boldsymbol{w}} \text{MSE}(\boldsymbol{w}) \\
 &=& \boldsymbol{w}_{t}  - \frac{1}{2} \alpha \nabla_{\boldsymbol{w}} \mathop{\mathbb{E}} \big[ (U^{*}(s) - \hat{U}(s, \boldsymbol{w}) \big)^{2} \big]\\
 &=& \boldsymbol{w}_{t}  + \alpha \mathop{\mathbb{E}} \big[ (U^{*}(s) - \hat{U}(s, \boldsymbol{w})) \nabla_{\boldsymbol{w}} \hat{U}(s, \boldsymbol{w}) \big] \\
-&=&  \boldsymbol{w}_{t} + \alpha [ U^{*}(s) - \hat{U}(s, \boldsymbol{w}) ] \nabla_{\boldsymbol{w}} \hat{U}(s, \boldsymbol{w})
+&=&  \boldsymbol{w}_{t} + \alpha \big[ U^{*}(s) - \hat{U}(s, \boldsymbol{w}) \big] \nabla_{\boldsymbol{w}} \hat{U}(s, \boldsymbol{w})
 \end{eqnarray}$$
+
+At this point you might think we have all we need to start the learning procedure, however there is an important part missing. We supposed it was possible to use the optimal utility function $$U^{*}$$ as target in the error estimation step. **We do not have the optimal utility function**. Think about that, having this function would mean we do not need an approximator at all. Moving in our gridworld we could simply call $$U^{*}(s_{t})$$ at each time step $$t$$ and get the actual utility value of that state. What we can do to overcome this problem is to build a target function $$U^{\sim}$$ which represent an approximated target and plug it in our formula:
+
+$$ \boldsymbol{w}_{t+1} =  \boldsymbol{w}_{t} + \alpha \big[ U^{\sim}(s) - \hat{U}(s, \boldsymbol{w}) \big] \nabla_{\boldsymbol{w}} \hat{U}(s, \boldsymbol{w}) $$
+
+How can we estimate the approximated target? We can follow different approaches, for instance using Monte Carlo or TD learning. In the next section I will introduce these methods.
+
+
+Target estimation
+------------------
+
+The **Generalised Policy Iteration (GPI)** (see [second post](https://mpatacchiola.github.io/blog/2017/01/15/dissecting-reinforcement-learning-2.html)) applies here as well. Let's suppose we start with a random set of weights. At the very first step the agent follows an epsilon-greedy strategy moving in the state with the highest utility. After the first step it is possible to update the weights using gradient descent. What's the effect of this adjustment? The effect is to slightly improve the utility function. At the next step the agent follows again a greedy strategy, then the weights are updated through gradient descent, and so on and so forth. As you can see we are applying the GPI scheme again.
+
+
 
 Linear approximator
 --------------------
 
-Here I will describe a **linear approximator** which is the simplest case of linear combinations, whereas in the next section I will describe some high order approximators. Before describing a liner approximator I want to clarify a crucial point. The linear approximator is a particular case of the broader class of linear combination of features.
-A liner combination is based on a **polynomial** which can be or not a line. Using only a line to discriminate between states would be very limited. **Linear combination** means that the **parameters are linearly combined**. We are not saying anything about the input features, which in fact may be represented by and high-order polynomial.
+Now it's time to put everything together. We have built a method based on an error measure and an update rule and we know how to estimate a target. Now I will show you how to build an approximator, meaning the function $$\hat{U}(s, \boldsymbol{w})$$.
+Here I will describe a **linear approximator** which is the simplest case of linear combinations, whereas in the next section I will describe some high order approximators. Before describing a liner approximator I want to clarify a crucial point in order to avoid a **common missunderstanding**. The linear approximator is a particular case of the broader class of linear combination of features.
+A liner combination is based on a **polynomial** which can be or not a line. Using only a line to discriminate between states can be very limited. **Linear combination** means that the **parameters are linearly combined**. We are not saying anything about the input features, which in fact may be represented by and high-order polynomial. Hopefully this distinction will be clear at the end of the post.
 
 To describe the linear approximator I will start from the usual robot cleaning example. Let's suppose we are in a very large state space, let's say a massive factory, and the cleaning robot has to find the charging stations which are in the corners on the right side of the room. At the centre of the factory there are some machines, we consider them as obstacles. On the left side there is the main entrance with many trucks and forklift moving around, better don't go there. In this scenario there is an high redundancy in storing all the possible states in a lookup table. What the robot has to learn is a pattern: the right corners of the room have maximum utility, the left corners of the room have negative utility. 
 
@@ -117,8 +139,7 @@ $$ \text{MSE}( \boldsymbol{w} ) = \sum_{s \in S} \big[ \hat{U}(s, \boldsymbol{w}
 
 In the previous section I said that the MSE can be used as a feedback to adjust the values inside the black box.
 However in our case we do not have the optimal utility function $$U^{*}(S)$$, what we have is an approximation of this function, given by the content of the black box $$\hat{U}(s, \boldsymbol{w})$$.
-
-The **Generalised Policy Iteration (GPI)** (see [second post](https://mpatacchiola.github.io/blog/2017/01/15/dissecting-reinforcement-learning-2.html)) applies here as well. Let's suppose we start with a random set of weights. At the very first step the agent follows an epsilon-greedy strategy. After the first step it is possible to update the weights using gradient descent. What's the effect of this adjustment? The effect is to slightly improve the utility function. At the next step the agent follows again a greedy strategy, then the weights are updated through gradient descent, and so on and so forth. As you can see we are applying the GPI scheme again. 
+ 
 
 
 High-order approximators
