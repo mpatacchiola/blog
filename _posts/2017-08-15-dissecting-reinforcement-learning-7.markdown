@@ -13,10 +13,10 @@ So far we have represented the utility function by a lookup table (or matrix if 
 In this post I will show you how to use a **linear combination of features** in order to approximate the utility function.
 This new technique will allow us to master new and old problems more efficiently.
 
-![Books Reinforcement Learning]({{site.baseurl}}/images/books_reinforcement_learning_an_introduction.png){:class="img-responsive"}
+![Books Reinforcement Learning]({{site.baseurl}}/images/books_reinforcement_learning_an_introduction_pattern_recognition.png){:class="img-responsive"}
 
 The reference for this post is chapter 8 for the [Sutton and Barto's book]((https://webdocs.cs.ualberta.ca/~sutton/book/ebook/the-book.html)) called "Generalization and Function Approximation". Moreover a good resource is the [video-lesson 6 of David Silver's course](https://www.youtube.com/watch?v=UoPei5o4fps&t=5217s). A wider introduction to function approximation is given by any good machine learning textbook, I suggest [Pattern Recognition and Machine Learning](https://books.google.co.uk/books/about/Pattern_Recognition_and_Machine_Learning.html?id=kTNoQgAACAAJ&redir_esc=y) by Christopher Bishop.
-I want to start this post with (another) brief excursion in the neuroscience world. Let's see how the function approximator concept relates to biological brains.
+I want to start this post with a brief excursion in the neuroscience world. Let's see how a function approximator relates to biological brains.
 
 
 Approximators (and grandmothers)
@@ -35,7 +35,6 @@ In the image below (inspired by Hinton, 1984) is represented how two stimuli (re
 
 How is it possible to explain the monkey selective-neurons described by [Gross et al. (1972)](http://jn.physiology.org/content/jn/35/1/96.full.pdf) using a distributed representation? A selective-neuron can be the visible part of an underlying network which encapsulate the information. Further research showed that those selective neurons had a large variation in their responsiveness and that it was connected to different aspects of faces. This observation suggested that those neurons embedded a distributed representation of faces. 
 
-
 If you think that the grandmother cell theory is something born and dead in the Seventies you are wrong. In recent years the local representation theory received support from biological observations (see [Bowers 2009](http://web.stanford.edu/class/psych209a/ReadingsByDate/02_01/Bowers09GrandMotherCells.pdf)), however these results have been strongly criticised by [Plaut and McClelland (2009)](http://cnbc.cmu.edu/~plaut/papers/pdf/PlautMcClelland10PR.comment-on-Bowers.pdf). For a very recent survey I suggest you [this article](http://www.tandfonline.com/doi/abs/10.1080/23273798.2016.1267782).
 From a machine learning perspective we know that the distributed representation works. The success of deep learning is based on neural networks, which are powerful function approximators. Moreover different methods, such as dropout, are tightly related to the distributed representation theory. Now it's time to go back to reinforcement learning, and see how a distributed representation can solve the problems due to local representation.
 
@@ -44,7 +43,7 @@ From a machine learning perspective we know that the distributed representation 
 Function approximation intuition
 --------------------------------
 
-Here I will use again the **robot cleaning example** described in previous posts. This robot moves in a two-dimensional world we called grid-world. It has only 4 possible actions available (forward, backward, left, right) and its goal is to reach a charger (green cell) and avoid to fall on stairs (red cell). I define with $$U(s)$$ our usual utility function, and with $$Q(s,a)$$ the state-action function.
+Here I will use again the **robot cleaning example** described in previous posts. The robot moves in a two-dimensional world we called gridworld. It has only 4 possible actions available (forward, backward, left, right) and its goal is to reach a charger (green cell) and avoid to fall on stairs (red cell). I define with $$U(s)$$ our usual utility function, and with $$Q(s,a)$$ the state-action function.
 The grid-world is a discrete rectangular state space, having $$c$$ columns and $$r$$ rows. Using a tabular approach we can represent $$U(s)$$  using a table containing $$r \times c = N$$ elements, where $$N$$ represent the total number of states. To represent $$Q(s,a)$$ we need a table of size $$N \times M$$, where $$M$$ is the total number of actions. In the previous posts I always represented the **lookup tables** using **matrices**. As utility function I used a matrix having the same size of the world, whereas for the state-action function I used a matrix having $$N$$ columns (states) and $$M$$ rows (actions). In the first case, to get the utility we have to access the location of the matrix corresponding to the particular state where we are. In the second case, we use the state as index to access the column in the state-action matrix and from that column we return the utilities of all the available actions.
 
 ![Function Approximation Lookup Tables]({{site.baseurl}}/images/reinforcement_learning_function_approximation_lookup_tables.png){:class="img-responsive"}
@@ -52,7 +51,7 @@ The grid-world is a discrete rectangular state space, having $$c$$ columns and $
 How can we fit the function approximation mechanism inside this scheme?
 Let's start with some definitions. Defining as $$S= \{ s_{1}, s_{2}, ... , s_{N} \} $$ the set of possible states, and as $$A= \{ a_{1}, a_{2}, ... , s_{M} \} $$ the set of possible actions, we define a utility function approximator $$\hat{U}(S,\boldsymbol{w})$$ having parameters stored in a vector $$\boldsymbol{w}$$. Here I use the hat on top of $$\hat{U}$$ to differentiate this function from the tabular version $$U$$.
 
-Before going into details on how to create a function approximator it is helpful to visualise it as a **black box**. The method described below can be used on different approximators and for this reason we can easily apply it to the box content.
+Before explaining how to create a function approximator it is helpful to visualise it as a **black box**. The method described below can be used on different approximators and for this reason we can easily apply it to the box content.
 The black box takes as input the current state and returns the utility of the state or the state-action utilities. That's it. The main advantage is that we can approximate (with an arbitrary small error) the utilities using less parameters respect to the tabular approach. We can say that the number of elements stored in the vector $$\boldsymbol{w}$$ is smaller than $$N$$ the number of values in the tabular counterpart.
 
 ![Function Approximation Black Boxes]({{site.baseurl}}/images/reinforcement_learning_function_approximation_black_boxes.png){:class="img-responsive"}
@@ -92,13 +91,13 @@ The goal in gradient descent is to minimise the error measure. We can achieve th
 In mathematical terms, we can update the vector $$\boldsymbol{w}$$ at $$t+1$$ as follows:
 
 $$\begin{eqnarray} 
-\boldsymbol{w}_{t+1} &=&  \boldsymbol{w}_{t}  - \frac{1}{2} \alpha \nabla_{\boldsymbol{w}} \text{MSE}(\boldsymbol{w}) \\
-&=& \boldsymbol{w}_{t}  - \frac{1}{2} \alpha \nabla_{\boldsymbol{w}} \mathop{\mathbb{E}} \big[ (U^{*}(s) - \hat{U}(s, \boldsymbol{w}) \big)^{2} \big]\\
-&=& \boldsymbol{w}_{t}  + \alpha \mathop{\mathbb{E}} \big[ (U^{*}(s) - \hat{U}(s, \boldsymbol{w})) \nabla_{\boldsymbol{w}} \hat{U}(s, \boldsymbol{w}) \big] \\
-&=&  \boldsymbol{w}_{t} + \alpha \big[ U^{*}(s) - \hat{U}(s, \boldsymbol{w}) \big] \nabla_{\boldsymbol{w}} \hat{U}(s, \boldsymbol{w})
+\boldsymbol{w}_{t+1} &=&  \boldsymbol{w}_{t}  - \frac{1}{2} \alpha \nabla_{\boldsymbol{w}} \text{MSE}(\boldsymbol{w}_{t}) \\
+&=& \boldsymbol{w}_{t}  - \frac{1}{2} \alpha \nabla_{\boldsymbol{w}} \mathop{\mathbb{E}} \big[ (U^{*}(s) - \hat{U}(s, \boldsymbol{w}_{t}) \big)^{2} \big]\\
+&=& \boldsymbol{w}_{t}  + \alpha \mathop{\mathbb{E}} \big[ (U^{*}(s) - \hat{U}(s, \boldsymbol{w}_{t})) \nabla_{\boldsymbol{w}} \hat{U}(s, \boldsymbol{w}_{t}) \big] \\
+&=&  \boldsymbol{w}_{t} + \alpha \big[ U^{*}(s) - \hat{U}(s, \boldsymbol{w}_{t}) \big] \nabla_{\boldsymbol{w}} \hat{U}(s, \boldsymbol{w}_{t})
 \end{eqnarray}$$
 
-At this point you might think we have all we need to start the learning procedure, however there is an important part missing. We supposed it was possible to use the optimal utility function $$U^{*}$$ as target in the error estimation step. **We do not have the optimal utility function**. Think about that, having this function would mean we do not need an approximator at all. Moving in our gridworld we could simply call $$U^{*}(s_{t})$$ at each time step $$t$$ and get the actual utility value of that state. What we can do to overcome this problem is to build a target function $$U^{\sim}$$ which represent an approximated target and plug it in our formula:
+At this point you might think we have all we need to start the learning procedure, however there is an important part missing. We supposed it was possible to use the optimal utility function $$U^{*}$$ as target in the error estimation step. **We do not have the optimal utility function**. Think about that, having this function would mean we do not need an approximator at all. Moving in our gridworld we could simply call $$U^{*}(s_{t})$$ at each time step $$t$$ and get the actual utility value of that state. What we can do to overcome this problem is to build a target function $$U^{\sim}$$ which represent an **approximated target** and plug it in our formula:
 
 $$ \boldsymbol{w}_{t+1} =  \boldsymbol{w}_{t} + \alpha \big[ U^{\sim}(s) - \hat{U}(s, \boldsymbol{w}) \big] \nabla_{\boldsymbol{w}} \hat{U}(s, \boldsymbol{w}) $$
 
@@ -107,6 +106,22 @@ How can we estimate the approximated target? We can follow different approaches,
 
 Target estimation
 ------------------
+
+In the previous section we came to the conclusion that we need approximated target functions $$U^{\sim}(s)$$ and $$Q^{\sim}(s,a)$$ to use in the error evaluation and update rule. The type of target used is at the heart of function approximation in reinforcement learning. There are two main approaches:
+
+**Monte Carlo target**: an approximated value for the target can be obtained through a direct interaction with the environment. Using a Monte Carlo approach (see the [second post](https://mpatacchiola.github.io/blog/2017/01/15/dissecting-reinforcement-learning-2.html)) we can generate an episode and update the function $$U^{\sim}(s)$$ based on the states encountered along the way. The estimation of the optimal function $$U^{*}(s)$$ is unbiased because $$\mathop{\mathbb{E}}[U^{\sim}(s)] = U^{*}(s)$$, meaning that the *prediction is guaranteed to converge*.
+
+**Bootstrapping target**: the other approach used to build the target is called bootstrapping and I introduced it in the [third post](https://mpatacchiola.github.io/blog/2017/01/29/dissecting-reinforcement-learning-3.html). In bootstrapping methods we do not have to complete an episode for getting an estimation of the target, we can directly update the approximator parameters after each visit. The simplest form of bootstrapping target is the one based on TD(0) which is defined as follows:
+
+$$ U^{\sim}(s_{t}) = \hat{U}(s_{t+1}, \boldsymbol{w}) \qquad Q^{\sim}(s_{t}, a) = \hat{Q}(s_{t+1}, a, \boldsymbol{w})$$
+
+That's it, the target is obtained through the approximation given by the estimator itself at $$s_{t+1}$$.
+
+
+
+I already wrote about the differences of these two approaches, however here I would like to discuss it again in the new context of function approximation.
+In both cases the functions $$U^{\sim}(s)$$ and $$Q^{\sim}(s,a)$$ are based on the vector of weights $$\boldsymbol{w}$$. For this reason the correct notation we are going to use from now on is $$U^{\sim}(s,\boldsymbol{w})$$ and $$Q^{\sim}(s,a,\boldsymbol{w})$$.
+We have to be particularly careful when using the bootstrapping methods in gradient-based approximators. Bootstrapping methods are not true instances of gradient descent because they only care about the parameters in $$\hat{U}(s, \boldsymbol{w})$$. At training time we adjust $$\boldsymbol{w}$$ in the estimator $$\hat{U}(s,\boldsymbol{w})$$ based on a measure of error but we are not changing the parameters in the target function $$U^{\sim}(s,\boldsymbol{w})$$ based on an error measure. Bootstrapping ignores the effect on the target, taking into account only the gradient of the estimation. For this reason bootstrapping techniques are called **semi-gradient methods**. Due to this issue semi-gradient methods **does not guarantee the convergence**. At this point you may think that it is better to use Monte Carlo methods because at least they are guaranteed to converge. Bootstrapping gives two main advantages. First of all they learn online and it is not required to complete the episode in order to update the weights. Secondly they are faster to learn and computationally friendly. 
 
 The **Generalised Policy Iteration (GPI)** (see [second post](https://mpatacchiola.github.io/blog/2017/01/15/dissecting-reinforcement-learning-2.html)) applies here as well. Let's suppose we start with a random set of weights. At the very first step the agent follows an epsilon-greedy strategy moving in the state with the highest utility. After the first step it is possible to update the weights using gradient descent. What's the effect of this adjustment? The effect is to slightly improve the utility function. At the next step the agent follows again a greedy strategy, then the weights are updated through gradient descent, and so on and so forth. As you can see we are applying the GPI scheme again.
 
@@ -119,13 +134,7 @@ Now it's time to put everything together. We have built a method based on an err
 Here I will describe a **linear approximator** which is the simplest case of linear combinations, whereas in the next section I will describe some high order approximators. Before describing a liner approximator I want to clarify a crucial point in order to avoid a **common missunderstanding**. The linear approximator is a particular case of the broader class of linear combination of features.
 A liner combination is based on a **polynomial** which can be or not a line. Using only a line to discriminate between states can be very limited. **Linear combination** means that the **parameters are linearly combined**. We are not saying anything about the input features, which in fact may be represented by and high-order polynomial. Hopefully this distinction will be clear at the end of the post.
 
-To describe the linear approximator I will start from the usual robot cleaning example. Let's suppose we are in a very large state space, let's say a massive factory, and the cleaning robot has to find the charging stations which are in the corners on the right side of the room. At the centre of the factory there are some machines, we consider them as obstacles. On the left side there is the main entrance with many trucks and forklift moving around, better don't go there. In this scenario there is an high redundancy in storing all the possible states in a lookup table. What the robot has to learn is a pattern: the right corners of the room have maximum utility, the left corners of the room have negative utility. 
-
-![Function Approximation Linear OR]({{site.baseurl}}/images/reinforcement_learning_function_approximation_linear_function_or_world.png){:class="img-responsive"}
-
-**Choosing the features** is a crucial point. Features can be the position of a robot, position and speed of an inverted pendulum, configurations of the stones in a Go game, etc. Here I define $$\boldsymbol{x}$$ as the feature vector, and $$\boldsymbol{w}$$ as a vector of weights (or parameters) having the same dimension of $$\boldsymbol{x}$$. The feature vector contains the features isolated from the state-space. For instance in the cleaning robot example $$\boldsymbol{x}$$ may contain the position in terms of row and column indices.
-
-The utility can be estimated through the dot product between $$\boldsymbol{x}$$ and $$\boldsymbol{w}$$, as follows:
+Here we model the state as a vector called $$\boldsymbol{x}$$. This vector contains the current state values at time $$t$$. We call these values **features**. Features can be the position of a robot, position and speed of an inverted pendulum, configurations of the stones in a Go game, etc. Here I define also $$\boldsymbol{w}$$ as the vector of weights (or parameters) of our linear approximator, having the same number of elements of $$\boldsymbol{x}$$. Great, we have two vectors and we want to use them in a linear function. How to do it? Simple, we have to perform the dot product between $$\boldsymbol{x}$$ and $$\boldsymbol{w}$$ as follows:
 
 $$ \hat{U}(s, \boldsymbol{w}) = \boldsymbol{x}(s)^{T} \boldsymbol{w} $$
 
@@ -133,29 +142,61 @@ If you are not used to linear algebra notation don't get scared. This is equival
 
 $$ \hat{U}(s, \boldsymbol{w}) = x_{1} w_{1} + x_{2} w_{2} + ... + x_{N} w_{N} $$
 
-where $$N$$ is the total number of features. Geometrically this solution is represented by a line (in two-dimensional space), a plane (in a three-dimensional space), or an hyper-plane (in hyper-spaces).  Now we know the content of the black box, which is given by the product of the vectors $$\boldsymbol{x}$$ and $$\boldsymbol{w}$$. However in order to apply the method described in the previous section we still need the MSE. I said that it can be estimated from the difference between the optimal function $$U^{*}(S)$$ and the content of the black box $$\hat{U}(s, \boldsymbol{w})$$. Now we have the content of the black box $$\hat{U}(s, \boldsymbol{w}) = \boldsymbol{x}(s)^{T} \boldsymbol{w}$$, but we do not have the optimal function. What we have is a rough approximation of the optimal function, which is given by our estimator. The formula for the RMSE reduces to:
+where $$N$$ is the total number of features. Geometrically this solution is represented by a line (in two-dimensional space), a plane (in a three-dimensional space), or an hyper-plane (in hyper-spaces).  Now we know the content of the black box, which is given by the product of the vectors $$\boldsymbol{x}$$ and $$\boldsymbol{w}$$. However in order to apply the method described in the previous section we still need the error measure, the update rule and the target. Using the MSE we can write the **error measure** as follows:
 
-$$ \text{MSE}( \boldsymbol{w} ) = \sum_{s \in S} \big[ \hat{U}(s, \boldsymbol{w}) - \boldsymbol{x}(s)^{T} \boldsymbol{w} \big]^{2}  $$
+$$ \text{MSE}( \boldsymbol{w} ) = \sum_{s \in S} \big[ U^{\sim}(s, \boldsymbol{w}) - \boldsymbol{x}(s)^{T} \boldsymbol{w} \big]^{2}  $$
 
-In the previous section I said that the MSE can be used as a feedback to adjust the values inside the black box.
-However in our case we do not have the optimal utility function $$U^{*}(S)$$, what we have is an approximation of this function, given by the content of the black box $$\hat{U}(s, \boldsymbol{w})$$.
+Using the TD(0) definition we can define the **target** as follows:
+
+$$ U^{\sim}(s, \boldsymbol{w}) = \boldsymbol{x}(s_{t+1})^{T} \boldsymbol{w}  $$
+
+Based on the previous definitions the gradient descent **update rule** is defined as follows:
+
+$$ \boldsymbol{w}_{t+1} =  \boldsymbol{w}_{t} + \alpha \big[ \boldsymbol{x}(s_{t+1})^{T} \boldsymbol{w} - \boldsymbol{x}(s)^{T} \boldsymbol{w} \big] \nabla_{\boldsymbol{w}} \hat{U}(s, \boldsymbol{w}) $$
+
+Great, we have almost all we need. I said almost because a last piece is missing. The update rule requires the gradient $$\nabla_{\boldsymbol{w}} \hat{U}(s, \boldsymbol{w}) $$. How to find it? It turns out that the gradient of the linear approximator simplify to a very nice form. First of all, based on the previous definitions we can rewrite the gradient as follows:
+
+$$\nabla_{\boldsymbol{w}} \hat{U}(s, \boldsymbol{w}) =  \nabla_{\boldsymbol{w}} ( x_{1} w_{1} + x_{2} w_{2} + ... + x_{N} w_{N}) $$
+
+now we have to find the partial derivatives of each weight $$ w_{1}, w_{2}, ..., w_{N} $$. If you do not remember how a partial derivative is calculated I will refresh your memory. For each unknown we have to find the derivative considering the other unknowns as constants. For instance, the partial derivative of the first unknown $$w_{1}$$ is simply $$x_{1}$$ because all the other values are considered constant values and the derivative of a constant is zero by definition:
+
+$$ \frac{\partial \hat{U}}{\partial w_{1}} = x_{1} + 0 + 0 + ... + 0 = x_{1}$$
+
+Applying the same process to all the other weights we end up with the following gradient vector:
+
+$$\nabla_{\boldsymbol{w}} \hat{U}(s, \boldsymbol{w}) =  x_{1} + x_{2} + ... + x_{N} = \boldsymbol{x}(s) $$
+
+Meaning that we can rewrite the update rule as follows:
+
+$$ \boldsymbol{w}_{t+1} =  \boldsymbol{w}_{t} + \alpha \big[ \boldsymbol{x}(s_{t+1})^{T} \boldsymbol{w} - \boldsymbol{x}(s)^{T} \boldsymbol{w} \big] \boldsymbol{x}(s) $$
+
+Great, we have all we need now. Let's get the party started! To describe the linear approximator I will use again the robot cleaning example. Let's suppose we are in a very large state space, let's say a massive factory, and the cleaning robot has to find the charging stations which are in the corners on the right side of the room. At the centre of the factory there are some machines, we consider them as obstacles. On the left side there is the main entrance with many trucks and forklift moving around, better don't go there. In this scenario there is an high redundancy in storing all the possible states in a lookup table. What the robot has to learn is a pattern: the right corners of the room have maximum utility, the left corners of the room have negative utility. 
+
+![Function Approximation Linear OR]({{site.baseurl}}/images/reinforcement_learning_function_approximation_linear_function_or_world.png){:class="img-responsive"}
  
+Linear approximator: continuous
+-------------------------------
+Using linear approximators in a discrete state space was easy. However many problems have a continuous state space. In the last post I showed how to create partitions and cast the state space inside specific bins. Here I would like to introduce a method which is based on the distributed representation we were talking about in the introduction. Partitioning the state space in bins of the same dimension 
+
 
 
 High-order approximators
 ------------------------
 
-The linear approximator is the simplest form of approximation. It has many limits, and it cannot represent complex state spaces. High-order approximators may find useful links between multiple futures. An example of high-order approximator is the **quadratic approximator**. In the quadratic approximator we use a second order polynomial to model the utility function. 
+The linear approximator is the simplest form of approximation. The linear case is appealing not only for its simplicity but also because it is guaranteed to converge. However, there is an important limit implicit in the linear model: it cannot represent complex relationships between features. That's it, the linear form does not allow representing the interaction between features. Such a complex interaction naturally arise in physical systems. Some features may be informative only when other features are absent. For example, in the inverted pendulum  position and angular speed are tightly connected.
+
+
+In general, we also need features for combinations of these natural qualities. This is because the linear form prohibits the representation of interactions between features, such as the presence of feature i being good only in the absence of feature j. For example, in the pole-balancing task (Example 3.4), a high angular velocity may be either good or bad depending on the angular position. If the angle is high, then high angular velocity means an imminent danger of falling—a bad state—whereas if the angle is low, then high angular velocity means the pole is righting itself—a good state. In cases with such interactions one needs to introduce features for combinations of feature values when using linear function approximation methods. In the following subsections we consider a variety of general ways of doing this.
+
+High-order approximators may find useful links between multiple futures. An example of high-order approximator is the **quadratic approximator**. In the quadratic approximator we use a second order polynomial to model the utility function. 
 
 $$ \hat{U}(s, \boldsymbol{w}) = x_{1} w_{1} + x_{2} w_{2} + x_{1}^{2} w_{3} + x_{2}^{2} w_{4} +... + x_{N-1} w_{M-1} + x_{N}^{2} w_{M} $$
-
-
-
 
 
 Conclusions
 -----------
 
+In this post I introduced function approximation and we saw how to build a methodology based on an error measure, an update rule, and a target. This methodology is extremely flexible and we are going to use it again in future posts. Moreover I introduced linear methods, which are the simplest approximators. Linear function approximation is limited because it cannot capture important relationships between features. Using an high-order polynomial can often solve the problem but is still a limited approach because modeling the relationship between features remain a manual task. In complex physical systems multiple elements are interacting and it will be difficult to find the right polynomial which may describe those relationships. How to solve this problem? 
 
 
 Index
