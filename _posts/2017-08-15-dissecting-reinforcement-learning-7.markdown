@@ -150,9 +150,9 @@ Using the TD(0) definition we can define the **target** as follows:
 
 $$ U^{\sim}(s, \boldsymbol{w}) = \boldsymbol{x}(s_{t+1})^{T} \boldsymbol{w}  $$
 
-Based on the previous definitions the gradient descent **update rule** is defined as follows:
+The **update rule** defined previously can be reused here as well, however we have to introduce the reward $$r_{t+1}$$ and gamma as required by the reinforcement learning update definition:
 
-$$ \boldsymbol{w}_{t+1} =  \boldsymbol{w}_{t} + \alpha \big[ \boldsymbol{x}(s_{t+1})^{T} \boldsymbol{w} - \boldsymbol{x}(s)^{T} \boldsymbol{w} \big] \nabla_{\boldsymbol{w}} \hat{U}(s, \boldsymbol{w}) $$
+$$ \boldsymbol{w}_{t+1} =  \boldsymbol{w}_{t} + \alpha \big[ r_{t+1} + \gamma \boldsymbol{x}(s_{t+1})^{T} \boldsymbol{w} - \boldsymbol{x}(s)^{T} \boldsymbol{w} \big] \nabla_{\boldsymbol{w}} \hat{U}(s, \boldsymbol{w}) $$
 
 Great, we have almost all we need. I said almost because a last piece is missing. The update rule requires the gradient $$\nabla_{\boldsymbol{w}} \hat{U}(s, \boldsymbol{w}) $$. How to find it? It turns out that the gradient of the linear approximator simplify to a very nice form. First of all, based on the previous definitions we can rewrite the gradient as follows:
 
@@ -168,13 +168,20 @@ $$\nabla_{\boldsymbol{w}} \hat{U}(s, \boldsymbol{w}) =  x_{1} + x_{2} + ... + x_
 
 Meaning that we can rewrite the update rule as follows:
 
-$$ \boldsymbol{w}_{t+1} =  \boldsymbol{w}_{t} + \alpha \big[ \boldsymbol{x}(s_{t+1})^{T} \boldsymbol{w} - \boldsymbol{x}(s)^{T} \boldsymbol{w} \big] \boldsymbol{x}(s) $$
+$$ \boldsymbol{w}_{t+1} =  \boldsymbol{w}_{t} + \alpha \big[ r_{t+1} + \boldsymbol{x}(s_{t+1})^{T} \boldsymbol{w} - \boldsymbol{x}(s)^{T} \boldsymbol{w} \big] \boldsymbol{x}(s) $$
 
-Great, we have all we need now. Let's get the party started! To describe the linear approximator I will use again the robot cleaning example. Let's suppose we are in a very large state space, let's say a massive factory, and the cleaning robot has to find the charging stations which are in the corners on the right side of the room. At the centre of the factory there are some machines, we consider them as obstacles. On the left side there is the main entrance with many trucks and forklift moving around, better don't go there. In this scenario there is an high redundancy in storing all the possible states in a lookup table. What the robot has to learn is a pattern: the right corners of the room have maximum utility, the left corners of the room have negative utility. 
+Great, we have all we need now. Let's get the party started! 
 
-![Function Approximation Linear OR]({{site.baseurl}}/images/reinforcement_learning_function_approximation_linear_function_or_world.png){:class="img-responsive"}
+
+Application: gridworld
+-----------------------
+To describe the linear approximator I will use again the robot cleaning example. Let's suppose we have a square gridworld and that charging station and stairs are in different corners. The position of the positive and negative cells can vary giving rise to three worlds which I called: OR-world, AND-world, XOR-world. 
+
+![Function Approximation Linear OR]({{site.baseurl}}/images/reinforcement_learning_function_approximation_linear_function_xor_worlds.png){:class="img-responsive"}
  
-Linear approximator: continuous
+If you have familiarity with [Boolean algebra](https://en.wikipedia.org/wiki/Boolean_algebra) you have already noticed that there is a pattern in the three worlds which reflects basic Boolean operations.
+
+Application: inverted pendulum
 -------------------------------
 Using linear approximators in a discrete state space was easy. However many problems have a continuous state space. In the last post I showed how to create partitions and cast the state space inside specific bins. Here I would like to introduce a method which is based on the distributed representation we were talking about in the introduction. Partitioning the state space in bins of the same dimension 
 
