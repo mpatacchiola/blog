@@ -119,7 +119,7 @@ That's it, the target is obtained through the approximation given by the estimat
 
 
 
-I already wrote about the differences of these two approaches, however here I would like to discuss it again in the new context of function approximation.
+I already wrote about the differences between the two approaches, however here I would like to discuss it again in the new context of function approximation.
 In both cases the functions $$U^{\sim}(s)$$ and $$Q^{\sim}(s,a)$$ are based on the vector of weights $$\boldsymbol{w}$$. For this reason the correct notation we are going to use from now on is $$U^{\sim}(s,\boldsymbol{w})$$ and $$Q^{\sim}(s,a,\boldsymbol{w})$$.
 We have to be particularly careful when using the bootstrapping methods in gradient-based approximators. Bootstrapping methods are not true instances of gradient descent because they only care about the parameters in $$\hat{U}(s, \boldsymbol{w})$$. At training time we adjust $$\boldsymbol{w}$$ in the estimator $$\hat{U}(s,\boldsymbol{w})$$ based on a measure of error but we are not changing the parameters in the target function $$U^{\sim}(s,\boldsymbol{w})$$ based on an error measure. Bootstrapping ignores the effect on the target, taking into account only the gradient of the estimation. For this reason bootstrapping techniques are called **semi-gradient methods**. Due to this issue semi-gradient methods **does not guarantee the convergence**. At this point you may think that it is better to use Monte Carlo methods because at least they are guaranteed to converge. Bootstrapping gives two main advantages. First of all they learn online and it is not required to complete the episode in order to update the weights. Secondly they are faster to learn and computationally friendly. 
 
@@ -130,11 +130,11 @@ The **Generalised Policy Iteration (GPI)** (see [second post](https://mpatacchio
 Linear approximator
 --------------------
 
-Now it's time to put everything together. We have built a method based on an error measure and an update rule and we know how to estimate a target. Now I will show you how to build an approximator, meaning the function $$\hat{U}(s, \boldsymbol{w})$$.
+Now it's time to put everything together. We have built a method based on an error measure and an update rule and we know how to estimate a target. Now I will show you how to build an approximator, the content of the black box, represented by the function $$\hat{U}(s, \boldsymbol{w})$$.
 Here I will describe a **linear approximator** which is the simplest case of linear combinations, whereas in the next section I will describe some high order approximators. Before describing a liner approximator I want to clarify a crucial point in order to avoid a **common missunderstanding**. The linear approximator is a particular case of the broader class of linear combination of features.
 A liner combination is based on a **polynomial** which can be or not a line. Using only a line to discriminate between states can be very limited. **Linear combination** means that the **parameters are linearly combined**. We are not saying anything about the input features, which in fact may be represented by and high-order polynomial. Hopefully this distinction will be clear at the end of the post.
 
-Here we model the state as a vector called $$\boldsymbol{x}$$. This vector contains the current state values at time $$t$$. We call these values **features**. Features can be the position of a robot, position and speed of an inverted pendulum, configurations of the stones in a Go game, etc. Here I define also $$\boldsymbol{w}$$ as the vector of weights (or parameters) of our linear approximator, having the same number of elements of $$\boldsymbol{x}$$. Great, we have two vectors and we want to use them in a linear function. How to do it? Simple, we have to perform the dot product between $$\boldsymbol{x}$$ and $$\boldsymbol{w}$$ as follows:
+Here we model the state as a vector called $$\boldsymbol{x}$$. This vector contains the current state values at time $$t$$. We call these values **features**. Features can be the position of a robot, position and speed of an inverted pendulum, configurations of the stones in a Go game, etc. Here I define also $$\boldsymbol{w}$$ as the vector of weights (or parameters) of our linear approximator, having the same number of elements of $$\boldsymbol{x}$$. Great, we have two vectors and we want to use them in a linear function. How to do it? Simple, we have to perform the [dot product](https://en.wikipedia.org/wiki/Dot_product) between $$\boldsymbol{x}$$ and $$\boldsymbol{w}$$ as follows:
 
 $$ \hat{U}(s, \boldsymbol{w}) = \boldsymbol{x}(s)^{T} \boldsymbol{w} $$
 
@@ -175,16 +175,35 @@ Great, we have all we need now. Let's get the party started!
 
 Application: gridworld
 -----------------------
-To describe the linear approximator I will use again the robot cleaning example. Let's suppose we have a square gridworld and that charging station and stairs are in different corners. The position of the positive and negative cells can vary giving rise to three worlds which I called: OR-world, AND-world, XOR-world. 
+In this section I will give a geometric interpretation of the linear approximator using again the robot cleaning example. The geometric interpretation will give us a demonstration of what a linear approximator can and cannot do. Moreover it will justify the use of tricks such as the bias unit. Let's suppose we have a square gridworld where charging stations and stairs are disposed in multiple locations. The position of the positive and negative cells can vary giving rise to four worlds which I called: OR-world, AND-world, NAND-world, XOR-world. The rule of the worlds are similar to the one defined in the previous posts. The robot has four action available: forward, backward, left, right.  When an action is performed, with a probability of 0.2 it can lead to a wrong movement. The reward is positive (+1.0) for green cells, and negative (-1.0) for red cells. A negative cost of living of -0.04 is applied to all the other states. In the following illustration I represented the four worlds:
 
-![Function Approximation Linear OR]({{site.baseurl}}/images/reinforcement_learning_function_approximation_linear_function_xor_worlds.png){:class="img-responsive"}
+![Function Approximation Linear OR]({{site.baseurl}}/images/reinforcement_learning_function_approximation_linear_function_boolean_worlds.png){:class="img-responsive"}
  
-If you have familiarity with [Boolean algebra](https://en.wikipedia.org/wiki/Boolean_algebra) you have already noticed that there is a pattern in the three worlds which reflects basic Boolean operations.
+If you are familiar with [Boolean algebra](https://en.wikipedia.org/wiki/Boolean_algebra) you have already noticed that there is a pattern in the worlds which reflects basic Boolean operations. From the **geometrical** point of view, when we apply a linear approximator to the boolean worlds, we are trying to find a **plane in a three-dimensional space** which can discriminate between states with high utility (green cells) and states with low utility (red cells). In the three-dimensional space the **x-axis** is represented by the **columns** of the world, whereas the **y-axis** is represented by the **rows**. The **utility value** is given by the **z-axis**. During the gradient descent we are changing the weights, adjusting the inclination of the plane and the utilities associated to each state.
 
-Application: inverted pendulum
--------------------------------
-Using linear approximators in a discrete state space was easy. However many problems have a continuous state space. In the last post I showed how to create partitions and cast the state space inside specific bins. Here I would like to introduce a method which is based on the distributed representation we were talking about in the introduction. Partitioning the state space in bins of the same dimension 
 
+The current definition of the approximator does not take into account an important factor, the **translation of the plane**. Having only two weights we can rotate the plane on the x and y axes but we cannot translate it. This problem becomes clear if you think about a scenario where the position (0,0) of the gridworld should have an utility different from 0. The input vector will be $$\boldsymbol{x} = \{ 0, 0 \}$$. Given this input, no matter which value we choose for the weights, we are going to end up with an utility of zero. Introducing a translation we can shift the plane and associate with the position (0,0) the utility value which best fit the world.
+To introduce the translation we have to introduce the **bias unit**. The bias unit can be represented as an additional input which is always equal to 1. Using the bias unit the input vector becomes $$\boldsymbol{x} = \{ 0, 0, 1 \}$$. The new vector when multiplied with the weights
+will return 
+The core of the python code is the update rule defined in the previous section, which can be summarised in a single line thanks to Numpy:
+
+```python
+def update(w, x, x_t1, reward, alpha, gamma):
+  '''Return the updated weight vector w_t1
+
+  @param w the weights before the update
+  @param x the feature vector observed at t
+  @param x_t1 the feature vector observed at t+1
+  @param reward the reward observed after the action
+  @param alpha the step size (learning rate)
+  @param gamma the discount factor
+  @return w_t1 the weights at t+1
+  '''
+  w_t1 = w + alpha * ((reward + gamma*(np.dot(x_t1.T,w)) - np.dot(x.T,w)) * x)
+  return w_t1
+```
+
+The function `numpy.dot()` is an implementation of the dot product, whereas the `.T` operator represent the transpose. 
 
 
 High-order approximators
@@ -198,6 +217,11 @@ In general, we also need features for combinations of these natural qualities. T
 High-order approximators may find useful links between multiple futures. An example of high-order approximator is the **quadratic approximator**. In the quadratic approximator we use a second order polynomial to model the utility function. 
 
 $$ \hat{U}(s, \boldsymbol{w}) = x_{1} w_{1} + x_{2} w_{2} + x_{1}^{2} w_{3} + x_{2}^{2} w_{4} +... + x_{N-1} w_{M-1} + x_{N}^{2} w_{M} $$
+
+
+Application: inverted pendulum
+-------------------------------
+Using linear approximators in a discrete state space was easy. However many problems have a continuous state space. In the last post I showed how to create partitions and cast the state space inside specific bins. Here I would like to introduce a method which is based on the distributed representation we were talking about in the introduction. Partitioning the state space in bins of the same dimension 
 
 
 Conclusions
@@ -215,7 +239,7 @@ Index
 4. [[Fourth Post]](https://mpatacchiola.github.io/blog/2017/02/11/dissecting-reinforcement-learning-4.html) Neurobiology behind Actor-Critic methods, computational Actor-Critic methods, Actor-only and Critic-only methods.
 5. [[Fifth Post]](https://mpatacchiola.github.io/blog/2017/03/14/dissecting-reinforcement-learning-5.html) Evolutionary Algorithms introduction, Genetic Algorithm in Reinforcement Learning, Genetic Algorithms for policy selection.
 6. [[Sixt Post]](https://mpatacchiola.github.io/blog/2017/08/14/dissecting-reinforcement-learning-6.html) Reinforcement learning applications, Multi-Armed Bandit, Mountain Car, Inverted Pendulum, Drone landing, Hard problems.
-7. **[Seventh Post]** Function approximation, Neurobiology, Intuitive introduction, Linear approximator, High-order approximator, Applications.
+7. **[Seventh Post]** Function approximation, Intuition, Linear approximator, High-order approximators, Applications.
 
 Resources
 ----------
