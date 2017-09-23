@@ -241,7 +241,7 @@ import numpy as np
 def return_state_utility(v, T, u, reward, gamma):
     """Return the state utility.
 
-    @param v the value vector
+    @param v the state vector
     @param T transition matrix
     @param u utility vector
     @param reward for that state
