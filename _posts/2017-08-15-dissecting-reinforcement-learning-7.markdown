@@ -175,17 +175,13 @@ Great, we have all we need now. Let's get the party started!
 
 Application: gridworld
 -----------------------
-In this section I will give a geometric interpretation of the linear approximator using again the robot cleaning example. The geometric interpretation will give us a demonstration of what a linear approximator can and cannot do. Moreover it will justify the use of tricks such as the bias unit. Let's suppose we have a square gridworld where charging stations and stairs are disposed in multiple locations. The position of the positive and negative cells can vary giving rise to four worlds which I called: OR-world, AND-world, NAND-world, XOR-world. The rule of the worlds are similar to the one defined in the previous posts. The robot has four action available: forward, backward, left, right.  When an action is performed, with a probability of 0.2 it can lead to a wrong movement. The reward is positive (+1.0) for green cells, and negative (-1.0) for red cells. A negative cost of living of -0.04 is applied to all the other states. In the following illustration I represented the four worlds:
+Let's suppose we have a square gridworld where charging stations (green cells) and stairs (red cells) are disposed in multiple locations. The position of the positive and negative cells can vary giving rise to four worlds which I called: OR-world, AND-world, NAND-world, XOR-world. The rule of the worlds are similar to the one defined in the previous posts. The robot has four action available: forward, backward, left, right.  When an action is performed, with a probability of 0.2 it can lead to a wrong movement. The reward is positive (+1.0) for green cells, negative (-1.0) for red cells, and null in all the other cases. The index convention for the states is the usual (row, column) where (0,0) represents the cell in the bottom-left corner and (4,4) the cell in the top-right corner.
 
-![Function Approximation Linear OR]({{site.baseurl}}/images/reinforcement_learning_function_approximation_linear_function_boolean_worlds.png){:class="img-responsive"}
+![Function Approximation Boolean Worlds]({{site.baseurl}}/images/reinforcement_learning_function_approximation_linear_function_boolean_worlds.png){:class="img-responsive"}
  
-If you are familiar with [Boolean algebra](https://en.wikipedia.org/wiki/Boolean_algebra) you have already noticed that there is a pattern in the worlds which reflects basic Boolean operations. From the **geometrical** point of view, when we apply a linear approximator to the boolean worlds, we are trying to find a **plane in a three-dimensional space** which can discriminate between states with high utility (green cells) and states with low utility (red cells). In the three-dimensional space the **x-axis** is represented by the **columns** of the world, whereas the **y-axis** is represented by the **rows**. The **utility value** is given by the **z-axis**. During the gradient descent we are changing the weights, adjusting the inclination of the plane and the utilities associated to each state.
+If you are familiar with [Boolean algebra](https://en.wikipedia.org/wiki/Boolean_algebra) you have already noticed that there is a pattern in the worlds which reflects basic Boolean operations. From the **geometrical** point of view, when we apply a linear approximator to the boolean worlds, we are trying to find a **plane in a three-dimensional space** which can discriminate between states with high utility (green cells) and states with low utility (red cells). In the three-dimensional space the **x-axis** is represented by the **columns** of the world, whereas the **y-axis** is represented by the **rows**. The **utility value** is given by the **z-axis**. During the gradient descent we are changing the weights, adjusting the inclination of the plane and the utilities associated to each state. To better understand this point you can plug the equation $$z = x + y$$ in [Wolfram Alpha](https://www.wolframalpha.com/input/?i=z+%3D+x+%2B+y) and give a look to the resulting plot. Changing the values of $$x$$ and $$y$$ you can change the values of the weights associated to those features and move the plane. Try again with $$z = \frac{1}{2} x + \frac{1}{4} y$$ or [click here](https://www.wolframalpha.com/input/?i=z+%3D+1%2F2x+%2B+1%2F4y) if you are lazy.
 
-
-The current definition of the approximator does not take into account an important factor, the **translation of the plane**. Having only two weights we can rotate the plane on the x and y axes but we cannot translate it. This problem becomes clear if you think about a scenario where the position (0,0) of the gridworld should have an utility different from 0. The input vector will be $$\boldsymbol{x} = \{ 0, 0 \}$$. Given this input, no matter which value we choose for the weights, we are going to end up with an utility of zero. Introducing a translation we can shift the plane and associate with the position (0,0) the utility value which best fit the world.
-To introduce the translation we have to introduce the **bias unit**. The bias unit can be represented as an additional input which is always equal to 1. Using the bias unit the input vector becomes $$\boldsymbol{x} = \{ 0, 0, 1 \}$$. The new vector when multiplied with the weights
-will return 
-The core of the python code is the update rule defined in the previous section, which can be summarised in a single line thanks to Numpy:
+The **python implementation** is based on a random agent which freely move in the world. Here we are only interested in estimating the state utilities, we do not want to find a policy. The core of the code is the update rule defined in the previous section, which can be summarised in a single line thanks to Numpy:
 
 ```python
 def update(w, x, x_t1, reward, alpha, gamma):
@@ -199,12 +195,59 @@ def update(w, x, x_t1, reward, alpha, gamma):
   @param gamma the discount factor
   @return w_t1 the weights at t+1
   '''
-  w_t1 = w + alpha * ((reward + gamma*(np.dot(x_t1.T,w)) - np.dot(x.T,w)) * x)
+  w_t1 = w + alpha * ((reward + gamma*(np.dot(x_t1,w)) - np.dot(x,w)) * x)
   return w_t1
 ```
 
-The function `numpy.dot()` is an implementation of the dot product, whereas the `.T` operator represent the transpose. 
+The function `numpy.dot()` is an implementation of the dot product. You can check the complete code on the [official GitHub repository](https://github.com/mpatacchiola/dissecting-reinforcement-learning) of the series, the python script is called `boolean_worlds_linear_td.py`. In my experiments I set the learning rate $$\alpha = 0.001$$ and I linearly decrease it to $$10^{-6}$$ for $$3 \times 10^{4}$$ epochs. The weights were randomly initialised in the range $$[-1,+1]$$. Using matplotlib I draw the planes generated for the worlds in a three-dimensional plot:
 
+![Function Approximation Boolean Planes No bias]({{site.baseurl}}/images/reinforcement_learning_function_approximation_linear_function_boolean_worlds_planes_no_bias.png){:class="img-responsive"}
+
+The surface of the plane is the utility value returned by the linear approximator. The utility should be -1 in proximity of a red cell, and +1 in proximity of a green cell. However, examining the plot we can notice that something strange is happening. The planes are flat and the resulting utility is always close to zero in all the worlds but the OR-world. It seems that the approximator is not working at all and that its output is always null. What is going on? Our current definition of approximator does not take into account an important factor, the **translation of the plane**. Having only two weights we can rotate the surface on the xy-plane but we cannot translate it up and down. This problem becomes clear if you think about the cell (0,0) of the gridworld. The input vector of this cell is $$\boldsymbol{x} = \{ 0, 0 \}$$. Given this input, no matter which value we choose for the weights, when we perform the dot product $$\boldsymbol{x}^{T} \boldsymbol{w}$$ we are going to end up with an utility of zero. From the geometric point of view the plane can be rotated but it is constrained to pass through the point (0,0). For example, in the AND-world the constraint in (0,0) is particularly disturbing. The optimisation cannot adjust to 1.0 the utility in (4,4) because it will get an higher error for the other two red cells in (0,4) and (4,0). The best thing to do is to keep the plane flat. A similar reasoning can be applied to the other worlds. Only in the OR-world it is possible to adjust the inclination and satisfy all the constraints. 
+How can we fix this issue? We have to introduce the **bias unit**.
+The bias unit can be represented as an additional input which is always equal to 1. Using the bias unit the input vector becomes $$\boldsymbol{x} = \{ x_{1}, x_{2}, ..., x_{N}, x_{b} \}$$ with $$x_{b}=1$$. At the same time we have to add an additional value in the weight vector $$\boldsymbol{w} = \{w_{1}, w_{2}, ..., w_{N}, w_{b} \}$$. The additional weight $$w_{b}$$ is updated similarly to the others. Using again Wolfram Alpha you can see what is the effect of plugging a bias of one in our usual equation $$z = x + y + 1$$, and the difference with respect to the same equation with a bias of zero $$z = x + y$$.
+I run again the script `boolean_worlds_linear_td.py` setting the variable `use_bias=True` and using the same hyper-parameters as before, obtaining the following plot:
+
+![Function Approximation Boolean Planes]({{site.baseurl}}/images/reinforcement_learning_function_approximation_linear_function_boolean_worlds_planes.png){:class="img-responsive"}
+
+The result is much better! The planes are no more flat, because introducing the bias we gave the possibility shift up and down. Now the planes can be adjusted to fit all the constraints. The script will also print the weight vector and the utilities returned by this approximator:
+
+```
+------AND-world------
+w: [ 0.27  0.22 -1.27]
+[-0.37, -0.15, 0.07, 0.29, 0.50]
+[-0.59, -0.37, -0.16, 0.06, 0.28]
+[-0.82, -0.60, -0.38, -0.16, 0.05]
+[-1.04, -0.82, -0.60, -0.39, -0.17]
+[-1.27, -1.05, -0.83, -0.61, -0.39]
+
+------NAND-world------
+w: [-0.22 -0.22  1.26]
+[0.37, 0.15, -0.06, -0.28, -0.50]
+[0.5, 0.37, 0.15, -0.06, -0.28]
+[0.81, 0.59, 0.37, 0.15, -0.06]
+[1.03, 0.82, 0.60, 0.38, 0.16]
+[1.26, 1.04, 0.82, 0.60, 0.38]
+
+------OR-world------
+w: [ 0.22  0.22 -0.49]
+[0.39, 0.60, 0.82, 1.04, 1.25]
+[0.17, 0.38, 0.60, 0.82, 1.03]
+[-0.04, 0.16, 0.38, 0.60, 0.81]
+[-0.26, -0.05, 0.16, 0.38, 0.60]
+[-0.48, -0.27, -0.05, 0.16, 0.38]
+
+------XOR-world------
+w: [ 0.0  0.0 -0.01]
+[0.0, 0.01, 0.02, 0.03, 0.03]
+[0.0, 0.0, 0.01, 0.02, 0.03]
+[-0.0, 0.0, 0.01, 0.01, 0.02]
+[-0.0, -0.0, 0.0, 0.01, 0.02]
+[-0.01, -0.0, 0.0, 0.0, 0.01]
+
+```
+
+Here we are not using the Numpy convention for the resulting matrices where (0,0) is the top-left corner. To make easy reading the results I implemented a direct correspondence between the values in the utility matrix and the cells in the gridworld. Giving a look to the utilities we can see that in most of the worlds they are pretty good. For instance, in the AND-world we should have an utility of -1.0 for the state (0,0). The approximator returned an utility of -1.27 (bottom-left element in the matrix). On the other two red cells the values are -0.37 and -0.39 which are not so close to -1.0 but are at least negative. The positive cell in state (4,4) has an utility of 1.0 and the approximator returned 0.5. At this point it should be clear why having a function approximator is a big deal. With the lookup table approach we could represent the utilities of the boolean worlds using a table with 5 rows and 5 columns, for a total of **25 variables** to keep in memory. Now we only need two weights and a bias, for a total of **3 variables**. Everything seems fine, we have an approximator which works pretty well and is easy to tune. However our problems are not finished. If you look to the XOR-world you will notice that the plane is still flat. This problem is much serious than the previous one and there are no way to fix it. The point is that there is no plane that can separate red and green cells in the XOR-world. Try by yourself, move the plane and try to satisfy all the constraints. That is not feasible. The **XOR-world is not linearly separable**, and using a linear approximator we can only approximate linearly separable functions. The only chance we have to approximate an utility function for the XOR-world is to literally bend the plane, and to do it we have to use an higher order approximator.
 
 High-order approximators
 ------------------------
