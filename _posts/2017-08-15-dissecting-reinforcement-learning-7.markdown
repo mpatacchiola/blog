@@ -9,7 +9,7 @@ comments: false
 published: false
 ---
 
-So far we have represented the utility function by a lookup table (or matrix if you prefer). This approach has a problem. When the underlying Markov decision process is large there are too many states and actions to store in memory. Moreover in this case it is extremely difficult to visit all the possible states, meaning that we cannot estimate the utility values for those states. The key issue is **generalization**, meaning how to produce a good approximation of a large state space experiencing only a small subset.
+So far we have represented the utility function by a lookup table (or matrix if you prefer). This approach has a problem. When the underlying Markov decision process is large there are too many states and actions to store in memory. Moreover in this case it is extremely difficult to visit all the possible states, meaning that we cannot estimate the utility values for those states. The key issue is **generalization**: how to produce a good approximation of a large state space experiencing only a small subset.
 In this post I will show you how to use a **linear combination of features** in order to approximate the utility function.
 This new technique will allow us to master new and old problems more efficiently.
 
@@ -70,7 +70,7 @@ Function approximation is an instance of [supervised learning](https://en.wikipe
 Method
 --------
 
-To improve the performance of our function approximator we need an error measure and an update rule. These two parts work tightly in the learning cycle of every supervised learning technique. Their use in reinforcement learning is not much different from how they are used in a classification task. In order to understand this section you need to refresh some concepts of [multivariable calculus](https://en.wikipedia.org/wiki/Multivariable_calculus) such as the [partial derivative](https://en.wikipedia.org/wiki/Partial_derivative) and [gradient](https://en.wikipedia.org/wiki/Gradient).
+To improve the performance of our function approximator we need an error measure and an update rule. These two components work tightly in the learning cycle of every supervised learning technique. Their use in reinforcement learning is not much different from how they are used in a classification task. In order to understand this section you need to refresh some concepts of [multivariable calculus](https://en.wikipedia.org/wiki/Multivariable_calculus) such as the [partial derivative](https://en.wikipedia.org/wiki/Partial_derivative) and [gradient](https://en.wikipedia.org/wiki/Gradient).
 
 
 ![Function Approximation Training]({{site.baseurl}}/images/reinforcement_learning_function_approximation_training_cycle.png){:class="img-responsive"}
@@ -86,7 +86,7 @@ that's it, the MSE is given by the expectation $$\mathop{\mathbb{E}}[ (U^{*}(s) 
 $$ \text{MSVE}( \boldsymbol{w} ) = \frac{1}{N} \sum_{s \in S}  \mu(s) \big[ U^{*}(s) - \hat{U}(s, \boldsymbol{w}) \big]^{2}  $$
 
 
-**Update rule**: the update rule for differentiable approximator is [gradient descent](https://en.wikipedia.org/wiki/Gradient_descent). The [gradient](https://en.wikipedia.org/wiki/Gradient) is a generalisation of the concept of derivative which applies to functions of several variables. You can imagine the gradient as the vector that points in the direction of the greatest rate of increase. Intuitively, if you want to reach the top of a mountain the gradient is an arrow that in each moment show you in which direction you should walk. The gradient is generally represented with the operator $$\nabla$$ also known as **nabla**. 
+**Update rule**: the update rule for differentiable approximator is [gradient descent](https://en.wikipedia.org/wiki/Gradient_descent). The [gradient](https://en.wikipedia.org/wiki/Gradient) is a generalisation of the concept of derivative which applies to functions of several variables. You can imagine the gradient as the vector that points in the direction of the greatest rate of increase. Intuitively, if you want to reach the top of a mountain the gradient is a signpost that in each moment show you in which direction you should walk. The gradient is generally represented with the operator $$\nabla$$ also known as **nabla**. 
 The goal in gradient descent is to minimise the error measure. We can achieve this goal moving in the direction of the negative gradient vector, meaning that we are not moving anymore to the top of the mountain but downslope. At each step we adjust the parameter vector $$\boldsymbol{w}$$ moving a step closer to the valley. First of all, we have to estimate the gradient vector for $$ \text{MSE}( \boldsymbol{w} )$$ or $$ \text{MSVE}( \boldsymbol{w} )$$. Those error functions are based on $$\boldsymbol{w}$$. In order to get the gradient vector we have to calculate the partial derivative of each weight with respect to all the other weights. Secondly, once we have the gradient vector we have to adjust the value of all the weights in accordance with the negative direction of the gradient.
 In mathematical terms, we can update the vector $$\boldsymbol{w}$$ at $$t+1$$ as follows:
 
@@ -130,7 +130,7 @@ Linear approximator
 
 Now it's time to put everything together. We have built a method based on an error measure and an update rule and we know how to estimate a target. Now I will show you how to build an approximator, the content of the black box, represented by the function $$\hat{U}(s, \boldsymbol{w})$$.
 I will describe a **linear approximator** which is the simplest case of linear combinations, whereas in the next section I will describe some high order approximators. Before describing a liner approximator I want to clarify a crucial point in order to avoid a **common missunderstanding**. The linear approximator is a particular case of the broader class of linear combination of features.
-A liner combination is based on a **polynomial** which can be or not a line. Using only a line to discriminate between states can be very limited. **Linear combination** means that the **parameters are linearly combined**. We are not saying anything about the input features, which in fact may be represented by and high-order polynomial. Hopefully this distinction will be clear at the end of the post.
+A liner combination is based on a [polynomial](https://en.wikipedia.org/wiki/Polynomial) which can be or not a line. Using only a line to discriminate between states can be very limited. **Linear combination** means that the **parameters are linearly combined**. We are not saying anything about the input features, which in fact may be represented by and high-order polynomial. Hopefully this distinction will be clear at the end of the post.
 
 In the linear approximator we model the state as a vector $$\boldsymbol{x}$$. This vector contains the current state values at time $$t$$, these values are called **features**. There are different notations for the vector $$\boldsymbol{x}$$ but the most common are $$\boldsymbol{x}(s_{t})$$ and $$\boldsymbol{x}_{t}$$. The features can be the position of a robot, angular position and speed of an inverted pendulum, configurations of the stones in a Go game, etc. Here I define also $$\boldsymbol{w}$$ as the vector of weights (or parameters) of our linear approximator, having the same number of elements of $$\boldsymbol{x}$$. Now we have two vectors and we want to use them in a linear function. How to do it? Simple, we have to perform the [dot product](https://en.wikipedia.org/wiki/Dot_product) between $$\boldsymbol{x}$$ and $$\boldsymbol{w}$$ as follows:
 
@@ -148,7 +148,7 @@ Using the TD(0) definition we can define the **target** as follows:
 
 $$ U^{\sim}(s, \boldsymbol{w}) = \boldsymbol{x}(s_{t+1})^{T} \boldsymbol{w}  $$
 
-The **update rule** defined previously can be reused here as well, however we have to introduce the reward $$r_{t+1}$$ and gamma as required by the reinforcement learning update definition:
+The **update rule** defined previously can be reused here as well, however we have to introduce the reward $$r_{t+1}$$ and the discount factor gamma as required by the reinforcement learning definition:
 
 $$ \boldsymbol{w}_{t+1} =  \boldsymbol{w}_{t} + \alpha \big[ r_{t+1} + \gamma \boldsymbol{x}(s_{t+1})^{T} \boldsymbol{w} - \boldsymbol{x}(s)^{T} \boldsymbol{w} \big] \nabla_{\boldsymbol{w}} \hat{U}(s, \boldsymbol{w}) $$
 
@@ -156,7 +156,7 @@ Great, we have almost all we need. I said almost because a last piece is missing
 
 $$\nabla_{\boldsymbol{w}} \hat{U}(s, \boldsymbol{w}) =  \nabla_{\boldsymbol{w}} ( x_{1} w_{1} + x_{2} w_{2} + ... + x_{N} w_{N}) $$
 
-now we have to find the partial derivatives of each weight $$ w_{1}, w_{2}, ..., w_{N} $$. If you do not remember how a partial derivative is calculated I will refresh your memory. For each unknown we have to find the derivative considering the other unknowns as constants. For instance, the partial derivative of the first unknown $$w_{1}$$ is simply $$x_{1}$$ because all the other values are considered constant values and the derivative of a constant is zero by definition:
+now we have to find the [partial derivatives](https://en.wikipedia.org/wiki/Partial_derivative) of each weight $$ w_{1}, w_{2}, ..., w_{N} $$. If you do not remember how a partial derivative is calculated I will refresh your memory. For each unknown we have to find the derivative considering the other unknowns as constants. For instance, the partial derivative of the first unknown $$w_{1}$$ is simply $$x_{1}$$ because all the other values are considered constant values and the derivative of a constant is zero:
 
 $$ \frac{\partial \hat{U}}{\partial w_{1}} = x_{1} + 0 + 0 + ... + 0 = x_{1}$$
 
@@ -164,7 +164,7 @@ Applying the same process to all the other weights we end up with the following 
 
 $$\nabla_{\boldsymbol{w}} \hat{U}(s, \boldsymbol{w}) =  x_{1} + x_{2} + ... + x_{N} = \boldsymbol{x}(s) $$
 
-Meaning that we can rewrite the update rule as follows:
+That's it. The gradient is the input vector $$\boldsymbol{x}(s)$$. Now we can rewrite the update rule as follows:
 
 $$ \boldsymbol{w}_{t+1} =  \boldsymbol{w}_{t} + \alpha \big[ r_{t+1} + \boldsymbol{x}(s_{t+1})^{T} \boldsymbol{w} - \boldsymbol{x}(s)^{T} \boldsymbol{w} \big] \boldsymbol{x}(s) $$
 
@@ -173,7 +173,7 @@ Great, we have all we need now. Let's get the party started!
 
 Application: gridworld
 -----------------------
-Let's suppose we have a square gridworld where charging stations (green cells) and stairs (red cells) are disposed in multiple locations. The position of the positive and negative cells can vary giving rise to four worlds which I called: OR-world, AND-world, NAND-world, XOR-world. The rule of the worlds are similar to the one defined in the previous posts. The robot has four action available: forward, backward, left, right.  When an action is performed, with a probability of 0.2 it can lead to a wrong movement. The reward is positive (+1.0) for green cells, negative (-1.0) for red cells, and null in all the other cases. The index convention for the states is the usual (row, column) where (0,0) represents the cell in the bottom-left corner and (4,4) the cell in the top-right corner.
+Let's suppose we have a square gridworld where charging stations (green cells) and stairs (red cells) are disposed in multiple locations. The position of the positive and negative cells can vary giving rise to four worlds which I called: OR-world, AND-world, NAND-world, XOR-world. The rule of the worlds are similar to the one defined in the previous posts. The robot has four action available: forward, backward, left, right.  When an action is performed, with a probability of 0.2 it can lead to a wrong movement. The reward is positive (+1.0) for green cells, negative (-1.0) for red cells, and null in all the other cases. The index convention for the states is the usual (column, row) where (0,0) represents the cell in the bottom-left corner and (4,4) the cell in the top-right corner.
 
 ![Function Approximation Boolean Worlds]({{site.baseurl}}/images/reinforcement_learning_function_approximation_linear_function_boolean_worlds.png){:class="img-responsive"}
  
@@ -186,22 +186,27 @@ In the three-dimensional space the **x-axis** is represented by the **columns** 
 The **python implementation** is based on a random agent which freely move in the world. Here we are only interested in estimating the state utilities, we do not want to find a policy. The core of the code is the update rule defined in the previous section, which can be summarised in a single line thanks to Numpy:
 
 ```python
-def update(w, x, x_t1, reward, alpha, gamma):
-  '''Return the updated weight vector w_t1
+def update(w, x, x_t1, reward, alpha, gamma, done):
+  '''Return the updated weights vector w_t1
 
-  @param w the weights before the update
-  @param x the feature vector observed at t
-  @param x_t1 the feature vector observed at t+1
+  @param w the weights vector before the update
+  @param x the feauture vector obsrved at t
+  @param x_t1 the feauture vector observed at t+1
   @param reward the reward observed after the action
-  @param alpha the step size (learning rate)
+  @param alpha the ste size (learning rate)
   @param gamma the discount factor
-  @return w_t1 the weights at t+1
+  @param done boolean True if the state is terminal
+  @return w_t1 the weights vector at t+1
   '''
-  w_t1 = w + alpha * ((reward + gamma*(np.dot(x_t1,w)) - np.dot(x,w)) * x)
+  if done:
+    w_t1 = w + alpha * ((reward - np.dot(x,w)) * x)
+  else:
+    w_t1 = w + alpha * ((reward + (gamma*(np.dot(x_t1,w))) - np.dot(x,w)) * x)
   return w_t1
 ```
 
-The function `numpy.dot()` is an implementation of the dot product. You can check the complete code on the [official GitHub repository](https://github.com/mpatacchiola/dissecting-reinforcement-learning) of the series, the python script is called `boolean_worlds_linear_td.py`. In my experiments I set the learning rate $$\alpha = 0.001$$ and I linearly decrease it to $$10^{-6}$$ for $$3 \times 10^{4}$$ epochs. The weights were randomly initialised in the range $$[-1,+1]$$. Using matplotlib I draw the planes generated for the worlds in a three-dimensional plot:
+The function `numpy.dot()` is an implementation of the dot product. The conditional statement is used to discriminate between terminal (`done=True`) and non-terminal (`done=False`) states. In case of a terminal state the target is obtained using only the reward. This is obvious, because after a terminal state there is not another state to use for approximating the target.
+You can check the complete code on the [official GitHub repository](https://github.com/mpatacchiola/dissecting-reinforcement-learning) of the series, the python script is called `boolean_worlds_linear_td.py`. In my experiments I set the learning rate $$\alpha = 0.001$$ and I linearly decrease it to $$10^{-6}$$ for $$3 \times 10^{4}$$ epochs. The weights were randomly initialised in the range $$[-1,+1]$$. Using matplotlib I draw the planes generated for the worlds in a three-dimensional plot:
 
 ![Function Approximation Boolean Planes No bias]({{site.baseurl}}/images/reinforcement_learning_function_approximation_linear_function_boolean_worlds_planes_no_bias.png){:class="img-responsive"}
 
@@ -216,40 +221,40 @@ The result is much better! The planes are no more flat, because introducing the 
 
 ```
 ------AND-world------
-w: [ 0.27  0.22 -1.27]
-[-0.37, -0.15, 0.07, 0.29, 0.50]
-[-0.59, -0.37, -0.16, 0.06, 0.28]
-[-0.82, -0.60, -0.38, -0.16, 0.05]
-[-1.04, -0.82, -0.60, -0.39, -0.17]
-[-1.27, -1.05, -0.83, -0.61, -0.39]
+w: [ 0.12613079  0.12282781 -0.71508217]
+[-0.21, -0.09, 0.04, 0.16, 0.28]
+[-0.34, -0.21, -0.09, 0.03, 0.15]
+[-0.46, -0.34, -0.22, -0.09, 0.03]
+[-0.59, -0.47, -0.34, -0.22, -0.1]
+[-0.72, -0.59, -0.47, -0.35, -0.22]
 
 ------NAND-world------
-w: [-0.22 -0.22  1.26]
-[0.37, 0.15, -0.06, -0.28, -0.50]
-[0.5, 0.37, 0.15, -0.06, -0.28]
-[0.81, 0.59, 0.37, 0.15, -0.06]
-[1.03, 0.82, 0.60, 0.38, 0.16]
-[1.26, 1.04, 0.82, 0.60, 0.38]
+w: [-0.12492996 -0.12773591  0.72185512]
+[0.22, 0.09, -0.03, -0.16, -0.29]
+[0.35, 0.22, 0.09, -0.04, -0.16]
+[0.47, 0.34, 0.22, 0.09, -0.04]
+[0.6, 0.47, 0.34, 0.21, 0.09]
+[0.72, 0.59, 0.47, 0.34, 0.21]
 
 ------OR-world------
-w: [ 0.22  0.22 -0.49]
-[0.39, 0.60, 0.82, 1.04, 1.25]
-[0.17, 0.38, 0.60, 0.82, 1.03]
-[-0.04, 0.16, 0.38, 0.60, 0.81]
-[-0.26, -0.05, 0.16, 0.38, 0.60]
-[-0.48, -0.27, -0.05, 0.16, 0.38]
+w: [ 0.12584343  0.12300307 -0.26801219]
+[0.24, 0.36, 0.48, 0.6, 0.73]
+[0.11, 0.23, 0.36, 0.48, 0.6]
+[-0.02, 0.11, 0.23, 0.35, 0.48]
+[-0.14, -0.02, 0.1, 0.23, 0.35]
+[-0.27, -0.15, -0.02, 0.1, 0.22]
 
 ------XOR-world------
-w: [ 0.0  0.0 -0.01]
-[0.0, 0.01, 0.02, 0.03, 0.03]
-[0.0, 0.0, 0.01, 0.02, 0.03]
-[-0.0, 0.0, 0.01, 0.01, 0.02]
-[-0.0, -0.0, 0.0, 0.01, 0.02]
-[-0.01, -0.0, 0.0, 0.0, 0.01]
+w: [-0.0030242  -0.00278779  0.00507761]
+[-0.01, -0.01, -0.01, -0.02, -0.02]
+[-0.0, -0.01, -0.01, -0.01, -0.02]
+[-0.0, -0.0, -0.01, -0.01, -0.01]
+[0.0, -0.0, -0.0, -0.01, -0.01]
+[0.01, 0.0, -0.0, -0.0, -0.01]
 
 ```
 
-Here we are not using the Numpy convention for the utility matrix. I implemented a direct correspondence between the values in the utility matrix and the cells in the gridworld, which should be easier to intepret. Giving a look to the utilities we can see that in most of the worlds they are pretty good. For instance, in the AND-world we should have an utility of -1.0 for the state (0,0). The approximator returned an utility of -1.27 (bottom-left element in the matrix). On the other two red cells the values are -0.37 and -0.39 which are not so close to -1.0 but are at least negative. The positive cell in state (4,4) has an utility of 1.0 and the approximator returned 0.5. At this point it should be clear why having a function approximator is a big deal. With the lookup table approach we could represent the utilities of the boolean worlds using a table with 5 rows and 5 columns, for a total of **25 variables** to keep in memory. Now we only need two weights and a bias, for a total of **3 variables**. Everything seems fine, we have an approximator which works pretty well and is easy to tune. However our problems are not finished. If you look to the XOR-world you will notice that the plane is still flat. This problem is much serious than the previous one and there are no way to solve it. The point is that there is no plane that can separate red and green cells in the XOR-world. Try it yourself, adjust the plane to satisfy all the constraints. That is not feasible. The **XOR-world is not linearly separable**, and using a linear approximator we can only approximate linearly separable functions. The only chance we have to approximate an utility function for the XOR-world is to literally bend the plane, and to do it we have to use an higher order approximator.
+Here we are not using the Numpy convention for the utility matrix. I implemented a direct correspondence between the values in the utility matrix and the cells in the gridworld, which should be easier to intepret. Giving a look to the utilities we can see that in most of the worlds they are pretty good. For instance, in the AND-world we should have an utility of -1.0 for the state (0,0). The approximator returned an utility of -0.72 (bottom-left element in the matrix). On the other two red cells the values are -0.21 and -0.22 which are not so close to -1.0 but are at least negative. The positive cell in state (4,4) has an utility of 1.0 and the approximator returned 0.28. At this point it should be clear why having a function approximator is a big deal. With the lookup table approach we could represent the utilities of the boolean worlds using a table with 5 rows and 5 columns, for a total of **25 variables** to keep in memory. Now we only need two weights and a bias, for a total of **3 variables**. Everything seems fine, we have an approximator which works pretty well and is easy to tune. However our problems are not finished. If you look to the XOR-world you will notice that the plane is still flat. This problem is much serious than the previous one and there are no way to solve it. The point is that there is no plane that can separate red and green cells in the XOR-world. Try it yourself, adjust the plane to satisfy all the constraints. That is not feasible. The **XOR-world is not linearly separable**, and using a linear approximator we can only approximate linearly separable functions. The only chance we have to approximate an utility function for the XOR-world is to literally bend the plane, and to do it we have to use an higher order approximator.
 
 High-order approximators
 ------------------------
@@ -264,7 +269,18 @@ If you look to the equation what I added is the new term $$x_{1} x_{2} w_{3}$$. 
 
 ![Function Approximation XOR Hyperbolic]({{site.baseurl}}/images/reinforcement_learning_function_approximation_linear_function_xor_hyperbolic.png){:class="img-responsive"}
 
-Here the paraboloid is represented using four different perspectives. The results are pretty good despite an overestimation of the utilities which are closer to 1.5 and -1.5 instead of 1.0 and -1.0. This overestimation is not a big issue because it is uniformly spread on all the states. Later in the series I will show you useful techniques for dealing with overestimation, for the moment I suggest you to run the script using different hyper-parameters (e.g. the learning rate alpha) to see the effects on the final plot.
+Here the paraboloid is represented using four different perspectives. The result obtained at the end of the training shows that the utilities are very good. 
+
+```
+w: [ 0.39908725  0.39223376 -0.19921515 -0.79385556]
+[0.8, 0.4, -0.01, -0.41, -0.82]
+[0.4, 0.2, -0.01, -0.21, -0.42]
+[0.0, -0.0, -0.01, -0.01, -0.02]
+[-0.39, -0.2, -0.01, 0.18, 0.38]
+[-0.79, -0.4, -0.01, 0.38, 0.78]
+```
+
+We should have -1 in states the bottom-left and top-right corners, the approximator returned -0.79 and -0.82 which are pretty good estimations. Similar results have been obtained for the positive states in the top-left and bottom-right corners, where the approximator returned 0.8 and 0.78 which are very close to the true utility of 1.0. I suggest you to run the script using different hyper-parameters (e.g. the learning rate alpha) to see the effects on the final plot and on the utility table.
 
 The geometrical intuition is helpful because it gives an immediate intuition of the difference between different approximators. We saw that using additional features and more complex functions it is possible to better describe the utility space. High-order approximators may find useful links between futures whereas a pure linear approximator could not. An example of high-order approximator is the **quadratic approximator**. In the quadratic approximator we use a second order polynomial to model the utility function. 
 
@@ -273,7 +289,7 @@ $$ \hat{U}(s, \boldsymbol{w}) = x_{1} w_{1} + x_{2} w_{2} + x_{1}^{2} w_{3} + x_
 
 Application: inverted pendulum
 -------------------------------
-Using linear approximators in a discrete state space was easy. However many problems have a continuous state space. In the last post I showed how to create partitions and cast the state space inside specific bins. Here I would like to introduce a method which is based on the distributed representation we were talking about in the introduction. Partitioning the state space in bins of the same dimension 
+Using linear approximators in a discrete state space was easy. However many problems have a continuous state space. In the last post I showed how to create partitions and cast the state space inside specific bins. Here I would like to introduce a method which is based on the distributed representation we were talking about in the introduction. 
 
 
 Conclusions

@@ -216,7 +216,7 @@ To empirically test the Bellman equation we are going to use our cleaning robot 
 
 ![Example with R(s)=0.04]({{site.baseurl}}/images/reinforcement_learning_example_r004.png){:class="img-responsive"}
 
-In our example we suppose **the robot starts from the state (1,1)**. Using the Bellman equation we have to **find which is the action with the highest utility** between UP, LEFT, DOWN and RIGHT. We do not have the optimal policy, but we have the transition model and the utility values for each state. You have to remember the two main rules of our environment. First, if the robot bounce on the wall it goes back to the previous state. Second, the selected action is executed only with a probability of 80% in accordance with the transition model. Instead of dealing with crude numbers I want to show you with a graphical illustration of the possible outcomes for the robot actions.
+In our example we suppose **the robot starts from the state (1,1)**. Using the Bellman equation we have to **find which is the action with the highest utility** between UP, LEFT, DOWN and RIGHT. We do not have the optimal policy, but we have the transition model and the utility values for each state. You have to remember the two main rules of our environment. First, if the robot bounce on the wall it goes back to the previous state. Second, the selected action is executed only with a probability of 80% in accordance with the transition model. Instead of dealing with crude numbers I want to show you a graphical illustration of the possible outcomes:
 
 ![Example with R(s)=0.04]({{site.baseurl}}/images/reinforcement_learning_simple_world_bellman_example.png){:class="img-responsive"}
 
@@ -228,11 +228,11 @@ We found out that for state (1,1) **the action UP has the highest value**. This 
 
 $$ \pi^{*}(s) = \underset{a}{\text{ argmax }} \sum_{s^{'}}^{} T(s,a,s^{'}) U(s^{'}) $$
 
-Now we have all the elements, we can plug in the values in the Bellman equation and find the utility of the state (1,1):
+Now we have all the elements and we can plug the values in the Bellman equation finding the utility of the state (1,1):
 
 $$ U(s_{11}) = -0.04 + 1.0 \times 0.7456 = 0.7056$$
 
-The Bellman equation works! What we need is a **Python implementation** of the equation to use in our simulated world. We are going to use the same terminology of the first sections. Our world has 4x3=12 possible states. The starting vector contains 12 values and the transition matrix is a huge 12x12x4 matrix (12 starting states, 12 next states, 4 actions) where most of the values are zeros (we can move only from one state to its neighbours). I generated the transition matrix using a script and I saved it as a Numpy matrix ([you can download it here](https://github.com/mpatacchiola/dissecting-reinforcement-learning/raw/master/src/1/T.npy)).
+The Bellman equation works! What we need is a **Python implementation** of the equation to use in our simulated world. We are going to use the same terminology of the previous sections. Our world has 4x3=12 possible states. The starting vector contains 12 values and the transition matrix is a huge 12x12x4 matrix (12 starting states, 12 next states, 4 actions) where most of the values are zeros (we can move only from one state to its neighbours). I generated the transition matrix using a script and I saved it as a Numpy matrix ([you can download it here](https://github.com/mpatacchiola/dissecting-reinforcement-learning/raw/master/src/1/T.npy)).
 In the script I defined the function `return_state_utility()` which is an implementation of the Bellman equation. Using this function we are going to print the utility of the state (1,1) and check if it is the same we found previously:
 
 ```python
@@ -287,12 +287,12 @@ Utility of state (1,1): 0.7056
 ```
 
 That's great, we obtained exactly the same value! 
-Until now **we supposed that the utility values appeared magically**. Instead of using a magician we want to **find an algorithm to obtain these values**. There is a problem. For $$ n $$ possible states there are $$ n $$ Bellman equations, and each equation contains $$ n $$ unknown. Using any linear algebra package would be possible to solve these equations, the problem is that they are not linear because of the $$ \text{max} $$ operator. What to do? We can use the value iteration algorithm...
+Until now **we supposed that the utility values appeared magically**. Instead of using a magician we want to **find an algorithm to obtain these values**. There is a problem. For $$ n $$ possible states there are $$ n $$ Bellman equations, and each equation contains $$ n $$ unknowns. Using any linear algebra package would be possible to solve these equations, the problem is that they are not linear because of the $$ \text{max} $$ operator. What to do? We can use the value iteration algorithm...
 
 The value iteration algorithm
 ---------------------------------------
 
-The Bellman equation is the basis of the value iteration algorithm for solving a MDP. **Our objective is to find the utility (also called value) for each state**. As we said we cannot use a linear algebra library, we need an iterative approach. We start with arbitrary initial utility values (usually zeros). Then we calculate the utility of a state using the Bellman equation and we assign it to the state. This iteration is called **Bellman update**. Applying the Bellman update infinitely often we are **guaranteed to reach an equilibrium**. Once we reached the equilibrium we have the utility values we were looking for and we can use them to estimate which is the best move for each state. 
+The Bellman equation is the core of the value iteration algorithm for solving a MDP. **Our objective is to find the utility (also called value) for each state**. As we said we cannot use a linear algebra library, we need an iterative approach. We start with arbitrary initial utility values (usually zeros). Then we calculate the utility of a state using the Bellman equation and we assign it to the state. This iteration is called **Bellman update**. Applying the Bellman update infinitely often we are **guaranteed to reach an equilibrium**. Once we reached the equilibrium we have the utility values we were looking for and we can use them to estimate which is the best move for each state. 
 How do we understand when the algorithm reaches the equilibrium? We need a **stopping criteria**. Taking into account the utilities between two consecutive iterations we can stop the algorithm when no state's utility changes by much.
 
 $$ || U_{k+1} - U_{k} || < \epsilon \frac{1-\gamma}{\gamma} $$ 
@@ -469,8 +469,8 @@ def return_expected_action(u, T, v):
     """
     actions_array = np.zeros(4)
     for action in range(4):
-         #Expected utility of doing a in state s, according to T and u.
-         actions_array[action] = np.sum(np.multiply(u, np.dot(v, T[:,:,action])))
+       #Expected utility of doing a in state s, according to T and u.
+       actions_array[action] = np.sum(np.multiply(u, np.dot(v, T[:,:,action])))
     return np.argmax(actions_array)
 
 def print_policy(p, shape):
