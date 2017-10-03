@@ -221,40 +221,39 @@ The result is much better! The planes are no more flat, because introducing the 
 
 ```
 ------AND-world------
-w: [ 0.12613079  0.12282781 -0.71508217]
-[-0.21, -0.09, 0.04, 0.16, 0.28]
-[-0.34, -0.21, -0.09, 0.03, 0.15]
-[-0.46, -0.34, -0.22, -0.09, 0.03]
-[-0.59, -0.47, -0.34, -0.22, -0.1]
-[-0.72, -0.59, -0.47, -0.35, -0.22]
+w: [ 0.12578254  0.12194905 -0.71257655]
+[[-0.21 -0.09  0.03  0.16  0.28]
+ [-0.34 -0.21 -0.09  0.03  0.15]
+ [-0.46 -0.34 -0.22 -0.1   0.03]
+ [-0.59 -0.46 -0.34 -0.22 -0.1 ]
+ [-0.71 -0.59 -0.47 -0.35 -0.22]]
 
 ------NAND-world------
-w: [-0.12492996 -0.12773591  0.72185512]
-[0.22, 0.09, -0.03, -0.16, -0.29]
-[0.35, 0.22, 0.09, -0.04, -0.16]
-[0.47, 0.34, 0.22, 0.09, -0.04]
-[0.6, 0.47, 0.34, 0.21, 0.09]
-[0.72, 0.59, 0.47, 0.34, 0.21]
+w: [-0.12242233 -0.12346582  0.71111163]
+[[ 0.22  0.1  -0.03 -0.15 -0.27]
+ [ 0.34  0.22  0.1  -0.03 -0.15]
+ [ 0.47  0.34  0.22  0.1  -0.03]
+ [ 0.59  0.47  0.34  0.22  0.09]
+ [ 0.71  0.59  0.46  0.34  0.22]]
 
 ------OR-world------
-w: [ 0.12584343  0.12300307 -0.26801219]
-[0.24, 0.36, 0.48, 0.6, 0.73]
-[0.11, 0.23, 0.36, 0.48, 0.6]
-[-0.02, 0.11, 0.23, 0.35, 0.48]
-[-0.14, -0.02, 0.1, 0.23, 0.35]
-[-0.27, -0.15, -0.02, 0.1, 0.22]
+w: [ 0.12406486  0.11832163 -0.26037356]
+[[ 0.24  0.35  0.47  0.59  0.71]
+ [ 0.11  0.23  0.35  0.47  0.59]
+ [-0.01  0.11  0.22  0.34  0.46]
+ [-0.14 -0.02  0.1   0.22  0.34]
+ [-0.26 -0.14 -0.02  0.09  0.21]]
 
 ------XOR-world------
-w: [-0.0030242  -0.00278779  0.00507761]
-[-0.01, -0.01, -0.01, -0.02, -0.02]
-[-0.0, -0.01, -0.01, -0.01, -0.02]
-[-0.0, -0.0, -0.01, -0.01, -0.01]
-[0.0, -0.0, -0.0, -0.01, -0.01]
-[0.01, 0.0, -0.0, -0.0, -0.01]
-
+w: [ 0.00220366 -0.00094763  0.00044972]
+[[ 0.01  0.01  0.01  0.01  0.01]
+ [ 0.01  0.01  0.01  0.    0.  ]
+ [ 0.    0.    0.    0.    0.  ]
+ [ 0.    0.    0.   -0.   -0.  ]
+ [ 0.   -0.   -0.   -0.   -0.  ]]
 ```
 
-Here we are not using the Numpy convention for the utility matrix. I implemented a direct correspondence between the values in the utility matrix and the cells in the gridworld, which should be easier to intepret. Giving a look to the utilities we can see that in most of the worlds they are pretty good. For instance, in the AND-world we should have an utility of -1.0 for the state (0,0). The approximator returned an utility of -0.72 (bottom-left element in the matrix). On the other two red cells the values are -0.21 and -0.22 which are not so close to -1.0 but are at least negative. The positive cell in state (4,4) has an utility of 1.0 and the approximator returned 0.28. At this point it should be clear why having a function approximator is a big deal. With the lookup table approach we could represent the utilities of the boolean worlds using a table with 5 rows and 5 columns, for a total of **25 variables** to keep in memory. Now we only need two weights and a bias, for a total of **3 variables**. Everything seems fine, we have an approximator which works pretty well and is easy to tune. However our problems are not finished. If you look to the XOR-world you will notice that the plane is still flat. This problem is much serious than the previous one and there are no way to solve it. The point is that there is no plane that can separate red and green cells in the XOR-world. Try it yourself, adjust the plane to satisfy all the constraints. That is not feasible. The **XOR-world is not linearly separable**, and using a linear approximator we can only approximate linearly separable functions. The only chance we have to approximate an utility function for the XOR-world is to literally bend the plane, and to do it we have to use an higher order approximator.
+The utility matrix printed on terminal is obtained computing the output of the linear approximator for each state of the gridworld. In Numpy the state (0,0) is the element in the top left corner and it can be hard to read when printing the matrix. For this reason the matrix has been vertically flipped in order to match the values with the cells of the gridworld. Giving a look to the utilities we can see that in most of the worlds they are pretty good. For instance, in the AND-world we should have an utility of -1.0 for the state (0,0). The approximator returned an utility of -0.71 (bottom-left element in the matrix). On the other two red cells the values are -0.21 and -0.22 which are not so close to -1.0 but are at least negative. The positive cell in state (4,4) has an utility of 1.0 and the approximator returned 0.28. At this point it should be clear why having a function approximator is a big deal. With the lookup table approach we could represent the utilities of the boolean worlds using a table with 5 rows and 5 columns, for a total of **25 variables** to keep in memory. Now we only need two weights and a bias, for a total of **3 variables**. Everything seems fine, we have an approximator which works pretty well and is easy to tune. However our problems are not finished. If you look to the XOR-world you will notice that the plane is still flat. This problem is much serious than the previous one and there are no way to solve it. The point is that there is no plane that can separate red and green cells in the XOR-world. Try it yourself, adjust the plane to satisfy all the constraints. That is not feasible. The **XOR-world is not linearly separable**, and using a linear approximator we can only approximate linearly separable functions. The only chance we have to approximate an utility function for the XOR-world is to literally bend the plane, and to do it we have to use an higher order approximator.
 
 High-order approximators
 ------------------------
@@ -272,22 +271,25 @@ If you look to the equation what I added is the new term $$x_{1} x_{2} w_{3}$$. 
 Here the paraboloid is represented using four different perspectives. The result obtained at the end of the training shows that the utilities are very good. 
 
 ```
-w: [ 0.39908725  0.39223376 -0.19921515 -0.79385556]
-[0.8, 0.4, -0.01, -0.41, -0.82]
-[0.4, 0.2, -0.01, -0.21, -0.42]
-[0.0, -0.0, -0.01, -0.01, -0.02]
-[-0.39, -0.2, -0.01, 0.18, 0.38]
-[-0.79, -0.4, -0.01, 0.38, 0.78]
+w: [ 0.36834857  0.36628493 -0.18575494 -0.73988694]
+[[ 0.73  0.36 -0.02 -0.4  -0.77]
+ [ 0.37  0.17 -0.02 -0.21 -0.4 ]
+ [-0.   -0.01 -0.01 -0.02 -0.02]
+ [-0.37 -0.19 -0.01  0.17  0.35]
+ [-0.74 -0.37 -0.01  0.36  0.73]]
 ```
 
-We should have -1 in states the bottom-left and top-right corners, the approximator returned -0.79 and -0.82 which are pretty good estimations. Similar results have been obtained for the positive states in the top-left and bottom-right corners, where the approximator returned 0.8 and 0.78 which are very close to the true utility of 1.0. I suggest you to run the script using different hyper-parameters (e.g. the learning rate alpha) to see the effects on the final plot and on the utility table.
+We should have -1 in the bottom-left and top-right corners, the approximator returned -0.74 and -0.77 which are pretty good estimations. Similar results have been obtained for the positive states in the top-left and bottom-right corners, where the approximator returned 0.73 and 0.77 which are very close to the true utility of 1.0. I suggest you to run the script using different hyper-parameters (e.g. the learning rate alpha) to see the effects on the final plot and on the utility table.
 
 The geometrical intuition is helpful because it gives an immediate intuition of the difference between different approximators. We saw that using additional features and more complex functions it is possible to better describe the utility space. High-order approximators may find useful links between futures whereas a pure linear approximator could not. An example of high-order approximator is the **quadratic approximator**. In the quadratic approximator we use a second order polynomial to model the utility function. 
 
 $$ \hat{U}(s, \boldsymbol{w}) = x_{1} w_{1} + x_{2} w_{2} + x_{1}^{2} w_{3} + x_{2}^{2} w_{4} +... + x_{N-1} w_{M-1} + x_{N}^{2} w_{M} $$
 
 
-Application: inverted pendulum
+It is not easy to **choose the right polynomial**. A simple approximator like the linear one can miss the relevant relations between features and target, whereas an high order approximator can fail to generalise to new unseen states. The optimal balance is achieved through a delicate tradeoff known in machine learning as the [bias-variance tradeoff](https://en.wikipedia.org/wiki/Bias%E2%80%93variance_tradeoff).
+
+
+Application: acrobot
 -------------------------------
 Using linear approximators in a discrete state space was easy. However many problems have a continuous state space. In the last post I showed how to create partitions and cast the state space inside specific bins. Here I would like to introduce a method which is based on the distributed representation we were talking about in the introduction. 
 
