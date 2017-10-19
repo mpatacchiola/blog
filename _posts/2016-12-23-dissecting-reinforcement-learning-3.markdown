@@ -478,7 +478,7 @@ SARSA uses GPI to improve the policy $$ \pi $$. The $$ \text{Target} $$ is estim
 
 $$ \pi(s_{t+1}) = \underset{a}{\text{ argmax }} Q(s_{t+1},a) $$
 
-At this point it is obvious that we do not really need the policy $$ \pi $$ for choosing the action, we can simply use the term $$ \text{ argmax }} Q(s_{t+1},a) $$ and rewrite the $$ \text{Target} $$ as the discounted Q-value obtained at $$ s_{t+1} $$ through a greedy selection :
+At this point it is obvious that we do not really need the policy $$ \pi $$ for choosing the action, we can simply use the term  on the right and rewrite the $$ \text{Target} $$ as the discounted Q-value obtained at $$ s_{t+1} $$ through a greedy selection :
 
 $$ \text{Target} = \text{r}_{t+1} + \gamma Q(s_{t+1}, \underset{a}{\text{ argmax }} Q(s_{t+1},a)) $$
 
@@ -486,12 +486,12 @@ The expression below corresponds to the highest Q-value at t+1 meaning that it c
 
 $$ \text{Target} = \text{r}_{t+1} + \gamma \underset{a}{\text{ max }} Q(s_{t+1}, a) $$
 
-That's it, we have the $$ \text{Target} $$ used in the actual update rule and this value follows the GPI scheme. Let's see now all the Q-learning **steps**:
+That's it, we have the $$ \text{Target} $$ used in the actual update rule and this value follows the GPI scheme. Let's see now all the **steps** involved in Q-learning:
 
 1. Move one step selecting $$ a_{t} $$ from $$ \mu(s_{t}) $$
 2. Observe: $$ r_{t+1} $$, $$ s_{t+1} $$
 3. Update the state-action function $$ Q(s_{t}, a_{t}) $$
-4. (Optional) Update the policy $$ \pi(s_{t}) \leftarrow \underset{a}{\text{ argmax }} Q(s_{t},a) $$
+4. (optional) Update the policy $$ \pi(s_{t}) \leftarrow \underset{a}{\text{ argmax }} Q(s_{t},a) $$
 
 There are some differences between the steps followed in SARSA and the one followed in Q-learning. Unlike in SARSA in the **step 2** of Q-learning we are not considering $$ a_{t+1} $$ the action at the next step. In this sense Q-learning updates the state-action function using the tuple State-Action-Reward-State.
 Comparing **step 1** and **step 4** you can see that in step 1 of SARSA the action is sampled from $$ \pi $$ and then the same policy is updated at step 4. In step 1 and step 4 of Q-learning we are sampling the action from the exploration policy $$ \mu $$ and (optionally) we update the policy $$ \pi $$ at step 4. The step 4 is optional because the action value can be obtained directly from the Q-function, calculating and storing $$ \pi $$ can be a waste of resources.
