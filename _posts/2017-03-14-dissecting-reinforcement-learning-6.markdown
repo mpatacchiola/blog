@@ -88,7 +88,7 @@ Average utility RMSE: 0.177346151284
 ```
 The result on our test is 733 which is significantly over the random score. We said that the true utility distribution is `[0.3, 0.5, 0.8]`. The greedy agent has an average utility distribution of `[0.14, 0.27, 0.66]` and a RMSE of 0.18, meaning that it underestimates the utilities because of its blind strategy which does not encourage exploration. Here we can see an inverse pattern respect to the random agent, meaning that for the greedy player both the average reward and the RMSE are high.
 
-**Epsilon-greedy**: we already encountered this strategy. At each time step the agent is going to select the most generous arm with probability $$p = \epsilon$$ (exploitation) and it will randomly choose one of the other arms with probability $$q = 1 - \epsilon$$ (exploration). A value which is often choose for epsilon is $$\epsilon = 0.1$$.
+**Epsilon-greedy**: we already encountered this strategy. At each time step the agent is going to select the most generous arm with probability $$p = 1 - \epsilon$$ (exploitation) and it will randomly choose one of the other arms with probability $$q = \epsilon$$ (exploration). A value which is often choose for epsilon is $$\epsilon = 0.1$$.
 I created a script for testing this agent that you will find on the [official repository](https://github.com/mpatacchiola/dissecting-reinforcement-learning) and is called `epsilon_greedy_agent_bandit.py`. Using a value of epsilon equal to 0.1, and running the script for 1000 steps and 2000 episodes I got the following results:
 
 ```
