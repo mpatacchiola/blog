@@ -478,7 +478,7 @@ SARSA uses GPI to improve the policy $$ \pi $$. The $$ \text{Target} $$ is estim
 
 $$ \pi(s_{t+1}) = \underset{a}{\text{ argmax }} Q(s_{t+1},a) $$
 
-At this point it is obvious that we do not really need the policy $$ \pi $$ for choosing the action, we can simply use the term  on the right and rewrite the $$ \text{Target} $$ as the discounted Q-value obtained at $$ s_{t+1} $$ through a greedy selection :
+At this point it is obvious that we do not really need the policy $$ \pi $$ for choosing the action, we can simply use the term  on the right and rewrite the $$ \text{Target} $$ as the discounted Q-value obtained at $$ s_{t+1} $$ through a greedy selection:
 
 $$ \text{Target} = \text{r}_{t+1} + \gamma Q(s_{t+1}, \underset{a}{\text{ argmax }} Q(s_{t+1},a)) $$
 
