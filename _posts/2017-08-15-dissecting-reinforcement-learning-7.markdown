@@ -184,7 +184,7 @@ If you are familiar with [Boolean algebra](https://en.wikipedia.org/wiki/Boolean
 
 In the three-dimensional space the **x-axis** is represented by the **columns** of the world, whereas the **y-axis** is represented by the **rows**. The **utility value** is given by the **z-axis**. During the gradient descent we are changing the weights, adjusting the inclination of the plane and the utilities associated to each state. To better understand this point you can plug the equation $$z = x + y$$ in [Wolfram Alpha](https://www.wolframalpha.com/input/?i=z+%3D+x+%2B+y) and give a look to the resulting plot. Changing the coefficients associated to $$x$$ and $$y$$ you are changing the weights associated to those features and you are in fact moving the plane. Try again with $$z = \frac{1}{2} x + \frac{1}{4} y$$ or [click here](https://www.wolframalpha.com/input/?i=z+%3D+1%2F2x+%2B+1%2F4y) if you are lazy.
 
-The **python implementation** is based on a random agent which freely move in the world. Here we are only interested in estimating the state utilities, we do not want to find a policy. The core of the code is the update rule defined in the previous section, summarised in a single line thanks to Numpy:
+The **python implementation** is based on a random agent which freely move in the world. Here we are only interested in estimating the state utilities, we do not want to find a policy. The core of the code is the update rule defined in the previous section, summarised in a few lines thanks to Numpy:
 
 ```python
 def update(w, x, x_t1, reward, alpha, gamma, done):
@@ -200,14 +200,14 @@ def update(w, x, x_t1, reward, alpha, gamma, done):
   @return w_t1 the weights vector at t+1
   '''
   if done:
-    w_t1 = w + alpha * ((reward - np.dot(x,w)) * x)
+    w_t1 = w + alpha * (reward - np.dot(x,w)) * x)
   else:
     w_t1 = w + alpha * ((reward + (gamma*(np.dot(x_t1,w))) - np.dot(x,w)) * x)
   return w_t1
 ```
 
 The function `numpy.dot()` is an implementation of the dot product. The conditional statement is used to discriminate between terminal (`done=True`) and non-terminal (`done=False`) states. In case of a terminal state the target is obtained using only the reward. This is obvious, because after a terminal state there is not another state to use for approximating the target.
-You can check the complete code on the [official GitHub repository](https://github.com/mpatacchiola/dissecting-reinforcement-learning) of the series, the python script is called `boolean_worlds_linear_td.py`. In my experiments I set the learning rate $$\alpha = 0.001$$ and I linearly decrease it to $$10^{-6}$$ for $$3 \times 10^{4}$$ epochs. The weights were randomly initialised in the range $$[-1,+1]$$. Using matplotlib I draw the planes generated for the worlds in a three-dimensional plot:
+You can check the complete code on the [official GitHub repository](https://github.com/mpatacchiola/dissecting-reinforcement-learning) of the series, the python script is called `boolean_worlds_linear_td.py`. In my experiments I set the learning rate $$\alpha = 0.001$$ and I linearly decrease it to $$10^{-6}$$ for $$3 \times 10^{4}$$ iterations. The weights were randomly initialised in the range $$[-1,+1]$$. Using matplotlib I draw the planes generated for the worlds in a three-dimensional plot:
 
 ![Function Approximation Boolean Planes No bias]({{site.baseurl}}/images/reinforcement_learning_function_approximation_linear_function_boolean_worlds_planes_no_bias.png){:class="img-responsive"}
 

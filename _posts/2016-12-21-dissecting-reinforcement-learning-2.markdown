@@ -366,8 +366,11 @@ The **state-action matrix** stores the utilities of executing a specific action 
 
 ![Active Model-Free RL MC control visits]({{site.baseurl}}/images/reinforcement_learning_model_free_active_mc_control_visits.png){:class="img-responsive"}
 
-The episode above is the same we used as example in the MC for prediction. The robot starts at (1,1) and it reaches the charging station after seven visits. Here we can calculate the returns as usual. Remembering that we are under the assumption of first-visit MC, we will update the entry for the state-action pair (1,2)-UP only once, because this pair is present twice in the episode. 
-**After this episode** our **matrix** containing the values for the state-action utilities will contain the following values:
+The episode above is the same we used as example in the MC for prediction. The robot starts at (1,1) and it reaches the charging station after seven visits. Here we can calculate the returns as usual. Remembering that we are under the assumption of first-visit MC, we will update the entry for the state-action pair (1,2)-UP only once, because this pair is present twice in the episode. To estimate the utility we have to decompose the episode and evaluate the **return that follows the first occurrence of the state-action pair**. In our example we have to compute the return for the pair pair (1,1)-UP, the pair (1,2)-UP, the pair (1,3)-DOWN, skip the pair (1,2)-UP (already updated), the (1,3)-RIGHT, etc. In the following image you can see how this computation proceed and how the returns are evaluated for different pairs:
+
+![Active Model-Free RL MC control visits]({{site.baseurl}}/images/reinforcement_learning_model_free_active_mc_control_visits_overview.png){:class="img-responsive"}
+
+**After this episode** our **matrix** containing the values for the state-action utilities can be updated. In our case the new matrix will contain the following values:
 
 ![Active Model-Free RL State-Action Table updated one ep]({{site.baseurl}}/images/reinforcement_learning_model_free_active_state_action_table_updated_one_ep.png){:class="img-responsive"}
 
@@ -376,7 +379,7 @@ After a second episode we will fill more entries in the table. Going on in this 
 $$ \pi(s) = \underset{a}{\text{ argmax }} Q(s,a) $$
 
 That's it, we are making the policy **greedy** choosing for each state $$ s $$ appearing in the episode the action with maximal Q-value.
-For example, if we consider the state (1,3) (top-left corner of the grid world) we can update the entry in the policy matrix taking the action with the highest value in the state-action table. In our case after the first episode the action with the highest value is RIGHT which has a Q-value of 0.48.
+For example, if we consider the state (1,3) (top-left corner of the grid world) we can update the entry in the policy matrix taking the action with the highest value in the state-action table. In our case after the first episode the action with the highest value is RIGHT which has a Q-value of 0.74.
 
 ![Active Model-Free RL State-Action policy improvement]({{site.baseurl}}/images/reinforcement_learning_model_free_active_mc_control_improvement.png){:class="img-responsive"}
 
