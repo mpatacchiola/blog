@@ -596,7 +596,7 @@ $$ \mathbf{u} = (I - \gamma T)^{-1} \mathbf{r} $$
 In fact we could obtain `u` implementing the last equation in Numpy:
 
 ```python
-u[s] = np.dot(np.transpose(np.identity(12) - gamma*T[:,:,p[s]]), r)[s]
+u[s] = np.dot(np.linalg.inv(np.identity(12) - gamma*T[:,:,p[s]]), r)[s]
 ```
 
 However I prefer to use `np.linalg.solve` which does the same thing but is much more readable.
