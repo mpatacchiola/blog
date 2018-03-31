@@ -6,7 +6,7 @@ description: This blog series explains the main ideas and techniques used in rei
 author: Massimiliano Patacchiola
 type: computer vision
 comments: false
-published: true
+published: false
 ---
 
 The bias-variance tradeoff is the backbone of model selection, and it can be explained from different points of view. Here I will extensively use terms from probability theory and statistics but I will try to ground everything in concrete machine learning scenarios. If you are not happy about the explanations available out there then this post can (hopefully) give you a deeper inside on this topic. 
