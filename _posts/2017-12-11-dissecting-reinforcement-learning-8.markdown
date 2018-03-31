@@ -1,7 +1,7 @@
 ---
 layout: post
 title:  "Dissecting Reinforcement Learning-Part.8"
-date:   2017-12-11 09:00:00 +0000
+date:   2018-03-30 09:00:00 +0000
 description: This blog series explains the main ideas and techniques used in reinforcement learning. In this post Reinforcement Learning through non-linear function approximation (Neural Networks) and policy gradient methods. It includes complete Python code.
 author: Massimiliano Patacchiola
 type: reinforcement learning
@@ -10,7 +10,7 @@ published: false
 ---
 
 
-In the [last post]((https://mpatacchiola.github.io/blog/2017/12/11/dissecting-reinforcement-learning-7.html)) I introduced **function approximation** as a method for representing the (state-)value function in a reinforcement learning setting. The simple approximator we used was based on a linear combination of features and it was quite limited because it could not model complex state spaces (like the XOR gridworld). In this post I will introduce **Neural Networks** as non-linear function approximators and I will show you how we can use a neural network to model a Q-function. I will start from basic architectures (e.g. **perceptron** and **ADALINE**) and then move to standard feed-forward models (e.g. **Multi Layer Perceptron**). Moreover I will introduce **policy gradient methods** that are (most of the time) based on neural network policies. I will use pure Numpy to implement the network and the update rule, in this way you are gonna have a full accessible code to study. This post is important because it allows understanding the deep models (Convolutional Neural Networks) used in Deep Reinforcement Learning that I will introduce in the next post.
+In the [last post]((https://mpatacchiola.github.io/blog/2017/12/11/dissecting-reinforcement-learning-7.html)) I introduced **function approximation** as a method for representing the utility function in a reinforcement learning setting. The simple approximator we used was based on a linear combination of features and it was quite limited because it could not model complex state spaces (like the XOR gridworld). In this post I will introduce **Artificial Neural Networks** as non-linear function approximators and I will show you how we can use a neural network to model a Q-function. I will start from basic architecture called **Perceptron** and then move to the standard feed-forward model called **Multi Layer Perceptron**. Moreover, I will introduce **policy gradient methods** that are (most of the time) based on neural network policies. I will use pure Numpy to implement the network and the update rule, in this way you will have a transparent code to study. This post is important because it allows understanding the **deep models** (e.g. Convolutional Neural Networks) used in Deep Reinforcement Learning, that I will introduce in the next post.
 
 ![Books Reinforcement Learning]({{site.baseurl}}/images/books_reinforcement_learning_an_introduction_pattern_recognition.png){:class="img-responsive"}
 
@@ -20,18 +20,94 @@ I want to start this post with a brief excursion in the history of neural networ
 
 The life and death of the Perceptron
 ------------------------------------- 
+In 1957 the American psychologist [Frank Rosenblatt](https://en.wikipedia.org/wiki/Frank_Rosenblatt) presented a report entitled *"The Perceptron: a perceiving and recognizing automaton"* to the Cornell Aeronautical Laboratory commission in New York. The Perceptron was not a proper software, it was implemented in a custom hardware (as big as a wardrobe), and it could discriminate between two types of marked cards. The first series of cards was marked on the left side, whereas the second series was marked on the right. A grid of 400 photo-cells was able to locate the marks and activate mechanical relays. Adjusting the parameters of the Perceptron was not so easy as today. In Python and Tensorflow we simply define a bunch of variables and then we search for the best combinations. In the hardware implementation the parameters to tune were physical handles (potentiometers) adjusted through electric motors.
 
+For your joy I found the original article of **The New York Times** describing the official presentation of the Perceptron by Rosenblatt and his staff:
 
+![Perceptron NYT]({{site.baseurl}}/images/reinforcement_learning_approximators_perceptron_nyt.png){:class="img-responsive"}
+
+As you have read the power of the Perceptron was a bit overestimated, especially when talking about artificial brains that *"would be conscious of their existence"* (we could start here a long discussion about what consciousness really is, but it would take another blog series). However, some of the predictions made by Rosenblatt were correct:
+
+*"Later perceptrons will be able to recognize people and call out their names and instantly translate speech in one language to speech or writing in another language"*
+
+Well, it took several decades but we now have it. What is the Perceptron from a technical point of view? You might be surprised to know that **the Perceptron is a linear function approximator** like the one described in the [previous post](https://mpatacchiola.github.io/blog/2017/12/11/dissecting-reinforcement-learning-7.html). Let's try to formalise this point. The input to the Rosenblat's Perceptron were 400 binary photo-cells that we can model as a vector of units $$ \boldsymbol{x} = ( x_{1}, x_{2,}, ..., x_{400} )$$. The output was given by an electric tension that we can call $$y$$. The connection between input and output were a series of wires and potentiometers that we can model through another vector $$\boldsymbol{w}$$ containing 400 real values (the resistance of the potentiometers). I said that the Perceptron is a linear system, and exactly like the linear model described in the previous post we can define it as the dot product between two vectors:
+
+$$y = \sigma \big( \boldsymbol{x}^{T} \boldsymbol{w} \big)$$
+
+The only difference between the linear approximator that I have already described and the Perceptron is the update rule.  The original perceptron used a [sign function](https://en.wikipedia.org/wiki/Sign_function) in the output unit to generate a binary output of the type zero/one. The sign function $$\sigma$$ is applied to the result of the dot product and it generates the binary output.
+The problem here is the sign function itself. Using a sign function is **not possible to apply gradient descent** because this function is not differentiable. Moreover, another important detail I should tell you is that gradient based techniques (such as the backpropagation) were unknown at that time. 
+
+**How did Rosenblatt train the Perceptron?** Here is the cool part, Rosenblatt used a form of [Hebbian learning](https://en.wikipedia.org/wiki/Hebbian_theory). The psychologist [Donald Hebb](https://en.wikipedia.org/wiki/Donald_O._Hebb) had published a few years before (1949) the work entitled *"The Organization of Behavior"* where he explained cognitive processes from the point of view of neural connectivity patterns. The principle is easy to grasp: **when two neurons fire at the same time their connection is strengthened**.
+Ronsenblat was inspired by this work when he defined the update rule of the Perceptron. The update rule directly manages the three possible outcomes of the training phase and it is repeated for a certain number of epochs:
+
+1. If the output $$y$$ is correct, leave the weights $$w$$ *unchanged*
+2. If the output $$y$$ is incorrect (zero instead of one), *add* the input vector $$x$$ to the weight vector $$w$$
+3. If the output $$y$$ is incorrect (one instead of zero), *subtract* the input vector $$x$$ from the weight vector $$w$$
+
+The **geometric interpretation** of the update rule can help you understand what is going on. I said that $$w$$ is a vector, meaning that we can imagine this vector in a three-dimensional space. The starting point of the vector is at the origin of the axes, whereas the end of the vector is at the coordinates specified by its values. The set of all the input vectors $$x$$ can also be considered as a bunch of vectors that occupy part of the same three-dimensional space. What we are doing during the update rule is moving around the weight vector changing its end-coordinates. The optimal position of the vector is inside a cone (with apex in the origin) where the first criterion of the learning rule is always satisfied. Said differently, when the weight vector reach this cone the second and third conditions of the update rule are no more triggered.
+
+Implementing a Perceptron and its update rule in **Python** is straightforward. Here You can find an example:
+
+```python
+def perceptron(x_array, w_array):
+    '''Perceptron model
+
+    Given an input array and a weight array
+    it returns the output of the model.
+    @param: x_array a binary input array
+    @param: w_array numpy array of weights
+    @return: the output of the model
+    '''
+    import numpy as np
+    #Dot product of input and weights
+    y = np.dot(x_array, w_array)
+    #Applying the sign function
+    if(y>0): return 1
+    else: return 0
+
+def update_rule(x_array, w_array, y_output, y_target)
+    '''Perceptron update rule
+
+    Given input, weights, output and target
+    it returns the updated set of weights.
+    @param: x_array a binary input array
+    @param: w_array numpy array of weights
+    @param: y_output the Perceptron output
+    @param: y_target the target value for the input
+    @return: the updated set of weights
+    '''
+    if(y_output == y_target):
+        return w_array #first condition
+    elif(y_output == 0 and y_target == 1):
+        return x_array + w_array #second condition
+    elif(y_output == 1 and y_target == 0)
+        return x_array - w_array #third condition
+```
+
+In the [previous post](https://mpatacchiola.github.io/blog/2017/12/11/dissecting-reinforcement-learning-7.html) I mentioned the fact that linear approximators are limited because they can only be used in linearly separable problems. The same considerations apply for the Perceptron. Historically, the research community was not aware of this problem and the work on the Perceptron continued for several years with good success. Interesting results were achieved by **Widrow and Hoff** in 1960 at Stanford with an evolution of the Perceptron called [ADALINE](https://en.wikipedia.org/wiki/ADALINE). The ADALINE network had multiple inputs and outputs, the activation function used on the outputs was a linear function and the update rule was the [Delta Rule](https://en.wikipedia.org/wiki/Delta_rule). The Delta Rule is a particular case of backpropagation and it is based on a gradient descent procedure. At that time this was an important success but the main problems remained. ADALINE was still a linear model and the Delta Rule was not applicable to non-linear problems.
+
+**There is a problem:** the publication of a book called [*"Perceptrons: an introduction to computational geometry"*](https://en.wikipedia.org/wiki/Perceptrons_(book)) in 1969 . In this book the authors, Marvin Minsky and Seymour Papert, mathematically proved that Perceptron-like models could only solve linearly separable problems and that they could not be applied to a non-linear dataset such as the XOR one. In the [previous post](https://mpatacchiola.github.io/blog/2017/12/11/dissecting-reinforcement-learning-7.html) I carefully chosen the **XOR grid world** as an example of non-linear problem, showing you how a linear approximator was not able to describe the utility function of this world. This is what Minsky and Papert proved in their book. The so called **XOR affair** signed the end of the Perceptron era. The funding to artificial neural network projects gradually disappeared and just a few researchers continued to study these models.
 
 Revival (Multi Layer Perceptron)
 --------------------------------
+
+After the winter the spring comes back. We must wait until 1985 to see the resurgence of neural networks. **Rumelhart, Hinton and Williams** published an article entitled *"Learning Internal Representations by Error Propagation"* on the use of a generalized delta rule for training a Perceptron having multiple layers. The **Multi Layer Perceptron (MLP)** is an extension of the classical Perceptron having one or more intermediate layers. The authors experimentally verified that using an additional layer (called hidden) and a new update rule, the network was able to solve the XOR problem. This result ignited again the research on neural networks. The authors stated:
+
+*"In short, we believe that we have answered Minsky and Papert's challenge and have found a learning result sufficiently powerful to demonstrate that their pessimism about learning in multilayer machines was misplaced."*
+
+The MLP in its classical form, is based on an input layer, an hidden layer and an output layer. The transfer function used between the layers is generally a [Sigmoid](https://en.wikipedia.org/wiki/Sigmoid_function). The **error function** can be defined as the **mean squared error (MSE)** between the output and the labels. Each layer of the MLP can be represetned as a vector-matrix multiplication between an input vector $$\boldsymbol{x}$$ and a weight matrix $$\boldsymbol{W}$$. The resulting value is added to a bias and passed to an activation function, generating an output vector $$\boldsymbol{y}$$. These operations are equivalent to the weighted sum of the input values used for the linear approximators. The main innovation behind the MLP is the **update rule** called **backpropagation**. The idea of backpropagation was not completely new, but the applying it to feedforward networks was not immediate.
+
+Similarly to what we saw in the [previous post](https://mpatacchiola.github.io/blog/2017/12/11/dissecting-reinforcement-learning-7.html) regarding the update rule for linear approximators, it is possible to think about backpropagation as an iterative application of the **chain rule** on the different layers of the network. Intuitively you can see backpropagation as the process of opening a set of black [Chinese boxes](https://en.wikipedia.org/wiki/Chinese_boxes) until a red box appear.
+
+![Backpropagation math]({{site.baseurl}}/images/reinforcement_learning_approximators_backprop_math.png){:class="img-responsive"}
+
+
 
 
 Method
 --------
 
 To improve the performance of our function approximator we need an error measure and an update rule. These two components work tightly in the learning cycle of every supervised learning technique. Their use in reinforcement learning is not much different from how they are used in a classification task. In order to understand this section you need to refresh some concepts of [multivariable calculus](https://en.wikipedia.org/wiki/Multivariable_calculus) such as the [partial derivative](https://en.wikipedia.org/wiki/Partial_derivative) and [gradient](https://en.wikipedia.org/wiki/Gradient).
-
 
 ![Function Approximation Training]({{site.baseurl}}/images/reinforcement_learning_function_approximation_training_cycle.png){:class="img-responsive"}
 
@@ -85,9 +161,6 @@ We have to be particularly careful when using the bootstrapping methods in gradi
 The **Generalised Policy Iteration (GPI)** (see [second post](https://mpatacchiola.github.io/blog/2017/01/15/dissecting-reinforcement-learning-2.html)) applies here as well. Let's suppose we start with a random set of weights. At the very first step the agent follows an epsilon-greedy strategy moving in the state with the highest utility. After the first step it is possible to update the weights using gradient descent. What's the effect of this adjustment? The effect is to slightly improve the utility function. At the next step the agent follows again a greedy strategy, then the weights are updated through gradient descent, and so on and so forth. As you can see we are applying the GPI scheme again.
 
 
-
-Linear approximator
---------------------
 
 Application: Multi Layer XOR
 --------------------------------------
@@ -145,7 +218,7 @@ Index
 5. [[Fifth Post]](https://mpatacchiola.github.io/blog/2017/03/14/dissecting-reinforcement-learning-5.html) Evolutionary Algorithms introduction, Genetic Algorithm in Reinforcement Learning, Genetic Algorithms for policy selection.
 6. [[Sixt Post]](https://mpatacchiola.github.io/blog/2017/08/14/dissecting-reinforcement-learning-6.html) Reinforcement learning applications, Multi-Armed Bandit, Mountain Car, Inverted Pendulum, Drone landing, Hard problems.
 7. [[Seventh Post]](https://mpatacchiola.github.io/blog/2017/12/11/dissecting-reinforcement-learning-7.html) Function approximation, Intuition, Linear approximator, Applications, High-order approximators.
-8. **[Eighth Post]** Non-linear function approximation, Intuition.
+8. **[Eighth Post]** Non-linear function approximation, Perceptron, Multi Layer Perceptron, Applications, Policy Gradient.
 
 Resources
 ----------
