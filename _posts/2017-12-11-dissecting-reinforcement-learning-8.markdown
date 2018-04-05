@@ -6,7 +6,7 @@ description: This blog series explains the main ideas and techniques used in rei
 author: Massimiliano Patacchiola
 type: reinforcement learning
 comments: false
-published: true
+published: false
 ---
 
 
