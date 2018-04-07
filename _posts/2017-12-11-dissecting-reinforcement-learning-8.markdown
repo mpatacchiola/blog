@@ -34,11 +34,7 @@ Well, it took several decades but we now have it. What is the Perceptron from a 
 
 $$y = \phi \big( \boldsymbol{x}^{T} \boldsymbol{w} \big)$$
 
-We can also use an additional **bias unit** called $$x_{b}$$ and its weight $$w_{b}$$ that we can add to the result of the activation function:
-
-$$y = \phi \big( \boldsymbol{x}^{T} \boldsymbol{w} \big) + w_{b}$$
-
-The reason for a bias unit has been extensively discussed in the [previous post](https://mpatacchiola.github.io/blog/2017/12/11/dissecting-reinforcement-learning-7.html) and I suggest you to give a look if you do not remeber why we need it.
+We can also use an additional **bias unit** called $$x_{b}$$ and its weight $$w_{b}$$. We can append the additional input to the vector $$\boldsymbol{x}$$, and we can append the additional weight to the vector $$\boldsymbol{w}$$. The reason for a bias unit has been extensively discussed in the [previous post](https://mpatacchiola.github.io/blog/2017/12/11/dissecting-reinforcement-learning-7.html) and I suggest you to give a look if you do not remeber why we need it.
 The last equation is the final form of the Perceptron. It may be useful to graphically represent the Perceptron as a **directed graph** where each node is a unit (or neuron) and each edge is a weight (or synapse). Regarding the **name convention** there is not a clear rule in the community. I personally prefer to use the term *unit* and *weight* instead of *neuron* and *synapse* to avoid confusion with the biological counterpart. 
 
 The following image represent the Rosenblatt's Perceptron. The 400 photo-cell fires only when a mark is identified on the card. Each photo-cell can be thought as an input of the Perceptron. Here I represented the neurons using a green colour for the active units (state=1), a red colour for the inactive units (state=0), and an orange colour for the units with undefined state. When I say *"undefined state"* I mean that the output of that unit has not been computed yet. For instance, this is the state of the output unit $$y$$ before the weighted sum and the transfer function are applied. In the image you must notice that the bias unit is always active, if you remember the [last post](https://mpatacchiola.github.io/blog/2017/12/11/dissecting-reinforcement-learning-7.html), we used this trick in order to add the bias in our model.
@@ -46,7 +42,7 @@ The following image represent the Rosenblatt's Perceptron. The 400 photo-cell fi
 ![Perceptron Graph Chain]({{site.baseurl}}/images/reinforcement_learning_approximators_perceptron_graph_chain.png){:class="img-responsive"}
 
 As I told you above, the only difference between the linear approximator and the Perceptron is the activation function $$\phi$$. The original perceptron uses a [sign function](https://en.wikipedia.org/wiki/Sign_function) to generate a binary output of type zero/one.
-The sign function introduce a relevant problem. Using a sign function is **not possible to apply gradient descent** because this function is not differentiable. Another important detail I should tell you is that gradient based techniques (such as the backpropagation) were unknown at that time. 
+The sign function introduce a relevant problem. Using a sign function it is **not possible to apply gradient descent** because this function is not differentiable. Another important detail I should tell you is that gradient based techniques (such as the backpropagation) were unknown at that time. 
 
 **How did Rosenblatt train the Perceptron?** Here is the cool part, Rosenblatt used a form of [Hebbian learning](https://en.wikipedia.org/wiki/Hebbian_theory). The psychologist [Donald Hebb](https://en.wikipedia.org/wiki/Donald_O._Hebb) had published a few years before (1949) the work entitled *"The Organization of Behavior"* where he explained cognitive processes from the point of view of neural connectivity patterns. The principle is easy to grasp: **when two neurons fire at the same time their connection is strengthened**.
 Ronsenblat was inspired by this work when he defined the update rule of the Perceptron. The update rule directly manages the three possible outcomes of the training phase and it is repeated for a certain number of epochs:
@@ -132,14 +128,18 @@ It is possible to think about backpropagation as an iterative application of the
 
 As you can see the idea is to factor the starting equation in different parts (1), then estimate the derivative of each part (2), and finally multiply each part (3). Intuitively you can see backpropagation as the process of opening a set of black [Chinese boxes](https://en.wikipedia.org/wiki/Chinese_boxes) until a red box appear. In our example the red box is the variable $$x$$ and the black boxes to open are the various sub-equations we have to derive in order to reach it.
 
-**How does the chain rule fit into neural networks?** This is something many people struggle with. Consider the neural network as a magic box where you can push an array, and get back another array. Push an input, get an output. Input and output can have different size, in our Perceptron for instance, the input contained 400 values and the output was a single value. This is technically a [scalar field](https://en.wikipedia.org/wiki/Scalar_fields). In our examples of MLP we will feed an array representing the world state, and we will get an output representing the utility of that state (as a single value), or the utility of each possible action (as an array). Now, a neural network is not a magic box. The output $$y$$ is obtained through a series of operation. If you carefully look at the MLP scheme of the previous section you can go back from $$y$$ to $$h$$ and from $$h$$ to $$x$$. In the end, $$y$$ is obtained from applying a Sigmoid to the weighted sum of $$h$$ and a set of weights. Whereas $$h$$ is obtained in a similar way using the weighted sum of $$x$$ and the first matrix of weights. This long chain of operation is a **composition of multiple functions**, and by definition we can apply the chain rule to it.
+**How does the chain rule fit into neural networks?** This is something many people struggle with. Consider the neural network as a magic box where you can push an array, and get back another array. Push an input, get an output. Input and output can have different size, in our Perceptron for instance, the input array consisted of 400 values and the output was a single value. This is technically a [scalar field](https://en.wikipedia.org/wiki/Scalar_fields). In our examples of MLP we will feed an array representing the world state, and we will get an output representing the utility of that state (as a single value), or the utility of each possible action (as an array). Now, a neural network is not a magic box. The output $$y$$ is obtained through a series of operation. If you carefully look at the MLP scheme of the previous section you can go back from $$y$$ to $$h$$ and from $$h$$ to $$x$$. In the end, $$y$$ is obtained from applying a Sigmoid to the weighted sum of $$h$$ and a set of weights. Whereas $$h$$ is obtained in a similar way using the weighted sum of $$x$$ and the first matrix of weights. This long chain of operation is a **composition of multiple functions**, and by definition we can apply the chain rule to it.
 
 **Which are the variables in a neural network?** In a neural network we do not have only a single variable to estimate, the **variables (or unknowns)** of our network are all the weights. Our goal is to find the set of weights that better represent the real utility function. Differently from a single variable equation (like the one used in the chain rule example above) a neural network is a [multivariable equation](https://en.wikipedia.org/wiki/Multivariable_calculus). For instance, you can think of the Rosenblatt's Perceptron as a multivariable equation having 400 unknowns. In a multivariable equation we do not think in terms of derivative but in terms of [gradient](https://en.wikipedia.org/wiki/Gradient). I already wrote about gradient in the [previous post](https://mpatacchiola.github.io/blog/2017/12/11/dissecting-reinforcement-learning-7.html). Dealing with a multivariable equation is not something that should scare you, since our chain rule still works. However, we now need to use [partial derivatives](https://en.wikipedia.org/wiki/Partial_derivative) instead of standard derivatives. 
-Given the error function $$E$$ we have to look for the set of variables $$\boldsymbol{W}_{1}$$ and $$\boldsymbol{W}_{2}$$, meaning that we keep differentiating (opening the Chinese boxes) until we do not find them. Above you can find a mathematical description of this process for a MLP having a vector $$x$$ as input, a vector $$y$$ as output, two set of weights $$w_{1}$$ (between input and hidden layers) and $$w_{2}$$ (between hidden and output layers), two different activation
+Given the error function $$E$$ we have to look for the set of variables $$\boldsymbol{W}_{1}$$ and $$\boldsymbol{W}_{2}$$, meaning that we keep differentiating (opening the Chinese boxes) until we do not find them. In the image below you can find a mathematical description of this process for a MLP having a vector $$x$$ as input, a vector $$y$$ as output, two set of weights $$W_{1}$$ (between input and hidden layers) and $$W_{2}$$ (between hidden and output layers). the weighted sum of these components generate two arrays $$z_{1}$$ and $$z_{2}$$ and passed through two activation functions $$h = \phi(z_{1})$$ and $$y = \phi(z_{2})$$. Remember that the last link of the chain is the error function $$E$$, and for this reason $$E$$ is the starting point for the chain rule.
 
 ![Backpropagation math]({{site.baseurl}}/images/reinforcement_learning_approximators_backprop_math.png){:class="img-responsive"}
 
-As you can notice the use of **backpropagation is very efficient** because it allows us to reuse part of the partial derivatives computed in later layers in order to estimate the derivatives of previous layers. Moreover all those operations can be formalised in matrix form and can be easily parallelised on a GPU.
+As you can notice the use of **backpropagation is very efficient** because it allows us to reuse part of the partial derivatives computed in later layers in order to estimate the derivatives of previous layers. Moreover all those operations can be formalised in matrix-vector form and can be easily parallelised on a GPU.
+
+**What does backpropagation return?** The backpropagation finds the gradient vectors of the unknowns. In our MLP the backpropagation finds two vectors, one for the weights $$W_{1}$$ and the other for the weights $$W_{2}$$. Great, but how should we use those vectors? If you remember from the last post the gradient vector is the vector pointing up-hill on the error surface, meaning that it shows us where we should move in order to reach the top of the function. However here we are interested in going down-hill because we want to minimize an error (in the end we are doing gradient **descent**). This change in direction can be easily achieved changing the sign in front of the gradient. Now, knowing the direction in which to move the weights is not enough, we need to know **how much we have to move in that direction**. You must recall that the steepness of the function at a specific point is given by the **magnitude of the gradient vector**. From your linear algebra class you should know that multiplying a vector by a scalar changes the magnitude of the vector. 
+
+This is something more complicated to estimate, 
 
 
 Method
@@ -179,67 +179,37 @@ $$ \boldsymbol{w}_{t+1} =  \boldsymbol{w}_{t} + \alpha \big[ U^{\sim}(s) - \hat{
 How can we estimate the approximated target? We can follow different approaches, for instance using Monte Carlo or TD learning. In the next section I will introduce these methods.
 
 
-Target estimation
-------------------
-
-In the previous section we came to the conclusion that we need approximated target functions $$U^{\sim}(s)$$ and $$Q^{\sim}(s,a)$$ to use in the error evaluation and update rule. The type of target used is at the heart of function approximation in reinforcement learning. There are two main approaches:
-
-**Monte Carlo target**: an approximated value for the target can be obtained through a direct interaction with the environment. Using a Monte Carlo approach (see the [second post](https://mpatacchiola.github.io/blog/2017/01/15/dissecting-reinforcement-learning-2.html)) we can generate an episode and update the function $$U^{\sim}(s)$$ based on the states encountered along the way. The estimation of the optimal function $$U^{*}(s)$$ is unbiased because $$\mathop{\mathbb{E}}[U^{\sim}(s)] = U^{*}(s)$$, meaning that the *prediction is guaranteed to converge*.
-
-**Bootstrapping target**: the other approach used to build the target is called bootstrapping and I introduced it in the [third post](https://mpatacchiola.github.io/blog/2017/01/29/dissecting-reinforcement-learning-3.html). In bootstrapping methods we do not have to complete an episode for getting an estimation of the target, we can directly update the approximator parameters after each visit. The simplest form of bootstrapping target is the one based on TD(0) which is defined as follows:
-
-$$ U^{\sim}(s_{t}) = \hat{U}(s_{t+1}, \boldsymbol{w}) \qquad Q^{\sim}(s_{t}, a) = \hat{Q}(s_{t+1}, a, \boldsymbol{w})$$
-
-That's it, the target is obtained through the approximation given by the estimator itself at $$s_{t+1}$$.
-
-I already wrote about the differences between the two approaches, however here I would like to discuss it again in the new context of function approximation.
-In both cases the functions $$U^{\sim}(s)$$ and $$Q^{\sim}(s,a)$$ are based on the vector of weights $$\boldsymbol{w}$$. For this reason the correct notation we are going to use from now on is $$U^{\sim}(s,\boldsymbol{w})$$ and $$Q^{\sim}(s,a,\boldsymbol{w})$$.
-We have to be particularly careful when using the bootstrapping methods in gradient-based approximators. Bootstrapping methods are not true instances of gradient descent because they only care about the parameters in $$\hat{U}(s, \boldsymbol{w})$$. At training time we adjust $$\boldsymbol{w}$$ in the estimator $$\hat{U}(s,\boldsymbol{w})$$ based on a measure of error but we are not changing the parameters in the target function $$U^{\sim}(s,\boldsymbol{w})$$ based on an error measure. Bootstrapping ignores the effect on the target, taking into account only the gradient of the estimation. For this reason bootstrapping techniques are called **semi-gradient methods**. Due to this issue semi-gradient methods **does not guarantee the convergence**. At this point you may think that it is better to use Monte Carlo methods because at least they are guaranteed to converge. Bootstrapping gives two main advantages. First of all they learn online and it is not required to complete the episode in order to update the weights. Secondly they are faster to learn and computationally friendly. 
-
-The **Generalised Policy Iteration (GPI)** (see [second post](https://mpatacchiola.github.io/blog/2017/01/15/dissecting-reinforcement-learning-2.html)) applies here as well. Let's suppose we start with a random set of weights. At the very first step the agent follows an epsilon-greedy strategy moving in the state with the highest utility. After the first step it is possible to update the weights using gradient descent. What's the effect of this adjustment? The effect is to slightly improve the utility function. At the next step the agent follows again a greedy strategy, then the weights are updated through gradient descent, and so on and so forth. As you can see we are applying the GPI scheme again.
-
 
 
 Application: Multi Layer XOR
---------------------------------------
+-------------------------------
 
 Here I will reproduce the architecture used by Rumelhart and al. to solve the XOR problem. 
 
 
-High-order approximators
-------------------------
 
-The linear approximator is the simplest form of approximation. The linear case is appealing not only for its simplicity but also because it is guaranteed to converge. However, there is an important limit implicit in the linear model: it cannot **represent complex relationships between features**. That's it, the linear form does not allow representing the interaction between features. Such a complex interaction naturally arise in physical systems. Some features may be informative only when other features are absent. For example, the inverted pendulum  angular position and velocity are tightly connected. A high angular velocity may be either good or bad depending on the position of the pole. If the angle is high then high angular velocity means an imminent danger of falling, whereas if the angle is low then high angular velocity means the pole is righting itself.
+Policy gradient methods
+-------------------------
 
-Solving the XOR problem is very easy when an additional feature is added. 
+Until now we used neural networks in order to approximate the utility (or state-action) function. However there is another widely adopted use of neural network: **the approximation of the policy**.
+At the end of the [fourth post](https://mpatacchiola.github.io/blog/2017/02/11/dissecting-reinforcement-learning-4.html) I explained what is the difference between an actor-only and a critic-only algorithm. The policy gradient is an actor-only method that aims to approximate the policy. Before moving forward it may be useful to recap what is the difference between utility, state-action, and policy functions:
 
-$$ \hat{U}(s, \boldsymbol{w}) = x_{1} w_{1} + x_{2} w_{2} + x_{1} x_{2} w_{3} + w_{4} $$
+1. **Utility (or value) function**: $$y = U(s)$$ receives as input a state vector $$s$$ and return the utility $$y$$ of that state.
+2. **State-action function**: $$y = Q(s, a)$$ receives as input a state $$s$$ and an action $$a$$, and returns the utility $$y$$ of that state-action pair.
+3. **Policy function**: $$a = \pi(s)$$ receives as input a state $$s$$ and returns the action to perform in that state.
 
-If you look to the equation what I added is the new term $$x_{1} x_{2} w_{3}$$. This term introduces a relationship between the two features $$x_{1}$$ and $$x_{2}$$. Now the surface represented by the equation is no more a plane but an [hyperbolic paraboloid](https://en.wikipedia.org/wiki/Paraboloid), a saddle-like surface which perfectly adapt to the XOR-world. We do not need to rewrite the update function because it remains unchanged. We always have a linear combination of features and the gradient is always equal to the input vector. In the repository you will find another script called `xor_paraboloid.py` containing an implementation of this new approximator. Running the script with the same parameters used for the linear case we end up with the following plot:
+In policy gradient methods we use a neural network to approximate the policy function $$\pi(s)$$. As the name suggest we are using the **gradient**. At this point of the series you should know what is the **gradient vector** and how we are using it in gradient descent methods. Here, we want to estimate the gradient of our neural network, but we do not want to minimise an error anymore. Instead we want to **maximise the expected return** (long-term cumulative reward). As I told you before the gradient indicates the direction we should move the weights in order to maximise a function, and this is exactly what we want to achieve in policy gradient methods.
 
-![Function Approximation XOR Hyperbolic]({{site.baseurl}}/images/reinforcement_learning_function_approximation_linear_function_xor_hyperbolic.png){:class="img-responsive"}
+**Advantages**: the main advantage of policy gradient methods is that in some context it is much easier to estimate the policy function instead of the utility function. We know that the estimation of the utility function can be difficult due to the **credit assignment problem**. In policy gradients method we bypass this issue and we obtain a better convergence and an increased stability. Another advantage is that using policy gradient we can approximate a continuous action space. This overcomes an important limitation of **Q-Learning** where the $$max$$ operator only allow us to approximate discrete action spaces (see [third post](https://mpatacchiola.github.io/blog/2017/01/29/dissecting-reinforcement-learning-3.html) for more details). 
 
-Here the paraboloid is represented using four different perspectives. The result obtained at the end of the training shows that the utilities are very good. 
+**Disadvantages**: the main disadvantage of policy gradient methods is that they are generally slower and that they often converge to local optimum. Another problem is variance. Evaluating the policy with an high number of trajectories leads to an high variance in the approximation of the function.
 
-```
-w: [ 0.36834857  0.36628493 -0.18575494 -0.73988694]
-[[ 0.73  0.36 -0.02 -0.4  -0.77]
- [ 0.37  0.17 -0.02 -0.21 -0.4 ]
- [-0.   -0.01 -0.01 -0.02 -0.02]
- [-0.37 -0.19 -0.01  0.17  0.35]
- [-0.74 -0.37 -0.01  0.36  0.73]]
-```
+REINFORCE
+----------
 
-We should have -1 in the bottom-left and top-right corners, the approximator returned -0.74 and -0.77 which are pretty good estimations. Similar results have been obtained for the positive states in the top-left and bottom-right corners, where the approximator returned 0.73 and 0.77 which are very close to the true utility of 1.0. I suggest you to run the script using different hyper-parameters (e.g. the learning rate alpha) to see the effects on the final plot and on the utility table.
+In this post I will focus on REINFORCE, a policy gradient method based on a Monte Carlo approach.
 
-The geometrical intuition is helpful because it gives an immediate intuition of the different approximators. We saw that using additional features and more complex functions it is possible to better describe the utility space. High-order approximators may find useful links between futures whereas a pure linear approximator could not. An example of high-order approximator is the **quadratic approximator**. In the quadratic approximator we use a second order polynomial to model the utility function. 
-
-$$ \hat{U}(s, \boldsymbol{w}) = x_{1} w_{1} + x_{2} w_{2} + x_{1}^{2} w_{3} + x_{2}^{2} w_{4} +... + x_{N-1} w_{M-1} + x_{N}^{2} w_{M} $$
-
-
-It is not easy to **choose the right polynomial**. A simple approximator like the linear one can miss the relevant relations between features and target, whereas an high order approximator can fail to generalise to new unseen states. The optimal balance is achieved through a delicate tradeoff known in machine learning as the [bias-variance tradeoff](https://en.wikipedia.org/wiki/Bias%E2%80%93variance_tradeoff).
-
-
+The REINFORCE algorithm finds an unbiased estimate of the gradient without using any utility function. 
 
 Conclusions
 -----------
@@ -265,11 +235,11 @@ Resources
 
 - **Reinforcement learning: An introduction (Chapter 8 'Generalization and Function Approximation')** Sutton, R. S., & Barto, A. G. (1998). Cambridge: MIT press. [[html]](https://webdocs.cs.ualberta.ca/~sutton/book/ebook/the-book.html)
 
-
+- Policy gradient methods on Scholarpedia by Prof. Jan Peters [[wiki]](http://www.scholarpedia.org/article/Policy_gradient_methods)
 
 References
 ------------
 
-
+Sutton, R. S., McAllester, D. A., Singh, S. P., & Mansour, Y. (2000). Policy gradient methods for reinforcement learning with function approximation. In Advances in neural information processing systems (pp. 1057-1063).
 
 
