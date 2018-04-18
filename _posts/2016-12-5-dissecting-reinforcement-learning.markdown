@@ -599,7 +599,7 @@ In fact we could obtain `u` implementing the last equation in Numpy:
 u[s] = np.dot(np.linalg.inv(np.identity(12) - gamma*T[:,:,p[s]]), r)[s]
 ```
 
-However I prefer to use `np.linalg.solve` which does the same thing but is much more readable.
+It is important to point out that most of the time to invert the matrix you will need the [pseudoinverse](https://en.wikipedia.org/wiki/Moore%E2%80%93Penrose_inverse) and the Numpy method `np.linalg.pinv()`. In the end, I prefer to use `np.linalg.solve` which does the same thing but is much more readable.
 
 Conclusions
 -----------
