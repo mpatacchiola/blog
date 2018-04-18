@@ -585,7 +585,8 @@ I said that eliminating the $$ max $$ operator from the Bellman equation made ou
 u[s] = np.linalg.solve(np.identity(12) - gamma*T[:,:,p[s]], r)[s]
 ```
 
-I used the Numpy method `np.linalg.solve` that takes as input the coefficient matrix `A` and an array of dependent values `b`. The method returns the solution to the system `A x = b`. For the matrix `A` I passed the difference between an identity matrix `I` and `gamma * T`, for the dependent array `b` I passed the reward vector `r`. **Why I passed as first parameter** `I - gamma*T` ? We can derive this value starting from the simplified Bellman equation:
+I used the Numpy method `np.linalg.solve()` that takes as input the coefficient matrix `A` and an array of dependent values `b`, finding (if it exists) the exact solution to a system of linear equations. If the solution does not exist (e.g. the matrix is not square, or the row-columns are not linearly independent), it is necessary to use the least-squares approximation via the method `np.linalg.lstsq()`.
+In both cases we get the solution to the system `A x = b`. For the matrix `A` we pass the difference between an identity matrix `I` and `gamma * T`, for the dependent array `b` we pass the reward vector `r`. **Why we pass as first parameter** `I - gamma*T` ? We can derive this value starting from the simplified Bellman equation:
 
 $$ \mathbf{u} = \mathbf{r} + \gamma T \mathbf{u} $$
 
@@ -599,7 +600,7 @@ In fact we could obtain `u` implementing the last equation in Numpy:
 u[s] = np.dot(np.linalg.inv(np.identity(12) - gamma*T[:,:,p[s]]), r)[s]
 ```
 
-It is important to point out that most of the time to invert the matrix you will need the [pseudoinverse](https://en.wikipedia.org/wiki/Moore%E2%80%93Penrose_inverse) and the Numpy method `np.linalg.pinv()`. In the end, I prefer to use `np.linalg.solve` which does the same thing but is much more readable.
+If you want to use the last form when an exact solution does not exist, you need to invert the matrix using the [pseudoinverse](https://en.wikipedia.org/wiki/Moore%E2%80%93Penrose_inverse) and the Numpy method `np.linalg.pinv()`.  In the end, I prefer to use `np.linalg.solve()` or `np.linalg.lstsq()` that does the same thing but is much more readable.
 
 Conclusions
 -----------
