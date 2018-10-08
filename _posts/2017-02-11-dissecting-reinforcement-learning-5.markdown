@@ -117,7 +117,7 @@ The starting population will have random initialised genotypes, meaning that the
 
 $$ \text{Fitness} = \sum_{e=0}^{M} \sum_{t=0}^{N} r_{t}^{(e)} $$
 
-The chromosome is evaluated on multiple episodes in order to have a better esteem of its performance. Here the exploring start condition is necessary in order to guarantee a wide exploration of the search space.
+The chromosome is evaluated on multiple episodes in order to have a better estimation of its performance. Here the exploring start condition is necessary in order to guarantee a wide exploration of the search space.
 We can summarise everything in two points:
 
 - The **genotype** (or chromosome) represents the **policy matrix**
