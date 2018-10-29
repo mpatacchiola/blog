@@ -10,7 +10,7 @@ published: false
 ---
 
 
-In the [last post]((https://mpatacchiola.github.io/blog/2017/12/11/dissecting-reinforcement-learning-7.html)) I introduced **function approximation** as a method for representing the utility function in a reinforcement learning setting. The simple approximator we used was based on a linear combination of features and it was quite limited because it could not model complex state spaces (like the XOR gridworld). In this post I will introduce **Artificial Neural Networks** as non-linear function approximators and I will show you how we can use a neural network to model a Q-function. I will start from basic architecture called **Perceptron** and then move to the standard feed-forward model called **Multi Layer Perceptron**. Moreover, I will introduce **policy gradient methods** that are (most of the time) based on neural network policies. I will use pure Numpy to implement the network and the update rule, in this way you will have a transparent code to study. This post is important because it allows understanding the **deep models** (e.g. Convolutional Neural Networks) used in Deep Reinforcement Learning, that I will introduce in the next post.
+In the [last post](https://mpatacchiola.github.io/blog/2017/12/11/dissecting-reinforcement-learning-7.html) I introduced **function approximation** as a method for representing the utility function in a reinforcement learning setting. The simple approximator we used was based on a linear combination of features and it was quite limited because it could not model complex state spaces (like the XOR gridworld). In this post I will introduce **Artificial Neural Networks** as non-linear function approximators and I will show you how we can use a neural network to model a Q-function. I will start from basic architecture called **Perceptron** and then move to the standard feed-forward model called **Multi Layer Perceptron**. Moreover, I will introduce **policy gradient methods** that are (most of the time) based on neural network policies. I will use pure Numpy to implement the network and the update rule, in this way you will have a transparent code to study. This post is important because it allows understanding the **deep models** (e.g. Convolutional Neural Networks) used in Deep Reinforcement Learning, that I will introduce in the next post.
 
 ![Books Reinforcement Learning]({{site.baseurl}}/images/books_reinforcement_learning_an_introduction_deep_learning.png){:class="img-responsive"}
 
@@ -93,7 +93,7 @@ def update_rule(x_array, w_array, y_output, y_target)
         return x_array - w_array #third condition
 ```
 
-In the [previous post](https://mpatacchiola.github.io/blog/2017/12/11/dissecting-reinforcement-learning-7.html) I mentioned the fact that linear approximators are limited because they can only be used in linearly separable problems. The same considerations apply for the Perceptron. Historically, the research community was not aware of this problem and the work on the Perceptron continued for several years with alternating success. Interesting results were achieved by **Widrow and Hoff** in 1960 at Stanford with an evolution of the Perceptron called [ADALINE](https://en.wikipedia.org/wiki/ADALINE). The ADALINE network had multiple inputs and outputs, the activation function used on the outputs was a linear function and the update rule was the [Delta Rule](https://en.wikipedia.org/wiki/Delta_rule). The Delta Rule is a particular case of backpropagation based on a gradient descent procedure. At that time this was an important success but the main issues remained: ADALINE was still a linear model and the Delta Rule was not applicable to non-linear problems.
+In the [previous post](https://mpatacchiola.github.io/blog/2017/12/11/dissecting-reinforcement-learning-7.html) I mentioned the fact that linear approximators are limited because they can only be used in linearly separable problems. The same considerations apply for the Perceptron. Historically, the research community was not aware of this problem and the work on the Perceptron continued for several years with alternating success. Interesting results were achieved by **Widrow and Hoff** in 1960 at Stanford with an evolution of the Perceptron called [ADALINE](https://en.wikipedia.org/wiki/ADALINE). The ADALINE network had multiple inputs and outputs, the activation function used on the outputs was a linear function and the update rule was the [Delta Rule](https://en.wikipedia.org/wiki/Delta_rule). The Delta Rule is a particular case of backpropagation based on a gradient descent procedure. At that time this was an important success but the main issues remained: ADALINE was still a linear model and the Delta Rule was not applicable to non-linear settings.
 
 **There is a problem:** the publication of a book called [*"Perceptrons: an introduction to computational geometry"*](https://en.wikipedia.org/wiki/Perceptrons_(book)) in 1969 . In this book the authors, [Marvin Minsky](https://en.wikipedia.org/wiki/Marvin_Minsky) and [Seymour Papert](https://en.wikipedia.org/wiki/Seymour_Papert), mathematically proved that Perceptron-like models could only solve linearly separable problems and that they could not be applied to a non-linear dataset such as the XOR one. In the [previous post](https://mpatacchiola.github.io/blog/2017/12/11/dissecting-reinforcement-learning-7.html) I carefully chosen the **XOR gridworld** as an example of non-linear problem, showing you how a linear approximator was not able to describe the utility function of this world. This is what Minsky and Papert proved in their book. The so called **XOR affair** signed the end of the Perceptron era. The funding to artificial neural network projects gradually disappeared and just a few researchers continued to study these models.
 
@@ -112,21 +112,24 @@ Similarly to the Perceptron we can represent an MLP as a **directed graph**. In 
 **Why the MLP is not a linear model?** This is a crucial point. It can be easily proved that the MLP is a non-linear approximator only if we use a non-linear activation function. If we replace the Sigmoid with a linear activation then our MLP collapse into a Perceptron. Another interesting thing about the MLP is that given a sufficient amount of hidden neurons it can approximate any  continuous function. This is known as the [universal approximation theorem](https://en.wikipedia.org/wiki/Universal_approximation_theorem) and it was proved by George Cybenko in 1989.
 
 
-Backpropagation
------------------
+Backpropagation (overview)
+--------------------------
 
 The main innovation behind the MLP is the **update rule** called **backpropagation**. The idea of backpropagation was not completely new at that time, but finding out that it was possible to apply it to feedforward networks took a while. As you remember from the [previous post](https://mpatacchiola.github.io/blog/2017/12/11/dissecting-reinforcement-learning-7.html) each time we want to train a function approximator we need two things:
 
 1. An **error measure** that gives a distance between the output of the estimator and the target.
 2. An **update rule** that set the parameters of the estimator in order to reduce the error.
 
-Since neural networks are function approximators they also need these two components. The error measure is still given by the [Mean Squared Error (MSE)](https://en.wikipedia.org/wiki/Mean_squared_error) between the network output and the target value. The update rule is still an application of the [gradient descent](https://en.wikipedia.org/wiki/Gradient_descent) procedure, that in the neural network context is called **backpropagation**. If you do not want to get into the mathematical details of backpropagation this is enough, and you can skip this section. 
+Since neural networks are function approximators they also need these two components. The error measure is still given by the [Mean Squared Error (MSE)](https://en.wikipedia.org/wiki/Mean_squared_error) between the network output and the target value. The update rule is still an application of the [gradient descent](https://en.wikipedia.org/wiki/Gradient_descent) procedure, that in the neural network context is called **backpropagation**. If you do not want to get into the mathematical details of backpropagation this is enough, and you can skip the next section. 
+
+Backpropagation (some math)
+--------------------------
 
 It is possible to think about backpropagation as an iterative application of the **chain rule** on the different layers of the network. If you want to understand the math behind backpropagation you should refresh your calculus. Here I can only give you a short explanation, because a wider **introduction to calculus is out of scope**. First of all, you must know what is a derivative and how you can calculate the derivative of the most important functions (e.g. sin, cos, exponential, polynomials). The chain rule is a simple iterative process that allows computing the derivative of a [composition of functions](https://en.wikipedia.org/wiki/Function_composition). The iterative process consists in moving into the composition and estimating the derivatives of all the functions encountered along the way. Here I will show you an **example of chain rule** applied to an equation having a single variable $$x$$:
 
 ![Backpropagation math]({{site.baseurl}}/images/reinforcement_learning_approximators_chain_rule.png){:class="img-responsive"}
 
-As you can see the idea is to factor the starting equation in different parts (1), then estimate the derivative of each part (2), and finally multiply each part (3). Intuitively you can see backpropagation as the process of opening a set of black [Chinese boxes](https://en.wikipedia.org/wiki/Chinese_boxes) until a red box appear. In our example the red box is the variable $$x$$ and the black boxes to open are the various sub-equations we have to derive in order to reach it.
+As you can see the idea is to (1) factor the starting equation in different parts, then (2) estimate the derivative of each part, and finally (3) multiply each part. Intuitively you can see backpropagation as the process of opening a set of black [Chinese boxes](https://en.wikipedia.org/wiki/Chinese_boxes) until a red box appear. In our example the red box is the variable $$x$$ and the black boxes to open are the various equations we have to derive in order to reach it.
 
 **How does the chain rule fit into neural networks?** This is something many people struggle with. Consider the neural network as a magic box where you can push an array, and get back another array. Push an input, get an output. Input and output can have different size, in our Perceptron for instance, the input array consisted of 400 values and the output was a single value. This is technically a [scalar field](https://en.wikipedia.org/wiki/Scalar_fields). In our examples of MLP we will feed an array representing the world state, and we will get an output representing the utility of that state (as a single value), or the utility of each possible action (as an array). Now, a neural network is not a magic box. The output $$y$$ is obtained through a series of operation. If you carefully look at the MLP scheme of the previous section you can go back from $$y$$ to $$h$$ and from $$h$$ to $$x$$. In the end, $$y$$ is obtained from applying a Sigmoid to the weighted sum of $$h$$ and a set of weights. Whereas $$h$$ is obtained in a similar way using the weighted sum of $$x$$ and the first matrix of weights. This long chain of operation is a **composition of multiple functions**, and by definition we can apply the chain rule to it.
 
@@ -137,56 +140,79 @@ Given the error function $$E$$ we have to look for the set of variables $$\bolds
 
 As you can notice the use of **backpropagation is very efficient** because it allows us to reuse part of the partial derivatives computed in later layers in order to estimate the derivatives of previous layers. Moreover all those operations can be formalised in matrix-vector form and can be easily parallelised on a GPU.
 
-**What does backpropagation return?** The backpropagation finds the gradient vectors of the unknowns. In our MLP the backpropagation finds two vectors, one for the weights $$W_{1}$$ and the other for the weights $$W_{2}$$. Great, but how should we use those vectors? If you remember from the last post the gradient vector is the vector pointing up-hill on the error surface, meaning that it shows us where we should move in order to reach the top of the function. However here we are interested in going down-hill because we want to minimize an error (in the end we are doing gradient **descent**). This change in direction can be easily achieved changing the sign in front of the gradient. Now, knowing the direction in which to move the weights is not enough, we need to know **how much we have to move in that direction**. You must recall that the steepness of the function at a specific point is given by the **magnitude of the gradient vector**. From your linear algebra class you should know that multiplying a vector by a scalar changes the magnitude of the vector. 
+**What does backpropagation return?** The backpropagation finds the gradient vectors of the unknowns. In our MLP the backpropagation finds two vectors, one for the weights $$W_{1}$$ and the other for the weights $$W_{2}$$. Great, but how should we use those vectors? If you remember from the last post the gradient vector is the vector pointing up-hill on the error surface, meaning that it shows us where we should move in order to reach the top of the function. However here we are interested in going down-hill because we want to minimize an error (in the end we are doing gradient **descent**). This change in direction can be easily achieved changing the sign in front of the gradient. 
 
-This is something more complicated to estimate, 
-
-
-Method
---------
-
-To improve the performance of our function approximator we need an error measure and an update rule. These two components work tightly in the learning cycle of every supervised learning technique. Their use in reinforcement learning is not much different from how they are used in a classification task. In order to understand this section you need to refresh some concepts of [multivariable calculus](https://en.wikipedia.org/wiki/Multivariable_calculus) such as the [partial derivative](https://en.wikipedia.org/wiki/Partial_derivative) and [gradient](https://en.wikipedia.org/wiki/Gradient).
-
-![Function Approximation Training]({{site.baseurl}}/images/reinforcement_learning_function_approximation_training_cycle.png){:class="img-responsive"}
-
-**Error Measure**: a common error measure is given by the [Mean Squared Error (MSE)](https://en.wikipedia.org/wiki/Mean_squared_error) between two quantities. For instance, if we have the optimal utility function $$U^{*}(S)$$ and an approximator function $$\hat{U}(s, \boldsymbol{w})$$, then the MSE is defined as follows:
-
-$$ \text{MSE}( \boldsymbol{w} ) = \frac{1}{N} \sum_{s \in S} \big[ U^{*}(s) - \hat{U}(s, \boldsymbol{w}) \big]^{2}  $$
-
-[comment]: <> (where $$P(s)$$ is a distribution weighting the errors of different states, such that $$\sum_{s} P(s) = 1$$. The number of parameters $$\boldsymbol{w}$$ is lower that the number of total states $$N$$. The function $$P(s)$$ allows gaining accuracy on some states instead of others.)
-
-that's it, the MSE is given by the expectation $$\mathop{\mathbb{E}}[ (U^{*}(s) - \hat{U}(s, \boldsymbol{w}) \big)^{2} ]$$ that quantifies the difference between the target and the approximator output. When the training is working correctly the MSE will decrease meaning that we are getting closer to the optimal utility function. The MSE is a common loss function used in supervised learning. However, in reinforcement learning it is often used a reinterpretation of the MSE called **Mean Squared Value Error (MSVE)**. The MSVE introduce a distribution $$\mu(s) \geq 0$$ that specifies how much we care about each state $$s$$. As I told you the function approximator is based on a set of weights $$\boldsymbol{w}$$ that contains less elements than the total number of states. For this reason adjusting a subset of the weights means improving the utility prediction of some states but loosing precision in others. We have limited resources and we have to manage them carefully. The function $$\mu(s)$$ gives us an explicit solution and using it we can rewrite the previous equation as follows:
-
-$$ \text{MSVE}( \boldsymbol{w} ) = \frac{1}{N} \sum_{s \in S}  \mu(s) \big[ U^{*}(s) - \hat{U}(s, \boldsymbol{w}) \big]^{2}  $$
-
-
-**Update rule**: the update rule for differentiable approximator is [gradient descent](https://en.wikipedia.org/wiki/Gradient_descent). The [gradient](https://en.wikipedia.org/wiki/Gradient) is a generalisation of the concept of derivative applied to scalar-valued functions of multiple variables. You can imagine the gradient as the vector that points in the direction of the greatest rate of increase. Intuitively, if you want to reach the top of a mountain the gradient is a signpost that in each moment show you in which direction you should walk. The gradient is generally represented with the operator $$\nabla$$ also known as **nabla**. 
-The goal in gradient descent is to minimise the error measure. We can achieve this goal moving in the direction of the negative gradient vector, meaning that we are not moving anymore to the top of the mountain but downslope. At each step we adjust the parameter vector $$\boldsymbol{w}$$ moving a step closer to the valley. First of all, we have to estimate the gradient vector for $$ \text{MSE}( \boldsymbol{w} )$$ or $$ \text{MSVE}( \boldsymbol{w} )$$. Those error functions are based on $$\boldsymbol{w}$$. In order to get the gradient vector we have to calculate the partial derivative of each weight with respect to all the other weights. Secondly, once we have the gradient vector we have to adjust the value of all the weights in accordance with the negative direction of the gradient.
-In mathematical terms, we can update the vector $$\boldsymbol{w}$$ at $$t+1$$ as follows:
-
-$$\begin{eqnarray} 
-\boldsymbol{w}_{t+1} &=&  \boldsymbol{w}_{t}  - \frac{1}{2} \alpha \nabla_{\boldsymbol{w}} \text{MSE}(\boldsymbol{w}_{t}) \\
-&=& \boldsymbol{w}_{t}  - \frac{1}{2} \alpha \nabla_{\boldsymbol{w}} \big[ U^{*}(s) - \hat{U}(s, \boldsymbol{w}_{t}) \big]^{2}\\
-&=& \boldsymbol{w}_{t}  + \alpha \big[ U^{*}(s) - \hat{U}(s, \boldsymbol{w}_{t}) \big] \nabla_{\boldsymbol{w}} \hat{U}(s, \boldsymbol{w}_{t}) \\
-\end{eqnarray}$$
-
-The last step is an application of the [chain rule](https://en.wikipedia.org/wiki/Chain_rule) that is necessary because we are dealing with a function composition. We want to find the gradient vector of the error function with respect to the weights, and the weights are part of our function approximator $$\hat{U}(s, \boldsymbol{w}_{t})$$. The minus sign in front of the quantity 1/2 is used to change the direction of the gradient vector. Remember that the gradient points to the top of the hill, while we want to go to the bottom (minimizing the error). In conclusion the upate rule is telling us that all we need is the output of the approximator and its gradient. Finding the gradient of a linear approximator is particularly easy, whereas in non-linear approximators (e.g. neural networks) it requires more steps.
-
-At this point you might think we have all we need to start the learning procedure, however there is an important part missing. We supposed it was possible to use the optimal utility function $$U^{*}$$ as target in the error estimation step. **We do not have the optimal utility function**. Think about that, having this function would mean we do not need an approximator at all. Moving in our gridworld we could simply call $$U^{*}(s_{t})$$ at each time step $$t$$ and get the actual utility value of that state. What we can do to overcome this problem is to build a target function $$U^{\sim}$$ which represent an **approximated target** and plug it in our formula:
-
-$$ \boldsymbol{w}_{t+1} =  \boldsymbol{w}_{t} + \alpha \big[ U^{\sim}(s) - \hat{U}(s, \boldsymbol{w}) \big] \nabla_{\boldsymbol{w}} \hat{U}(s, \boldsymbol{w}) $$
-
-How can we estimate the approximated target? We can follow different approaches, for instance using Monte Carlo or TD learning. In the next section I will introduce these methods.
-
+Now, knowing the direction in which to move the weights is not enough, we need to know **how much we have to move in that direction**. You must recall that the steepness of the function at a specific point is given by the **magnitude of the gradient vector**. From your linear algebra class you should know that multiplying a vector by a scalar changes the magnitude of the vector. 
+This scalar step is called **learning rate**. Finding an optimal learning rate is not easy. Researcher generally uses a linear decay to decrease the value of the learning rate. Today there are techniques (e.g. Adagrad, Adam, RMSProp, etc) that can dynamically adjust the learning rate based on the slope of the error surface. Give a look to [this well written blog post](http://ruder.io/optimizing-gradient-descent/) if you want to know more about adaptive gradient methods.
 
 
 
 Application: Multi Layer XOR
 -------------------------------
 
-Here I will reproduce the architecture used by Rumelhart and al. to solve the XOR problem. 
+In the [last post](https://mpatacchiola.github.io/blog/2017/12/11/dissecting-reinforcement-learning-7.html) we saw how the XOR problem was impossible to solve using a linear function approximator. Now we have a new tool, multi-layer neural networks, that are powerful non-linear approximators able to solve the XOR problem. Here, I will reproduce the architecture used by Rumelhart and al. to solve this problem. 
+
+Before introducing the code it is important to review what has been written above. A neural network is a non-linear function approximator. Similarly to the linear approximator introduced in the previous post, training a neural network requires two components, and error measure and an update rule:
+
+**Error Measure**: a common error measure is given by the [Mean Squared Error (MSE)](https://en.wikipedia.org/wiki/Mean_squared_error) between two quantities.
+
+**Update rule (backprop)**: the update rule for neural networks is based on [gradient descent](https://en.wikipedia.org/wiki/Gradient_descent) and is called backpropagation. Backpropagation is an application of the chain rule.
 
 
+Implementing a multilayer perceptron in Python is very easy if we think in terms of matrices and vectors. The input is a vector $$x$$, the weights of the first layer are a matrix $$W1$$, the weights of the second layer a matrix $$W2$$. The forward pass can be represented as matrix-vector product between $$x$$ and $$W1$$. the product produces an activation in the hidden layer called $$h$$, and this vector is then used to produce the output $$y$$ through the product with $$W2$$ the weight matrix in the second layer. I will embedd everything in a class called `MLP`, that we are going to use later. Here I describe the methods of the class, you can find the complete code in the GitHub repository. Let's start with the `__init__()` method:
+
+```python
+def __init__(self, tot_inputs, tot_hidden, tot_outputs):
+    '''Init an MLP object
+
+    Defines the matrices associated with the MLP.
+    @param: tot_inputs
+    @param: tot_hidden
+    @param: tot_outputs
+    '''
+    import numpy as np
+    self.tot_inputs = tot_inputs
+    self.W1 = np.random.normal(0.0, 0.1, (tot_inputs+1, tot_hidden)
+    self.W2 = np.random.normal(0.0, 0.1, (tot_hidden+1, tot_outputs)
+    self.tot_outputs = tot_outputs
+```
+
+You should notice how I added the bias as an additional row in the weight matrices when I wrote `tot_inputs+1` and `tot_hidden+1`. As explained in this post and the previous the bias is simply an additional unit in bot the input vector $$x$$ and the hidden activation $$h$$. The weights of the matrix are randomly initialised from a Gaussian distribution with mean 0.0 and standard deviation 0.1. Great, we can now give a look to the other methods of the class: the Sigmoid function and the forward pass. 
+
+```python
+def _sigmoid(self, z):
+    return 1.0 / (1.0 + np.exp(-z))
+        
+def forward(self, x):
+    '''Forward pass in the neural network
+
+    Forward pass via dot product
+    @param: x the input vector (must have shape==tot_inputs)
+    @return: the output of the network
+    '''
+    if(x.shape!=self.tot_inputs): raise ValueError("The size of x is wrong!")
+    self.x = np.stack([x, np.array(1.0)], axis=0) #add the bias unit
+    self.h = np.dot(self.x, self.W1)
+    self.h = self._sigmoid(self.h) #apply the sigmoid to hidden activation
+    self.h = np.stack([self.h, np.array(1.0)], axis=0) #add the bias unit
+    self.y = np.dot(self.h, self.W2)
+    self.y = self._sigmoid(self.y) #apply sigmoid to output
+    return self.y
+```
+
+There are a few things to notice. I added the bias unit using the Numpy method `stack()`. This has been done for both the input and the hidden activation. The Sigmoid function has been used on the hidden vector and the output.
+
+```python
+def _sigmoid_derivative(self, z):
+    return self._sigmoid(z) * (1.0 - self._sigmoid(z))
+        
+def backward(self, learning_rate):
+    '''Backward pass in the network
+  
+    @return: two matrices dW1 and dW2
+    '''
+
+```
 
 Policy gradient methods
 -------------------------
