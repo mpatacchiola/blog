@@ -324,7 +324,7 @@ The code above is similar to the one used for the linear and hyperbolic approxim
 
 ![xor multi-layer perceptron]({{site.baseurl}}/images/reinforcement_learning_function_approximation_mlp_xor.png){:class="img-responsive"}
 
-Such a simple neural network can generate a pretty complex function, that is quite similar to the **hyperbolic paraboloid** we used in the [previous post]](https://mpatacchiola.github.io/blog/2017/12/11/dissecting-reinforcement-learning-7.html). The **utility matrix** obtained in the last epoch is here reported:
+Such a simple neural network can generate a pretty complex function, that is quite similar to the **hyperbolic paraboloid** we used in the [previous post](https://mpatacchiola.github.io/blog/2017/12/11/dissecting-reinforcement-learning-7.html). The **utility matrix** obtained in the last epoch is here reported:
 
 ```
 Epoch: 10001
