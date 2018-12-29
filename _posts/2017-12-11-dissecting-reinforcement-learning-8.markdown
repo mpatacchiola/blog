@@ -278,7 +278,8 @@ def train(self, x, target, learning_rate=0.1):
     return error
 ```
 
-This is the essential code for a basic MLP, you can extend it adding more layers and error/activation functions.
+This is the essential code for a basic MLP, you can extend it adding more layers and error/activation functions. It is important to notice that the current version of the code **does not include mini-batch training**. For the purpose of this post a single input-target pair is enough, but generally stochastic gradient descent needs a mini-batch of multiple samples which is representative of the function we want to approximate. Expanding the class methods it would be possible to include mini-batch training. There are two ways I can think of. (i) One way is to pass a list of input-target pairs and to iterate on those pairs accumulating gradients through the `backward()` method, then apply the average gradients on the two matrices `W1` and `W2`. (ii) A second alternative is to exploit the Numpy capabilities and implement a tensor-based version of the methods `forward()` and `backward()`. This means we have to add another dimension representing the batch size, similarly to frameworks such as Tensorflow and pyTorch.
+Let's consider it as another homework...
 
 Application: Multi Layer XOR
 -------------------------------
