@@ -49,7 +49,7 @@ The grid-world is a discrete rectangular state space, having $$c$$ columns and $
 ![Function Approximation Lookup Tables]({{site.baseurl}}/images/reinforcement_learning_function_approximation_lookup_tables.png){:class="img-responsive"}
 
 How can we fit the function approximation mechanism inside this scheme?
-Let's start with some definitions. Defining as $$S= \{ s_{1}, s_{2}, ... , s_{N} \} $$ the set of possible states, and as $$A= \{ a_{1}, a_{2}, ... , s_{M} \} $$ the set of possible actions, we define a utility function approximator $$\hat{U}(S,\boldsymbol{w})$$ having parameters stored in a vector $$\boldsymbol{w}$$. Here I use the hat on top of $$\hat{U}$$ to differentiate this function from the tabular version $$U$$.
+Let's start with some definitions. Defining as $$S= \{ s_{1}, s_{2}, ... , s_{N} \} $$ the set of possible states, and as $$A= \{ a_{1}, a_{2}, ... , a_{M} \} $$ the set of possible actions, we define a utility function approximator $$\hat{U}(S,\boldsymbol{w})$$ having parameters stored in a vector $$\boldsymbol{w}$$. Here I use the hat on top of $$\hat{U}$$ to differentiate this function from the tabular version $$U$$.
 
 Before explaining how to create a function approximator it is helpful to visualise it as a **black box**. The method described below can be used on different approximators and for this reason we can easily apply it to the box content.
 The black box takes as input the current state and returns the utility of the state or the state-action utilities. That's it. The main advantage is that we can approximate (with an arbitrary small error) the utilities using less parameters respect to the tabular approach. We can say that the number of elements stored in the vector $$\boldsymbol{w}$$ is smaller than $$N$$ the number of values in the tabular counterpart.
@@ -163,7 +163,7 @@ $$ \frac{\partial \hat{U}}{\partial w_{1}} = x_{1} + 0 + 0 + ... + 0 = x_{1}$$
 
 Applying the same process to all the other weights we end up with the following gradient vector:
 
-$$\nabla_{\boldsymbol{w}} \hat{U}(s, \boldsymbol{w}) =  x_{1} + x_{2} + ... + x_{N} = \boldsymbol{x}(s) $$
+$$\nabla_{\boldsymbol{w}} \hat{U}(s, \boldsymbol{w}) = \left(\frac{\partial \hat{U}}{\partial w_{1}}, ..., \frac{\partial \hat{U}}{\partial w_{N}}  \right) = \left( x_{1},..., x_{N} \right) = \boldsymbol{x}(s) $$
 
 That's it. The gradient is the input vector $$\boldsymbol{x}(s)$$. Now we can rewrite the update rule as follows:
 
