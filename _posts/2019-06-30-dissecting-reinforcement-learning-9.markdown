@@ -18,7 +18,7 @@ In the [last post](https://mpatacchiola.github.io/blog/2018/12/28/dissecting-rei
 
 3. **Training instability**. Training a neural network is unstable in standard reinforcement learning algorithms (see for instance Q-learning and its bootstrap mechanism).
 
-DRL overcome all these issues! First, to reduce the size of the network DRL adopts [Convolutional Neural Networks (CNNs)](https://en.wikipedia.org/wiki/Convolutional_neural_network) as function approximator. Secondly, to break the correlation between samples DRL introduces an external memory, called *Replay Memory*, a bucket from which past experiences are sampled and then used for training. Thirdly, the instability issue is mitigated cloning the network and using the frozen clone as target. In this post I will carefully explain each one of this tricks and you will get an idea of why they are necessary.
+DRL overcome all these issues! First, to reduce the size of the network DRL adopts [Convolutional Neural Networks (CNNs)](https://en.wikipedia.org/wiki/Convolutional_neural_network) as function approximator. Secondly, to break the correlation between samples DRL introduces an external memory, called *Replay Memory*, a bucket from which past experiences are sampled and then used for training. Thirdly, the instability issue is mitigated cloning the network and using the frozen clone as target. In this post I will carefully explain each one of these tricks giving you an idea of why they are necessary.
 
 
 ![Books Reinforcement Learning]({{site.baseurl}}/images/books_reinforcement_learning_an_introduction_deep_learning.png){:class="img-responsive"}
@@ -43,11 +43,15 @@ Second issue: i.i.d. samples
 -----------------------------------------
 
 **What is a *Replay Memory*?** As stated in the introduction, one of the issues affecting standard reinforcement learning methods that are based on neural networks is the correlation between samples. In order to work correctly the samples of a mini-batch must be [independent and identically distributed (i.i.d.)](https://en.wikipedia.org/wiki/Independent_and_identically_distributed_random_variables). What does it mean? It means that the samples must belong to the same probability distribution, and that they must be mutually independent. In other words, the input to the neural network has to be a mini-batch of samples that is representative of the function we want to approximate. Samples that are very similar (like in a temporal sequence) are a good representation of a function locally, but they fail to represent that function globally. 
-In supervised learning the same problem is tackled shuffling the dataset, such that the images belonging to the same class are evenly spread at training time. However, in reinforcement learning we cannot use the same trick because we do not have a dataset. The solution adopted in DRL is the introduction of a buffer called *Replay Memory*. Differently from a standard dataset the replay memory does not contains simple images but *Experiences* that are gradually accumulated during the interaction with the environment. The replay memory has a fixed size and experiences are added and removed following a [first-in-first-out (FIFO)](https://en.wikipedia.org/wiki/FIFO_(computing_and_electronics)) scheme.
+In supervised learning i.i.d. samples are obtained shuffling the dataset, such that images belonging to the same class are evenly spread at training time. However, in reinforcement learning we cannot use the same trick because we do not have a proper dataset to shuffle. The solution adopted in DRL is the introduction of a buffer called *Replay Memory*. Differently from a standard dataset the replay memory does not contains simple images but *Experiences* that are gradually accumulated during the interaction with the environment. The replay memory has a fixed size and experiences are added and removed following a [first-in-first-out (FIFO)](https://en.wikipedia.org/wiki/FIFO_(computing_and_electronics)) scheme.
 Before going into details I would like to briefly discuss the issue of non i.i.d. samples in the context of temporal sequences.
 
-**Catastrophic forgetting**. Let's suppose we are training a network on an environment that has two incremental levels. This is a typical scenario in many video games, where the difficulty of the task increases sequentially. The agent start from the first level, meaning that the network will receive only states belonging to this level. The network may be able to perform pretty well after a while. However, when the second level of the game is reached, a completely new series of states is used to feed the network. What happens at this point is a phenomenon called [catastrophic forgetting](https://en.wikipedia.org/wiki/Catastrophic_interference). The network will "forget" the old task and will start to perform better and better on the second one.
-The replay memory is useful to contrast this phenomenon, since it accumulates in a reservoir past experiences from previous levels and it randomly feeds the network with these experiences. 
+**Catastrophic forgetting**. Let's suppose we are training a network on an environment that has two incremental levels. This is a typical scenario in many video games, where the difficulty of the task increases sequentially. A typical example is the [Atari game Combat](https://en.wikipedia.org/wiki/Combat_(Atari_2600)). This game has 27 games in one, with three main branches: tank, biplane, and jet. Even though those games have similar control commands, they visually look different and the difficulty level can also vary substantially. Here is a screenshot of the games tank and jet for two levels of difficulty:
+
+![Atari Combat]({{site.baseurl}}/images/reinforcement_learning_atari_tank_jet_levels.png){:class="img-responsive"}
+
+Let's suppose that the agent starts from the level *Thank simple*. The neural network will receive only states belonging to this level and it will perform pretty well after a while. However, when the new level *Thank advanced* is used for training the same agent, a completely new series of states will update the network weights. What happens at this point is a phenomenon called [catastrophic forgetting](https://en.wikipedia.org/wiki/Catastrophic_interference). The network will "forget" the old task and will start to perform better and better on the second one. Such a problem may be even more evident if we want to train the agent on a new environment like *Jet simple* or *Jet advanced*.
+The replay memory is useful to contrast this phenomenon, since it accumulates in a reservoir past experiences from previous levels and it randomly feeds the network with these experiences.
 
 **Hippocampus**. The use of a replay memory has been often compared to the hippocampus, a fundamental component of the mammalian brain. The [hippocampus](https://en.wikipedia.org/wiki/Hippocampus) plays a crucial role in moving the information acquired by the short-term memory to the long-term memory. Patients with a damage in the hippocampus cannot acquire new information. A famous case is the one of [Henry Molaison](https://en.wikipedia.org/wiki/Henry_Molaison), an American man who received a temporal lobectomy that caused a severe form of [anterograde amnesia](https://en.wikipedia.org/wiki/Anterograde_amnesia). You may also know the [movie "Memento"](https://en.wikipedia.org/wiki/Memento_(film)) where the protagonist is affected by the same amnesia and his memory reset approximately every five minutes.
 
@@ -73,9 +77,28 @@ Let's say that you are the player controlling the left paddle. Given only a **si
 
 
 
-
 Third issue: training instability
 -----------------------------------------
+
+**Q-learning update rule.** To understand this issue I have to refresh your memory about the update rule used in standard Q-learning that I introduced in the [third post](https://mpatacchiola.github.io/blog/2017/01/29/dissecting-reinforcement-learning-3.html) of the series. Deep Q-learning uses this update rule at its core
+
+$$ Q(s_{t}, a_{t}) \leftarrow Q(s_{t}, a_{t}) + \alpha \big[ \text{r}_{t+1} + \gamma \underset{a}{\text{ max }} Q(s_{t+1}, a) - Q(s_{t}, a_{t}) \big], $$
+
+where $$Q(s, a)$$ is our state-action function that is parameterised as a neural network, $$\gamma$$ is the discount factor, $$s$$ is the state, $$a$$ the action, and $$r$$ the reward.
+I hope you recall that part of this rule represents the *Target*:
+
+$$ \text{Target} = \text{r}_{t+1} + \gamma \underset{a}{\text{ max }} Q(s_{t+1}, a).$$
+
+While in supervised learning we have a clear target, represented by the label of the image, in reinforcement learning such a label does not exist. What we do instead is to *bootstrap*, meaning that the model itself provides the target. This is done looking one step ahead at $$s_{t+1}$$ and asking *"what the current model would do in the next state?"* The answer to this question is a state-action value. This state-action value is then used to recalibrate the approximation done in the previous state.
+
+The issue with bootstrapping is that when the environment and the neural network are complex, the estimate of $$s_{t+1}$$ provided by the model can be pretty wrong. If you ever played with standard classification models in supervised learning you know that there may be large oscillations in the loss function at training time. These oscillations are caused by the fact that the loss function is defined in a high-dimensional space where local and global minima are hard to find. The same problems remain in reinforcement learning, with the additional difficulty of not having a stable target like in supervised learning. 
+
+**Target-Network.** The solution proposed to solve this issue is to save a snapshot of the neural network every $$k$$ iterations, and use this twin model to estimate the target value. Without too much creativity this network has been called *target network* in the original paper. There are therefore two networks. The former is the actual model used to predict the action and whose weights are updated. We can call it *Net*. The latter is the twin network, the *Target-Net*, a snapshot of *Net* that is not updated during the training. Here I underlined where *Net* and *Target-Net* are used in the update rule:
+
+$$ \underbrace{Q(s_{t}, a_{t})}_{\text{Net}} \leftarrow \underbrace{Q(s_{t}, a_{t})}_{\text{Net}} + \alpha \big[ \text{r}_{t+1} + \gamma \underset{a}{\text{ max }} \underbrace{Q(s_{t+1}, a)}_{\text{Target-Net}} - \underbrace{Q(s_{t}, a_{t})}_{\text{Net}} \big]. $$
+
+As you can see the *Target-Net* is only used to predict the state-action value at $$s_{t+1}$$, providing an estimate that is more stable in time.
+
 
 Index
 ------
@@ -93,25 +116,16 @@ Index
 Resources
 ----------
 
-- The **complete code** for the Reinforcement Learning Function Approximation is available on the [dissecting-reinforcement-learning](https://github.com/mpatacchiola/dissecting-reinforcement-learning) official repository on GitHub.
+- The **complete code** for the Deep Reinforcement Learning episode is available on the [dissecting-reinforcement-learning](https://github.com/mpatacchiola/dissecting-reinforcement-learning) official repository on GitHub.
 
 - **Reinforcement learning: An introduction (Chapter 8 'Generalization and Function Approximation')** Sutton, R. S., & Barto, A. G. (1998). Cambridge: MIT press. [[html]](https://webdocs.cs.ualberta.ca/~sutton/book/ebook/the-book.html)
 
-- Policy gradient methods on **Scholarpedia** by Prof. Jan Peters [[wiki]](http://www.scholarpedia.org/article/Policy_gradient_methods)
-
-- **Tensorflow playground**, try different MLP architectures and datasets on the browser [[web]](https://playground.tensorflow.org)
 
 References
 ------------
 
 Goodfellow, I., Bengio, Y., Courville, A., & Bengio, Y. (2016). Deep learning. Cambridge: MIT press.
 
-Hebb, D. O. (2005). The first stage of perception: growth of the assembly. In The Organization of Behavior (pp. 102-120). Psychology Press.
-
-Minsky, M., & Papert, S. A. (2017). Perceptrons: An introduction to computational geometry. MIT press.
-
-Rumelhart, D. E., Hinton, G. E., & Williams, R. J. (1986). Learning representations by back-propagating errors. nature, 323(6088), 533.
-
-Sutton, R. S., McAllester, D. A., Singh, S. P., & Mansour, Y. (2000). Policy gradient methods for reinforcement learning with function approximation. In Advances in neural information processing systems (pp. 1057-1063).
+Mnih, V., Kavukcuoglu, K., Silver, D., Rusu, A. A., Veness, J., Bellemare, M. G., ... & Petersen, S. (2015). Human-level control through deep reinforcement learning. Nature, 518(7540), 529.
 
 
