@@ -1,7 +1,7 @@
 ---
 layout: post
 title:  "Dissecting Reinforcement Learning-Part.9"
-date:   2019-06-30 09:00:00 +0000
+date:   2020-01-08 09:00:00 +0000
 description: This blog series explains the main ideas and techniques used in reinforcement learning. In this post Reinforcement Learning through non-linear function approximation (Neural Networks) and policy gradient methods. It includes complete Python code.
 author: Massimiliano Patacchiola
 type: reinforcement learning
@@ -63,19 +63,6 @@ In a *standard dataset* each sample is composed of a image-label pair. For insta
 
 In the *replay memory* instead each sample is a tuple (experience) containing a state $$s_t$$, the next state $$s_{t+1}$$, the action executed at that time step, and the reward obtained. Most importantly the replay memory is a buffer, and a mechanism of push/pop is implemented to keep the size constant while changing the experiences contained in it. We generally fill the buffer to capacity using a random policy in a warm-up phase. Then we start the training loop. Slowly the content of the dataset changes, at each episode a new tuple is pushed in, and an old tuple is popped out. If we start with 1 million tuples at the beginning of the training, at the end of the training we will have 1 million different tuples stored in the buffer.
 
-**How the replay memory guarantees i.i.d. samples?** As stated at the beginning of this section, the main reason why we need such a complex mechanism is to have i.i.d. samples. Let's compare a standard reinforcement learning approach and one based on a replay memory. Let's say that the agent is moving in the environment. I will abuse the notation for the sake of clarity, defining the state collected at $$t=1$$ in episode $$e=1$$ as $$s_{(t=1,e=1)}$$, the state collected at $$t=9$$ in episode $$e=3$$ as $$s_{(t=9,e=3)}$$. 
-
-Before going into details I would like to briefly discuss the issue of non i.i.d. samples in the context of temporal sequences, also known as *"catastrophic forgetting"*.
-
-**Catastrophic forgetting**. Even though the replay memory guarantees i.i.d. samples we can still have other problems. Let's suppose we are training a network in an environment that has two incremental levels. This is a typical scenario in many video games, where the difficulty of the task increases sequentially. A typical example is the [Atari game Combat](https://en.wikipedia.org/wiki/Combat_(Atari_2600)). This game has 27 games in one, with three main branches: tank, biplane, and jet. Even though those games have similar control commands, they visually look different and the difficulty level can also vary substantially. Here is a screenshot of the games tank and jet for two levels of difficulty:
-
-![Atari Combat]({{site.baseurl}}/images/reinforcement_learning_atari_tank_jet_levels.png){:class="img-responsive"}
-
-Let's suppose that the agent starts from the level *thank simple*. The replay memory is saturated with samples belonging to this level and the neural network will receive i.i.d. samples belonging to this level. The network will perform pretty well after a while. However, when the new level *thank advanced* is used for training the same agent, a completely new series of states will start to saturate the replay memory and therefore to update the network weights. What happens at this point is a phenomenon called [catastrophic forgetting](https://en.wikipedia.org/wiki/Catastrophic_interference). The network will gradually "forget" the old task while performing better and better on the new task. Such a problem may be even more evident if we want to train the agent on a new environment like *jet simple* or *jet advanced*.
-As we will see later, choosing the right capacity of the replay memory is the most important factor to consider in order to prevent catastrophic forgetting.
-
-**Hippocampus**. The use of a replay memory has been often compared to the hippocampus, a fundamental component of the mammalian brain. The [hippocampus](https://en.wikipedia.org/wiki/Hippocampus) plays a crucial role in moving the information acquired by the short-term memory to the long-term memory. Patients with a damage in the hippocampus cannot acquire new information. A famous case is the one of [Henry Molaison](https://en.wikipedia.org/wiki/Henry_Molaison), an American man who received a temporal lobectomy that caused a severe form of [anterograde amnesia](https://en.wikipedia.org/wiki/Anterograde_amnesia). You may also know the [movie "Memento"](https://en.wikipedia.org/wiki/Memento_(film)) where the protagonist is affected by the same amnesia and his memory reset approximately every five minutes.
-
 
 **Content of an Experience**. The bricks that compose a replay memory are called *experiences*. An experience is composed of four components: a stack of images representing the state $$s_t$$, another stack of images representing the state $$s_{t+1}$$, the action $$a$$ performed to pass from $$s_{t}$$ to $$s_{t+1}$$, and $$r$$ the reward obtained. Depending on the environment we may have to store an additional Boolean variable $$d$$ that identifies the *done* condition, meaning a terminal state (goal reached). Formally an experience is represented as a tuple
 
@@ -91,6 +78,24 @@ The experience contains two stacks of images. A stack of images is simply a pile
 ![Atari pong reinforcement learning]({{site.baseurl}}/images/reinforcement_learning_single_vs_multi_frame.png){:class="img-responsive"}
 
 Let's say that you are the player controlling the left paddle. Given only a *single frame* it is not easy to estimate in which direction the ball is moving. In fact it is not even possible to understand if the player just hit the ball or if the opponent did it. Is the ball moving to the left or to the right? Even if we know that the ball is moving toward us, it is not trivial to estimate the trajectory. It may be that the opponent hit the ball top-down such that it is directed to the bottom-left corner, or it may be the other way around. Let's consider now a stack of the *last three frames*. In this condition it is much easier to understand what is happening. The opponent hit the ball, and then moved bottom-up, meaning that the ball is directed towards the left paddle. This was just a simple case but there are many other scenarios where such a temporal information is necessary. For instance, if you are training an agent to drive a car based on camera frames, it is necessary to know in which direction the other cars are moving in order to avoid collisions. A single frame cannot give you this information whereas a stack can do the job.
+
+**How does the replay memory guarantees i.i.d. samples?** As stated at the beginning of this section, the main reason why we need such a complex mechanism is to have i.i.d. samples. Let's consider first the standard supervised learning set, familiar to most of us. In supervised learning we randomly pick image-label pairs from the dataset, and use them to compose a mini-batch. The mini-batch is then passed to the network for the forward and backward phases. The replay memory works in a similar way, we randomly pick experiences from the buffer and use them to compose a mini-batch. The mini-batch is then used to Q-learn the network.
+
+A graphical example should clarify any doubt. Let's consider the standard dataset (containing $$N$$ image-label pairs) and the replay memory (containing $$M$$ experiences). To compare what happens in the two cases here we suppose that we need to get a mini-batch of size 64. From the image you can see that 64 random samples are taken from the dataset, whereas in the case of the replay memory 64 random experiences are taken.
+
+![Dataset vs Replay Memory sampling]({{site.baseurl}}/images/reinforcement_learning_dataset_vs_replay_memory_sampling.png){:class="img-responsive"}
+
+The sampling in a standard buffer replay is done following a uniform distribution over the experiences, meaning that each experience has the same probability of being selected. We will see later that in other types of buffer it is possible to define a non-uniform distribution giving more weight to some experiences with the aim of speeding up the training.
+
+**Catastrophic forgetting**. Even though the replay memory guarantees i.i.d. samples we can still have other problems. Let's suppose we are training a network in an environment that has two incremental levels. This is a typical scenario in many video games, where the difficulty of the task increases sequentially. A typical example is the [Atari game Combat](https://en.wikipedia.org/wiki/Combat_(Atari_2600)). This game has 27 games in one, with three main branches: tank, biplane, and jet. Even though those games have similar control commands, they visually look different and the difficulty level can also vary substantially. Here is a screenshot of the games tank and jet for two levels of difficulty:
+
+![Atari Combat]({{site.baseurl}}/images/reinforcement_learning_atari_tank_jet_levels.png){:class="img-responsive"}
+
+Let's suppose that the agent starts from the level *thank simple*. The replay memory is saturated with samples belonging to this level and the neural network will receive i.i.d. samples belonging to this level. The network will perform pretty well after a while. However, when the new level *thank advanced* is used for training the same agent, a completely new series of states will start to saturate the replay memory and therefore to update the network weights. What happens at this point is a phenomenon called [catastrophic forgetting](https://en.wikipedia.org/wiki/Catastrophic_interference). The network will gradually "forget" the old task while performing better and better on the new task. Such a problem may be even more evident if we want to train the agent on a new environment like *jet simple* or *jet advanced*.
+As we will see later, choosing the right capacity of the replay memory is the most important factor to consider in order to prevent catastrophic forgetting.
+
+**Bonus: hippocampus**. The use of a replay memory has been often compared to the hippocampus, a fundamental component of the mammalian brain. The [hippocampus](https://en.wikipedia.org/wiki/Hippocampus) plays a crucial role in moving the information acquired by the short-term memory to the long-term memory. Patients with a damage in the hippocampus cannot acquire new information. A famous case is the one of [Henry Molaison](https://en.wikipedia.org/wiki/Henry_Molaison), an American man who received a temporal lobectomy that caused a severe form of [anterograde amnesia](https://en.wikipedia.org/wiki/Anterograde_amnesia). You may also know the [movie "Memento"](https://en.wikipedia.org/wiki/Memento_(film)) where the protagonist is affected by the same amnesia and his memory reset approximately every five minutes.
+
 
 **Types of *Replay Memory*.** During the last years there have been different improvements on the type of replay memory used in DRL and here I will describe some of them.
 
@@ -118,7 +123,7 @@ While in supervised learning we have a clear target, represented by the label of
 
 $$ \underbrace{Q(s_{t}, a_{t})}_{\text{Net}} \leftarrow \underbrace{Q(s_{t}, a_{t})}_{\text{Net}} + \alpha \big[ \text{r}_{t+1} + \gamma \underset{a}{\text{ max }} \underbrace{\hat{Q}(s_{t+1}, a)}_{\text{Target-Net}} - \underbrace{Q(s_{t}, a_{t})}_{\text{Net}} \big]. $$
 
-As you can see *Target-Net* is only used to predict the state-action value at $$s_{t+1}$$, providing an estimate that is more stable in time.
+As you can see *Target-Net* is only used to predict the state-action value at $$s_{t+1}$$, providing an estimate that is more stable in time. More importantly the *weights* of *Target-Net* are *not updated* in the backward pass, just the weights of *Net* are updated. Then when $$k$$ iterations are passed we simply clone *Net* and assign the clone to *Target-Net*. It is common to observe some oscillations in the overall reward of the agent when this synchronization is made but in the long term the trend should be upward.
 
 
 Index
