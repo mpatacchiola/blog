@@ -5,7 +5,7 @@ date:   2020-07-31 08:00:00 +0000
 description: Overview of Gaussian Mixture Models (GMMs) for density estimation with an intuitive introduction and python examples.
 author: Massimiliano Patacchiola
 type: bayesian methods
-comments: false
+comments: true
 published: true
 ---
 
