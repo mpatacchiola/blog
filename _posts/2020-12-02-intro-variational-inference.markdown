@@ -1,6 +1,6 @@
 ---
 layout: post
-title:  "Variational inference in a nutshell"
+title:  "Variational inference, KL-divergence, and ELBO"
 date:   2020-12-02 08:00:00 +0000
 description: .
 author: Massimiliano Patacchiola
@@ -34,7 +34,7 @@ $$
 
 However, we have a problem. 
 
-**Problem: intractable posterior.** The denominator $$p(\mathbf{x})$$ of the posterior distribution $$p(\mathbf{z} \vert \mathbf{x})$$ is called *evidence* and can be estimated as follows
+**Problem: intractable posterior.** Let's give a closer look at $$p(\mathbf{z} \vert \mathbf{x})$$. The numerator of the posterior is the joint distribution over the observed and latent variables $$p(\mathbf{z}, \mathbf{x})$$ which is efficient to compute. The denominator $$p(\mathbf{x})$$ of the posterior is called *marginal likelihood* or *evidence* and can be estimated as follows
 
 $$
 p(\mathbf{x}) = \int p(\mathbf{z}, \mathbf{x}) d \mathbf{z}.
@@ -126,17 +126,38 @@ $$
 
 $$(1.8 \rightarrow 1.9)$$ There is no expected value for $$\mathbb{E}_{q} \big[ \log p(\boldsymbol{x}) \big]$$ since we are considering an expectation $$\mathbb{E}_{q}$$ over $$q(\boldsymbol{z})$$ and not over $$p(\boldsymbol{x})$$.
 
+
+
+
 Evidence Lower BOund (ELBO)
 -----------------------------
 
-The Evidence Lower BOund (ELBO) is the last trick in our arsenal. The idea is to avoid minimizing the KL divergence by maximizing an alternative quantity which is equivalent up to an added constant. The ELBO is such a quantity. The ELBO is also known as the *variational lower bound* or *negative variational free energy*. What is this ELBO in practice? Well, you may be surprised to know that the ELBO is just the form $$\text{(1.9)}$$ we have found in the previous section when we unpacked the KL divergence, $$\mathbb{E}_{q} [ \log q(\boldsymbol{z})] - \mathbb{E}_{q} [ \log p(\boldsymbol{x}, \boldsymbol{z}) ] + \log p(\boldsymbol{x})$$, but without the problematic term $$p(\boldsymbol{x})$$ and a reversed sign:
+Let's go back to $$\text{(1.9)}$$ where we got
 
 $$
-\text{ELBO}(q) = - \mathbb{E}_{q} \big[ \log q(\boldsymbol{z}) \big] + \mathbb{E}_{q} \big[ \log p(\boldsymbol{x}, \boldsymbol{z}) \big].
+\text{KL} \big( q(\boldsymbol{z}) \vert\vert p(\boldsymbol{z} \vert \boldsymbol{x}) \big)
+= \mathbb{E}_{q} \big[ \log q(\boldsymbol{z}) \big] - \mathbb{E}_{q} \big[ \log p(\boldsymbol{x}, \boldsymbol{z}) \big] + \log p(\boldsymbol{x}).
 $$
 
-We got rid of our problematic term and more importantly by maximizing the ELBO we can minimize the KL divergence, that is what we wanted.
-Ok this is amazing, but why are we allowed to do that? What's the theory behind it? To understand why this is legit we are going to unpack the ELBO:
+This decomposition is problematic because we still have two intractable terms $$\text{KL} ( q(\boldsymbol{z}) \vert\vert p(\boldsymbol{z} \vert \boldsymbol{x}) )$$ and $$\log p(\boldsymbol{x})$$.
+However, rearranging those quantities by moving the intractable terms on the same side we get
+
+$$
+-\mathbb{E}_{q} \big[ \log q(\boldsymbol{z}) \big] + \mathbb{E}_{q} \big[ \log p(\boldsymbol{x}, \boldsymbol{z}) \big]
+= \log p(\boldsymbol{x}) - \text{KL} \big( q(\boldsymbol{z}) || p(\boldsymbol{z} | \boldsymbol{x}) \big).
+$$
+
+Here is the idea: what if we maximize the quantity on the left side? This would be great because the terms on the left are tractable. Is this legit? Here is the interesting part, by maximizing the quantity on the left we are simultaneously (i) maximizing the evidence $$p(\boldsymbol{x})$$, and (ii) minimizing the KL divergence between our variational distribution $$q(\boldsymbol{z})$$ and the true posterior $$p(\boldsymbol{z} \vert \boldsymbol{x})$$, that is what we wanted to achieve with this machinery. Crucially, since the KL divergence is non-negative $$\text{KL} \geq 0$$ the left term is a lower-bound over the log-evidence $$p(\boldsymbol{x})$$ called the *Evidence Lower BOund (ELBO)*
+
+$$
+\text{ELBO}(q) 
+= -\mathbb{E}_{q} \big[ \log q(\boldsymbol{z}) \big] + \mathbb{E}_{q} \big[ \log p(\boldsymbol{x}, \boldsymbol{z}) \big]
+= \mathbb{E}_{q} \bigg[ \log \frac{p(\boldsymbol{x}, \boldsymbol{z})}{q(\boldsymbol{z})} \bigg].
+$$
+
+To obtain the last form I have first applied the linearity of the expectation and then the rule of the logarithms to get the ratio.
+
+**Unpacking the ELBO.** The ELBO is the last trick in our arsenal. The idea is to avoid minimizing the KL divergence by maximizing an alternative quantity which is equivalent up to an added constant. The ELBO is such a quantity. The ELBO is also known as the *variational lower bound* or *negative variational free energy*. Here, we are going to unpack the ELBO until we get a decomposition that is easy to manage:
 
 $$
 \begin{aligned}
@@ -180,31 +201,55 @@ $$(2.7 \rightarrow 2.8)$$ Applying the properties of logarithm to arrange the di
 $$(2.8 \rightarrow 2.9)$$ The integral in the second term is equivalent to the definition of negative KL divergence.
 
 
-**ELBO as evidence lower-bound.** As the name suggests the ELBO is a lower-bound over the evidence $$p(\boldsymbol{x})$$. This is crucial. Recall that the evidence is the intractable term that caused our troubles. First of all, let's show again the final form of the KL divergence and the ELBO:
+Other routes to the ELBO
+-------------------------
+
+We are dealing with three quantities: 
+
+- the log-evidence $$\log p(\boldsymbol{x})$$
+- the KL divergence $$\text{KL} ( q(\boldsymbol{z}) \vert\vert p(\boldsymbol{z} \vert \boldsymbol{x}) )$$
+- the ELBO $$-\mathbb{E}_{q} \big[ \log q(\boldsymbol{z}) \big] + \mathbb{E}_{q} \big[ \log p(\boldsymbol{x}, \boldsymbol{z}) \big]$$
+
+As we saw above, those quantities are strictly intertwined. In previous sections I have followed one of the possible ways we can derive the ELBO, starting from the KL divergence. However, it is also possible to start from the evidence to get back the KL divergence and the ELBO. For completeness, we can see how to do it:
 
 $$
-\text{KL} \big( q(\boldsymbol{z}) \vert\vert p(\boldsymbol{z} \vert \boldsymbol{x}) \big) = \mathbb{E}_{q} \big[ \log q(\boldsymbol{z}) \big] - \mathbb{E}_{q} \big[ \log p(\boldsymbol{x}, \boldsymbol{z}) \big] + \log p(\boldsymbol{x}),\\
-\text{ELBO}(q) = - \mathbb{E}_{q} \big[ \log q(\boldsymbol{z}) \big] + \mathbb{E}_{q} \big[ \log p(\boldsymbol{x}, \boldsymbol{z}) \big].
+\begin{aligned}
+\log p(\boldsymbol{x})
+&=\mathbb{E}_{q}[\log p(\boldsymbol{x})] &\text{(3.1)}\\
+&=\mathbb{E}_{q} \bigg[ \log \frac{p(\boldsymbol{x}, \boldsymbol{z})}{p(\boldsymbol{z} \vert \boldsymbol{x})} \bigg] &\text{(3.2)}\\
+&=\mathbb{E}_{q} \bigg[ \log \frac{p(\boldsymbol{x}, \boldsymbol{z})}{p(\boldsymbol{z} \vert \boldsymbol{x})} \frac{q(\boldsymbol{z})}{q(\boldsymbol{z})} \bigg] &\text{(3.3)}\\
+&=\mathbb{E}_{q} \bigg[ \log \frac{p(\boldsymbol{x}, \boldsymbol{z})}{q(\boldsymbol{z})} \frac{q(\boldsymbol{z})}{p(\boldsymbol{z} \vert \boldsymbol{x})} \bigg] &\text{(3.4)}\\
+&=\underbrace{\mathbb{E}_{q} \bigg[ \log \frac{p(\boldsymbol{x}, \boldsymbol{z})}{q(\boldsymbol{z})} \bigg]}_{\text{ELBO}} + \underbrace{\mathbb{E}_{q} \bigg[ \log \frac{q(\boldsymbol{z})}{p(\boldsymbol{z} \vert \boldsymbol{x})} \bigg]}_{\text{KL}} &\text{(3.5)}\\
+\end{aligned}
 $$
 
-Note that, the KL divergence *contains* the (negative) ELBO:
+As expected, this gave us two terms: the ELBO and the KL divergence. Here is a quick explanation of what has been done above:
+
+$$(3.1)$$ The expectation over $$q(\boldsymbol{z})$$ has no effect on $$p(\boldsymbol{x})$$ therefore
 
 $$
-\text{KL} \big( q(\boldsymbol{z}) \vert\vert p(\boldsymbol{z} \vert \boldsymbol{x}) \big) = - \text{ELBO}(q) + \log p(\boldsymbol{x}) .
+\mathbb{E}_{q}[\log p(\boldsymbol{x})] = \log p(\boldsymbol{x}).
 $$
 
-Rearranging the terms we notice something interesting
+$$(3.1 \rightarrow 3.2)$$ Applying a refactoring based on the basic probability rule
 
 $$
-\log p(\boldsymbol{x}) - \text{KL} \big( q(\boldsymbol{z}) \vert\vert p(\boldsymbol{z} \vert \boldsymbol{x}) \big) = \text{ELBO}(q),
+p(\boldsymbol{x}) = \frac{p(\boldsymbol{x}, \boldsymbol{z})}{p(\boldsymbol{z} \vert \boldsymbol{x})}.
 $$
 
-by maximizing the ELBO we are simultaneously (i) maximizing the evidence $$p(\boldsymbol{x})$$, and (ii) minimizing the KL divergence between our variational distribution $$q(\boldsymbol{z})$$ and the true posterior $$p(\boldsymbol{z} \vert \boldsymbol{x})$$, that is what we wanted to achieve with this machinery. Crucially, since the KL divergence is non-negative $$\text{KL} \geq 0$$ the ELBO is a *lower-bound* over the log-evidence $$p(\boldsymbol{x})$$.
+$$(3.2 \rightarrow 3.3)$$ Including a new term for convenience. I will state the obvious: multiplying and dividing by the same quantity has no effect, therefore is a legit operation.
+
+$$(3.3 \rightarrow 3.4)$$ Rearranging by switching the denominator of the two terms.
+
+$$(3.4 \rightarrow 3.5)$$ Applying the rule of logarithms to turn a product into a sum, then splitting the expectation based on the linearity property.
+
+**Derivation via Jensen’s inequality.** Another popular derivation starting from the evidence is based on the [Jensen’s inequality](https://en.wikipedia.org/wiki/Jensen%27s_inequality).
+
 
 Conclusion
 ----------
 
-I hope you enjoyed this post. I have tried to be as compact as possible, explaining every step along the way. Below you can find some additional resources if you want to know more about variational inference.
+In this post I have provided an introduction to variational inference and the ELBO. I have tried to be as compact as possible, explaining every step along the way. Below you can find some additional resources if you want to know more about variational inference.
 
 
 Resources
