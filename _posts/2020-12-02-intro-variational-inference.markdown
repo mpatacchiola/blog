@@ -1,6 +1,6 @@
 ---
 layout: post
-title:  "Variational inference, KL-divergence, and ELBO"
+title:  "Variational inference: evidence, KL, and ELBO"
 date:   2020-12-02 08:00:00 +0000
 description: .
 author: Massimiliano Patacchiola
@@ -9,7 +9,7 @@ comments: false
 published: false
 ---
 
-In this post I will present a compact introduction to variational inference in latent variable models. Variational inference has been widely used in machine learning and it's the engine of many successful methods, e.g. Variational Auto-Encoders (VAEs). My goal here is to present an essential summary which is not meant to be exhaustive.
+This post is the first of a series on variational inference, a tool that has been widely used in machine learning as engine of many successful methods, e.g. Variational Auto-Encoders (VAEs). My goal here is to define the problem and then introduce the main characters at play: evidence, Kullback-Leibler (KL) divergence, and Evidence Lower BOund (ELBO). Those three quantities have a central role in variational inference and it is therefore necessary to have a clear understanding of how they are interconnected.
 
 
 Definition of the problem
@@ -26,7 +26,7 @@ $$
 Keep in mind that the observed variables $$\mathbf{x}$$ are often called just *data*.
 We suppose that the latent variable *causes* the observed variable, therefore the probabilistic graphical model would be $$z \rightarrow x$$. For instance, "health" causes specific values to be recorded in the blood tests. In a Bayesian treatment we imply that latent variables govern the distribution of the data. In particular, in a Bayesian model we draw the latent variables from a prior density $$p(\mathbf{z})$$ and then relates them to the observations through the likelihood $$p(\mathbf{x} \vert \mathbf{z})$$.
 
-**Inference.** Our goal is to perform inference. For instance, given various medical examinations (data) we want to infer "health", or given cognitive tests infer "intelligence". Formally, we want to estimate the following posterior 
+**Inference.** Our goal is to perform inference, that is estimate some hidden variables given some observations (data, observed variables). For instance, given various medical examinations we want to infer "health", or given cognitive tests infer "intelligence". Formally, we want to estimate the following posterior 
 
 $$
 p(\mathbf{z} \vert \mathbf{x}) = \frac{p(\mathbf{z}, \mathbf{x})}{p(\mathbf{x})}.
@@ -210,46 +210,89 @@ We are dealing with three quantities:
 - the KL divergence $$\text{KL} ( q(\boldsymbol{z}) \vert\vert p(\boldsymbol{z} \vert \boldsymbol{x}) )$$
 - the ELBO $$-\mathbb{E}_{q} \big[ \log q(\boldsymbol{z}) \big] + \mathbb{E}_{q} \big[ \log p(\boldsymbol{x}, \boldsymbol{z}) \big]$$
 
-As we saw above, those quantities are strictly intertwined. In previous sections I have followed one of the possible ways we can derive the ELBO, starting from the KL divergence. However, it is also possible to start from the evidence to get back the KL divergence and the ELBO. For completeness, we can see how to do it:
+As we saw above, those quantities are strictly intertwined. In previous sections I have used the KL-divergence as starting point for the derivation of the ELBO and the evidence. However, it is also possible to use the evidence as starting point. In particular, there are two possible derivations, the first based on the Jensen's inequality shows why the ELBO is a lower bound over the evidence, the second starts from the evidence to return the KL divergence and the ELBO. Let's dive into those two derivations.
+
+**Derivation via Jensen's inequality**. This is the most popular derivation of the ELBO, which clearly shows why the ELBO is a lower bound over the evidence. The idea is to exploit the [Jensen's inequality](https://en.wikipedia.org/wiki/Jensen%27s_inequality) to reorganize some of the terms. The Jensen's inequality relates the value of a convex function of an integral (or expectation) to the integral of the convex function in this way
+
+$$
+g(\mathbb{E}[X]) \leq \mathbb{E}[g(X)],
+$$
+
+where $$g$$ is a convex function, and $$X$$ an integrable real-valued random variable. The inequality similarly applies to a concave function (with inequality reversed), which is what we care about here, since we are dealing with log-probabilities
+
+$$
+\log \mathbb{E}[X] \geq \mathbb{E}[\log X].
+$$
+
+That's it. The log of the expectation of a random variable is greater than or equal to the expectation of the log of that random variable. Keep in mind this inequality, we are going to use it at some point in the decomposition below:
 
 $$
 \begin{aligned}
 \log p(\boldsymbol{x})
-&=\mathbb{E}_{q}[\log p(\boldsymbol{x})] &\text{(3.1)}\\
-&=\mathbb{E}_{q} \bigg[ \log \frac{p(\boldsymbol{x}, \boldsymbol{z})}{p(\boldsymbol{z} \vert \boldsymbol{x})} \bigg] &\text{(3.2)}\\
-&=\mathbb{E}_{q} \bigg[ \log \frac{p(\boldsymbol{x}, \boldsymbol{z})}{p(\boldsymbol{z} \vert \boldsymbol{x})} \frac{q(\boldsymbol{z})}{q(\boldsymbol{z})} \bigg] &\text{(3.3)}\\
-&=\mathbb{E}_{q} \bigg[ \log \frac{p(\boldsymbol{x}, \boldsymbol{z})}{q(\boldsymbol{z})} \frac{q(\boldsymbol{z})}{p(\boldsymbol{z} \vert \boldsymbol{x})} \bigg] &\text{(3.4)}\\
-&=\underbrace{\mathbb{E}_{q} \bigg[ \log \frac{p(\boldsymbol{x}, \boldsymbol{z})}{q(\boldsymbol{z})} \bigg]}_{\text{ELBO}} + \underbrace{\mathbb{E}_{q} \bigg[ \log \frac{q(\boldsymbol{z})}{p(\boldsymbol{z} \vert \boldsymbol{x})} \bigg]}_{\text{KL}} &\text{(3.5)}\\
+&=\log \int p(\boldsymbol{x}, \boldsymbol{z}) d\boldsymbol{z} &\text{(3.1)}\\
+&=\log \int p(\boldsymbol{x}, \boldsymbol{z}) \frac{q(\boldsymbol{z})}{q(\boldsymbol{z})} d\boldsymbol{z} &\text{(3.2)}\\
+&=\log \mathbb{E}_{q} \bigg[ \frac{p(\boldsymbol{x}, \boldsymbol{z})}{q(\boldsymbol{z})} \bigg] &\text{(3.3)}\\
+&\geq \underbrace{\mathbb{E}_{q} \bigg[ \log \frac{p(\boldsymbol{x}, \boldsymbol{z})}{q(\boldsymbol{z})} \bigg]}_{\text{ELBO}} &\text{(3.4)}\\
 \end{aligned}
 $$
 
-As expected, this gave us two terms: the ELBO and the KL divergence. Here is a quick explanation of what has been done above:
+In the last step I have used the Jensen's inequality such that
 
-$$(3.1)$$ The expectation over $$q(\boldsymbol{z})$$ has no effect on $$p(\boldsymbol{x})$$ therefore
+$$
+\log p(\boldsymbol{x}) \geq \text{ELBO},
+$$
+
+and therefore the ELBO is a lower bound over the (log)evidence. Let's breakdown the various steps:
+
+$$(3.1)$$ Just rewriting $$\log p(\boldsymbol{x})$$ by using the definition of joint probability.
+
+$$(3.1 \rightarrow 3.2)$$ Using the good old trick of including a new term for convenience. I will state the obvious: the new quantity is equal to 1 and has no effect on the product, therefore this is a legit operation.
+
+$$(3.2 \rightarrow 3.3)$$ The new integral can be rewritten as an expectation.
+
+$$(3.3 \rightarrow 3.4)$$ Finally, we apply the Jensen's inequality to move the logarithm inside the brackets.
+
+
+
+**Alternative derivation**. Starting from the evidence we should be able to retrieve both the ELBO and the KL-divergence. An alternative derivation can be used to achieve this goal.
+This derivation is not so popular as the previous one but it is helpful, since it gives a broader view over the connection between the three quantities of interest. For completeness, I will write it down here:
+
+$$
+\begin{aligned}
+\log p(\boldsymbol{x})
+&=\mathbb{E}_{q}[\log p(\boldsymbol{x})] &\text{(4.1)}\\
+&=\mathbb{E}_{q} \bigg[ \log \frac{p(\boldsymbol{x}, \boldsymbol{z})}{p(\boldsymbol{z} \vert \boldsymbol{x})} \bigg] &\text{(4.2)}\\
+&=\mathbb{E}_{q} \bigg[ \log \frac{p(\boldsymbol{x}, \boldsymbol{z})}{p(\boldsymbol{z} \vert \boldsymbol{x})} \frac{q(\boldsymbol{z})}{q(\boldsymbol{z})} \bigg] &\text{(4.3)}\\
+&=\mathbb{E}_{q} \bigg[ \log \frac{p(\boldsymbol{x}, \boldsymbol{z})}{q(\boldsymbol{z})} \frac{q(\boldsymbol{z})}{p(\boldsymbol{z} \vert \boldsymbol{x})} \bigg] &\text{(4.4)}\\
+&=\underbrace{\mathbb{E}_{q} \bigg[ \log \frac{p(\boldsymbol{x}, \boldsymbol{z})}{q(\boldsymbol{z})} \bigg]}_{\text{ELBO}} + \underbrace{\mathbb{E}_{q} \bigg[ \log \frac{q(\boldsymbol{z})}{p(\boldsymbol{z} \vert \boldsymbol{x})} \bigg]}_{\text{KL}} &\text{(4.5)}\\
+\end{aligned}
+$$
+
+As you can see this derivation is different from the one based on the Jensen's inequality, since it returns two terms: the ELBO and the KL divergence. Here is a quick explanation of what has been done above:
+
+$$(4.1)$$ The expectation over $$q(\boldsymbol{z})$$ has no effect on $$p(\boldsymbol{x})$$ therefore
 
 $$
 \mathbb{E}_{q}[\log p(\boldsymbol{x})] = \log p(\boldsymbol{x}).
 $$
 
-$$(3.1 \rightarrow 3.2)$$ Applying a refactoring based on the basic probability rule
+$$(4.1 \rightarrow 4.2)$$ Applying a refactoring based on the basic probability rule
 
 $$
 p(\boldsymbol{x}) = \frac{p(\boldsymbol{x}, \boldsymbol{z})}{p(\boldsymbol{z} \vert \boldsymbol{x})}.
 $$
 
-$$(3.2 \rightarrow 3.3)$$ Including a new term for convenience. I will state the obvious: multiplying and dividing by the same quantity has no effect, therefore is a legit operation.
+$$(4.2 \rightarrow 4.3)$$ Including a new term for convenience, this has no effect on the product.
 
-$$(3.3 \rightarrow 3.4)$$ Rearranging by switching the denominator of the two terms.
+$$(4.3 \rightarrow 4.4)$$ Rearranging by switching the denominator of the two terms.
 
-$$(3.4 \rightarrow 3.5)$$ Applying the rule of logarithms to turn a product into a sum, then splitting the expectation based on the linearity property.
-
-**Derivation via Jensen’s inequality.** Another popular derivation starting from the evidence is based on the [Jensen’s inequality](https://en.wikipedia.org/wiki/Jensen%27s_inequality).
+$$(4.4 \rightarrow 4.5)$$ Applying the rule of logarithms to turn a product into a sum, then splitting the expectation based on the linearity property.
 
 
 Conclusion
 ----------
 
-In this post I have provided an introduction to variational inference and the ELBO. I have tried to be as compact as possible, explaining every step along the way. Below you can find some additional resources if you want to know more about variational inference.
+In this post I have provided an introduction to variational inference introducing the three main characters at play: the evidence, the KL-divergence, and the ELBO. I have tried to be as compact as possible, explaining every step along the way. Below you can find some additional resources if you want to know more about variational inference.
 
 
 Resources
