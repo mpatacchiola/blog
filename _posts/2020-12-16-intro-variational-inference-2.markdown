@@ -17,7 +17,7 @@ In this post I will focus on this particular problem, showing how we can estimat
 Definition of the problem
 --------------------------
 
-Here we are interested in a system with two components: a stochastic component called *measure* and a *cost function*, with training consisting of two phases: a simulation phase and an optimisation phase. The entire system is stochastic since one of the element is stochastic. However, in many cases the system is said to be *doubly-stochastic* if for instance we are using stochastic gradient descent in the optimization component. In a doubly-stochastic system one source of randomness arises from the simulation phase (e.g. using Monte Carlo estimators) and a second source arises in the optimization phase (e.g. sampling datapoints in the mini-batch gradient descent).
+We are interested in a system with two components: a stochastic component named *measure* and a *cost function*, with training consisting of two phases: a simulation phase and an optimisation phase. The entire system is stochastic since one of the element is stochastic. However, in many cases the system is said to be *doubly-stochastic* if for instance we are using stochastic gradient descent in the optimization component. In a doubly-stochastic system one source of randomness arises from the simulation phase (e.g. using Monte Carlo estimators) and a second source arises in the optimization phase (e.g. sampling datapoints in the mini-batch gradient descent).
 
 Let's try now to better formalize our setting. Consider a generic density function $$p_{\theta}(x)$$ parameterized by a vector $$\boldsymbol{\theta}$$, representing the stochastic component (measure), and a function $$f(x)$$, representing the *cost function*. We assume $$p_{\theta}(x)$$ to be differentiable, but the cost function $$f(x)$$ is not necessarily differentiable, for instance it could be discrete or a black-box (e.g. only the outputs are given). Since we are dealing with expectations (integrals) we can use Monte Carlo to get an unbiased approximation of the expected value. Monte Carlo numerically evaluates the integral by drawing samples $$x_1, \dots, x_N$$ from the distribution $$p_{\theta}(x)$$ and computing the average of the function evaluated at these points. In our case, the Monte Carlo approximation of $$\mathbb{E}_{p_{\theta}}[f(x)]$$ corresponds to
 
@@ -35,7 +35,7 @@ $$
 \end{align}
 $$
 
-In the last step I have used the [Leibniz's rule](https://en.wikipedia.org/wiki/Leibniz_integral_rule) to move the gradient inside the integral. Here is the issue, most of the time the gradient of a density function is not itself a density function. In our particular case, the quantity $$\nabla_\theta p(x_{\theta})$$ may not be a proper density. It follows that the integral in $$\text{(1.2)}$$ cannot be casted into an expectation and therefore it cannot be approximated as usual via Monte Carlo.
+In the last step I have used the [Leibniz's rule](https://en.wikipedia.org/wiki/Leibniz_integral_rule) to move the gradient inside the integral. Here is the issue, most of the time the gradient of a density function is not itself a density function, since it may have negative values and could not integrate to one. In our particular case, the quantity $$\nabla_\theta p(x_{\theta})$$ may not be a proper density. It follows that the integral in $$\text{(1.2)}$$ cannot be casted into an expectation and therefore it cannot be approximated as usual via Monte Carlo.
 
 When we try to get the gradient of the ELBO we incur in the same issue, since the gradient of the ELBO corresponds to the gradient of an expectation:
 
@@ -53,6 +53,7 @@ The score function estimator
 -----------------------------
 
 The score function estimator is also known as the likelihood-ratio estimator and as REINFORCE in the reinforcement learning literature. This estimator gets the gradient by computing the derivatives of the measure, meaning by direct differentiation through $$p_{\theta}(x)$$.
+The estimator is particularly popular because it is unbiased, flexible, and it does not impose any restriction over $$p_{\theta}(x)$$ or $$f(x)$$. However, a major issue is that is has large variance. Before showing the derivation of the estimator, it is important to provide a definition of score and introduce some tools like the log-derivative trick.
 
 **What is the score?** In statistical terms, the [score](https://en.wikipedia.org/wiki/Score_(statistics)) (or score function) is just the gradient of the log-likelihood function with respect to the parameter vector. In our case this correspond to
 
@@ -117,14 +118,12 @@ $$(2.5 \rightarrow 2.6)$$ The new form of the integral corresponds to a proper e
 
 **[TODO] The score function estimator of the ELBO.**
 
-The score function estimator is particularly popular because it is unbiased, flexible, and it does not impose any restriction over $$p_{\theta}(x)$$ or $$f(x)$$. However, a major issue is that is has large variance. Let's see what does this implies.
-
 
 
 The pathwise gradient estimator
 -------------------------------
 
-Another way to estimate the gradient consists of differentiating the cost function $$f(x)$$ through the random variable $$x$$, which encodes the pathway from the target parameters $$\boldsymbol{\theta}$$. This approach is the one used in the pathwise gradient estimator. The pathwise estimator also appears under several names, such as process derivative, pathwise derivative, and more recently as the reparameterisation trick. A well know application of the reparameterization trick is in the context of Variational Auto-Encoders (VAEs), where is used for backpropagation through a stochastic hidden layer.
+Another way to estimate the gradient consists of differentiating the cost function $$f(x)$$ through the random variable $$x$$, which encodes the pathway from the target parameters $$\boldsymbol{\theta}$$. This approach is the one used in the pathwise gradient estimator. The pathwise estimator also appears under several names, such as process derivative, pathwise derivative, and more recently as the reparameterisation trick. A well know application of the reparameterization trick is in the context of Variational Auto-Encoders (VAEs), where is used for backpropagating through a stochastic hidden layer.
 
 In the previous section we noted that the score function estimator has a large variance, meaning that the resulting signal does a poor job at finding the parameters we are interested in. The pathwise estimator solve this issue, since it has low variance, but on the other hand it requires a differentiable cost function and the possibility to reparameterize the  measure $$p_{\theta}(x)$$. The idea behind the pathwise estimator is to exploit the structural property of the system. In particular, here we care about the sequence of transformations that are applied to the stochastic component affecting the overall objective. Those transformations pass through the measure and into the cost function.
 
@@ -176,8 +175,30 @@ $$
 
 Note that, $$f(g_{\theta}(\hat{\epsilon}_{n}))$$ is a composite function, therefore its gradient can be easily obtained by applying the [chain rule](https://en.wikipedia.org/wiki/Chain_rule).
 
-**Application to the ELBO.** Let's apply the pathwise estimator to our original problem: estimating the gradient of the ELBO. For simplicity, I assume that the variational distribution is a univariate Gaussian $$\mathcal{N}(x \vert \mu, \sigma)$$ and that we are interested in finding the parameters of this Gaussian $$\boldsymbol{\theta}= \{\mu, \sigma\}$$. In a similar way the estimator can be adapted to many other continuous univariate distributions such as Gamma, Beta, von Mises, and Student.
+**Application to the ELBO.** Let's apply the pathwise estimator to our original problem: estimating the gradient of the ELBO. Recall that in variational inference we are interested in estimating the posterior over the latent variable $$z$$ given $$x$$ (observed variable), that is $$p(z \vert x)$$. I have used univariate random variables which are scalars (no bold notation) but the same treatment can be extended to the multivariate case. For simplicity, I assume that the variational distribution $$q_{\theta}(z)$$ is a univariate Gaussian $$\mathcal{N}(z \vert \mu, \sigma)$$ and that we are interested in finding the parameters of this Gaussian $$\boldsymbol{\theta}= \{\mu, \sigma\}$$. In a similar way the estimator can be adapted to many other continuous univariate distributions such as Gamma, Beta, von Mises, and Student. We need a valid path and a base distribution, obvious choices are the *location-scale* transform and the *standard* Gaussian
 
+$$
+z = g_{\theta}(\epsilon) = \mu + \sigma \epsilon
+\quad \text{and} \quad
+\mathcal{N}(\epsilon \vert 0, 1).
+$$
+
+Note that, this path is reversible, meaning that we can get  $$\epsilon \rightarrow z$$ through $$g_{\theta}$$ and $$z \rightarrow \epsilon$$ through the inverse path $$g_{\theta}^{-1}$$ as follows
+
+$$
+\epsilon = g_{\theta}^{-1}(z) = \frac{z-\mu}{\sigma}.
+$$
+
+
+Under this reparameterization we can rewrite the ELBO as
+
+$$
+\mathbb{E}_{q_{\theta}(x)} \bigg[ \log \frac{p(x, z)}{q_{\theta}(z)} \bigg]
+=
+\mathbb{E}_{p(\epsilon)} \bigg[ \log \frac{p(x, g_{\theta}(\epsilon))}{q_{\theta}(g_{\theta}(\epsilon))} \bigg].
+$$
+
+Estimating the gradient of the ELBO is now feasible, since the gradient can be moved inside the brackets as explained in Equation (3) and the expression is fully differentiable w.r.t. the parameters $$\boldsymbol{\theta}$$.
 
 Comparing estimators
 ---------------------
@@ -189,7 +210,7 @@ Comparing estimators
 3. *Minimum variance.* Estimators are random variables since they depend on a random variable. Given the same number of samples $$N$$, we prefer the estimator with lower variance. Low variance means that the gradient estimates are more accurate, therefore we have a higher chances of converging to useful local minima and we can use larger step sizes (faster convergence).
 4. *Efficiency.* We prefer estimators that needs a low number of samples and can be easily parallelized.
 
-The estimators that we have considered above differ in their variance and efficiency.
+Both the score function estimator and the pathwise estimator are consistent (property 1) and unbiased (property 2), therefore here I will focus on comparing them in terms of their varirance (property 3) and efficiency (property 4).
 
 
 **The variance of the gradient.** In the previous section we saw how the score function estimator allows us to estimate the gradient of the ELBO. In practice, we have exploited the log-derivative trick to move the gradient estimate inside the expectation. This has solved one issue but it created another. 
@@ -204,6 +225,9 @@ $$
 
 Stochastic variational inference solves one issue but it creates another. The number of datapoints in the mini-batch impacts the quality of the gradient. We can quantify this quality by introducing the variance of the gradient.
 
+**Efficiency.** Here, with the term "efficiency", I refer to computationally efficiency. The first thing to notice is that variance is directly connected to efficiency, since estimators with high variance require more samples to better approximate the gradient, as a consequence of the [law of the large numbers](law of large numbers). An experimental comparison in terms of efficiency could be computationally expensive for non trivial cases. A recent analysis has been provided by Kucukelbir et al. (2017), who found that the score function estimator can require up to two orders of magnitude more samples to arrive at the same variance as a pathwise estimator.
+
+
 Conclusion
 ----------
 
@@ -214,7 +238,12 @@ Resources
 
 - [Shakir's blog](http://blog.shakirm.com) in particular [[link-1]](http://blog.shakirm.com/2015/11/machine-learning-trick-of-the-day-5-log-derivative-trick/) [[link-2]](http://blog.shakirm.com/2015/10/machine-learning-trick-of-the-day-4-reparameterisation-tricks/)
 - [Yuge's blog](https://yugeten.github.io/) in particular [[link]](https://yugeten.github.io/posts/2020/06/elbo/)
-- *"Monte Carlo Gradient Estimation in Machine Learning"* (2019), S. Mohamed, M. Rosca, M. Figurnov, A. Mnih [[arXiv]](https://arxiv.org/abs/1906.10652)
 - *"Pattern Recognition and Machine Learning"*, Chapter 10, C. Bishop
 
+References
+-----------
+
+Kucukelbir, A., Tran, D., Ranganath, R., Gelman, A., & Blei, D. M. (2017). Automatic differentiation variational inference. The Journal of Machine Learning Research, 18(1), 430-474.
+
+Mohamed, S., Rosca, M., Figurnov, M., & Mnih, A. (2019). Monte Carlo gradient estimation in machine learning. arXiv preprint:1906.10652 [[arXiv]](https://arxiv.org/abs/1906.10652)
 
