@@ -62,24 +62,27 @@ $$
 $$
 
 
-
-**The log-derivative trick.** The log-derivative trick just consists of applying the rule of the gradient on the logarithm of a function. If we apply this trick to the score function we get
+**The log-derivative trick.** The log-derivative trick just consists of applying the [chain rule](https://en.wikipedia.org/wiki/Chain_rule) to a [composite function](https://en.wikipedia.org/wiki/Function_composition) in which the outermost term is a logarithm. In our case the score function happens to be in such a form, with $$\log$$ being the external term and $$p_{\theta}(x)$$ the internal one. It follows that we can apply the log-derivative trick straight away to get
 
 $$
-\nabla_\theta \log p_{\theta}(x) = \frac{\nabla_{\theta} p_{\theta}(x)}{p_{\theta}(x)}.
+\nabla_\theta \log p_{\theta}(x) 
+=
+\frac{1}{p_{\theta}(x)} \cdot \nabla_{\theta} p_{\theta}(x)
+=
+\frac{\nabla_{\theta} p_{\theta}(x)}{p_{\theta}(x)}.
 $$
 
-The term on the right is called the *score ratio*, which explains why sometimes this estimator is also called the score-ratio estimator. The log-derivative trick can be quite helpful. For instance, exploiting this trick we can notice an interesting property of the score function, that is its expected value is equal to zero
+The last term is called the *score ratio*. The log-derivative trick can be quite helpful. For instance, exploiting this trick we can notice an interesting property of the score function, that is its expected value is equal to zero
 
 $$
 \mathbb{E}_{p_{\theta}}[\nabla_{\theta} \log p_{\theta}(x)]
 =  \mathbb{E}_{p_{\theta}} \bigg[ \frac{\nabla_{\theta} p_{\theta}(x)}{p_{\theta}(x)} \bigg] 
 = \int p_{\theta}(x) \frac{\nabla_{\theta} p_{\theta}(x)}{p_{\theta}(x)} dx
 = \nabla_{\theta} \int  p_{\theta}(x) dx
-= \nabla_{\theta} 1 = 0
+= \nabla_{\theta} 1 = 0.
 $$
 
-This property is not particularly relevant here but it is fundamental in the context of [control variates](https://en.wikipedia.org/wiki/Control_variates). Armed with the log-derivative trick, we are ready to derive the score function estimator.
+This property is not particularly relevant here but it is fundamental in the context of [control variates](https://en.wikipedia.org/wiki/Control_variates), and it has been exploited by [Roeder et al. (2017)](https://arxiv.org/abs/1703.09194) to reduce the variance of ELBO gradient estimators. Armed with the log-derivative trick, we are ready to derive the score function estimator.
 
 
 **Derivation of the estimator.** We want to overcome the problem described in the previous section, where we saw that the gradient of an expectation cannot be approximated via Monte Carlo. Our goal here will be to exploit the log-derivative trick to bypass this issue. In particular, we want to reach a friendly form of the integral and turn it into a proper expectation. Let's break it down
@@ -145,7 +148,7 @@ $$
 The question is: are those expectations equivalent? To answer this question we invoke the *law of the unconscious statistician* or [LOTUS](https://en.wikipedia.org/wiki/Law_of_the_unconscious_statistician), which states that we can compute the expectation of a function of a random variable (in our case the cost function $$f$$ ) without the need of knowing its distribution (in our case the measure $$p_{\theta}$$) whenever we use a valid sampling path and a base distribution. In other words, we can replace the original expectation with the expectation over the base distribution $$p(\epsilon)$$ using the transformation $$g_{\theta}(\epsilon)$$. Therefore, LOTUS implies that the two expectations are equivalent.
 
 
-**Derivation of the estimator.** In the last step we exploit sampling paths and LOTUS to derive our estimator. All we need is a differentiable sampling path $$g_{\theta}(\epsilon)$$ and a base distribution $$p(\epsilon)$$. The derivation goes like this:
+**Derivation of the estimator.** We can exploit sampling paths and LOTUS to derive the pathwise estimator. All we need is a differentiable sampling path $$g_{\theta}(\epsilon)$$ and a base distribution $$p(\epsilon)$$. The derivation goes like this:
 
 
 $$
@@ -203,7 +206,7 @@ Estimating the gradient of the ELBO is now feasible, since the gradient can be m
 Comparing estimators
 ---------------------
 
-**Properties of an estimator.** Following [Mohamed et al. (2019)](https://arxiv.org/abs/1906.10652) I will use four properties to quantify the quality of an estimator:
+Following [Mohamed et al. (2019)](https://arxiv.org/abs/1906.10652) I will use *four properties* to quantify the quality of an estimator:
 
 1. *Consistency.* Increasing $$N$$, the number of samples, the estimate should converge to the true expected value (see [law of large numbers](https://en.wikipedia.org/wiki/Law_of_large_numbers)). Typically, our estimators are consistent, meaning we will not focus too much on this property.
 2. *Unbiasedness.* Repeating the estimate multiple times we see that *on average* the estimate is centered around the true expected value. This property is preferred because it guarantees the convergence of stochastic optimisation procedures.
@@ -213,19 +216,24 @@ Comparing estimators
 Both the score function estimator and the pathwise estimator are consistent (property 1) and unbiased (property 2), therefore here I will focus on comparing them in terms of their varirance (property 3) and efficiency (property 4).
 
 
-**The variance of the gradient.** In the previous section we saw how the score function estimator allows us to estimate the gradient of the ELBO. In practice, we have exploited the log-derivative trick to move the gradient estimate inside the expectation. This has solved one issue but it created another. 
-
-
-Another issue is that the estimate $$\mathbb{E}_{p_{\theta}}[f(x)]$$ is done over the $$N$$ datapoints in our dataset. Given the size of many datasets this is often computationally expensive. What we do instead is to choose a random sample of those points $$M$$ with $$M \ll N$$, often called mini-batch. This is know as [stochastic variational inference](https://www.jmlr.org/papers/volume14/hoffman13a/hoffman13a.pdf). Using the same notation defined above, consider $$\nabla_\theta f(x_{m})$$ as the gradient w.r.t. a single datapoint, and $$\mathbb{E}_{p_{\theta}} [\nabla_\theta f(x)]$$ as the gradient w.r.t. all the $$N$$ datapoints. Through stochastic variational inference we get the following approximation of the gradient
+**Variance of the score function estimator.**
+Let's give a look at the variance of the score function estimator
 
 $$
-\mathbb{E}_{p_{\theta}} [\nabla_\theta f(x)] 
-\approx \tilde{\mathbb{E}}_{p_{\theta}} = \frac{N}{M} \sum_{m=1}^{M} \nabla_\theta f(x_{m}).
+\mathbb{V}_{p_{\theta}}[\nabla_\theta \log p_{\theta}(x) f(x)]
+=
+\mathbb{E}_{p_{\theta}}[\big( \nabla_\theta \log p_{\theta}(x) f(x) \big)^{2}] 
+- 
+\mathbb{E}_{p_{\theta}}[\nabla_\theta \log p_{\theta}(x) f(x)]^{2},
 $$
 
-Stochastic variational inference solves one issue but it creates another. The number of datapoints in the mini-batch impacts the quality of the gradient. We can quantify this quality by introducing the variance of the gradient.
+where I have just applied the [definition of variance](https://en.wikipedia.org/wiki/Variance): the variance of a random variable is equal to the mean of the square of the random variable minus the square of the mean of the random variable. In general, when using the score function estimator we are not really concerned about the cost function $$f(x)$$, which can even be a black-box, but the variance depends on the cost function $$f(x)$$ which is a multiplicative term over the gradient. In other words, since the cost function tipically does not depend on the parameters $$\boldsymbol{\theta}$$ it will not directly affect the estimation of the gradient $$\nabla_\theta \log p_{\theta}(x)$$ but its multiplicative nature will affect the variance. For example, if $$\mathbf{x} \in \mathbb{R}^{D} $$ and the cost function is a sum of those $$D$$ terms, $$f(\mathbf{x}) =\sum f(x_d)$$, then the variance of the  estimator will be of order $$O(D^2)$$. In this case the variance depends quadratically from the dimensionality of the input.
 
-**Efficiency.** Here, with the term "efficiency", I refer to computationally efficiency. The first thing to notice is that variance is directly connected to efficiency, since estimators with high variance require more samples to better approximate the gradient, as a consequence of the [law of the large numbers](law of large numbers). An experimental comparison in terms of efficiency could be computationally expensive for non trivial cases. A recent analysis has been provided by Kucukelbir et al. (2017), who found that the score function estimator can require up to two orders of magnitude more samples to arrive at the same variance as a pathwise estimator.
+**Variance of the pathwise estimator.** The variance of the pathwise estimator is bounded by  the  squared  Lipschitz constant of the cost function (see Mohamed et al., 2019). Importantly, the bounds are independent of the dimensionality of the parameter space and we can get low-variance gradient estimates in the high-dimensional setting. Differently from the score function case, here we are able to directly differentiate through the cost function itself. Therefore, additional terms play no role in the variance of the pathwise estimator, since only the path influencing the parameters is included in the gradient.
+
+
+
+**Efficiency.** Here, the term "efficiency" means computationally efficiency. The first thing to notice is that variance is directly connected to efficiency, since estimators with high variance require more samples to better approximate the gradient, as a consequence of the [law of the large numbers](law of large numbers). A recent analysis has been provided by Kucukelbir et al. (2017), who found that the score function estimator can require up to two orders of magnitude more samples to arrive at the same variance as a pathwise estimator. Intuitively, the variance increases with the number of terms to be estimated via Monte Carlo methods. This is why exact integration is desirable wherever possible, as it reduces the number of those terms.
 
 
 Conclusion
@@ -246,4 +254,6 @@ References
 Kucukelbir, A., Tran, D., Ranganath, R., Gelman, A., & Blei, D. M. (2017). Automatic differentiation variational inference. The Journal of Machine Learning Research, 18(1), 430-474.
 
 Mohamed, S., Rosca, M., Figurnov, M., & Mnih, A. (2019). Monte Carlo gradient estimation in machine learning. arXiv preprint:1906.10652 [[arXiv]](https://arxiv.org/abs/1906.10652)
+
+Roeder, G., Wu, Y., & Duvenaud, D. K. (2017). Sticking the landing: Simple, lower-variance gradient estimators for variational inference. In Advances in Neural Information Processing Systems (pp. 6925-6934). [[arXiv]](https://arxiv.org/abs/1703.09194)
 
