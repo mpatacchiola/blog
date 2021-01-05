@@ -82,7 +82,7 @@ $$
 = \nabla_{\theta} 1 = 0.
 $$
 
-This property is not particularly relevant here but it is fundamental in the context of [control variates](https://en.wikipedia.org/wiki/Control_variates), and it has been exploited by [Roeder et al. (2017)](https://arxiv.org/abs/1703.09194) to reduce the variance of ELBO gradient estimators. Armed with the log-derivative trick, we are ready to derive the score function estimator.
+This property will be helpful when we derive the score function estimator of the ELBO; it is also fundamental in the context of [control variates](https://en.wikipedia.org/wiki/Control_variates), and it has been exploited by [Roeder et al. (2017)](https://arxiv.org/abs/1703.09194) for variance reduction. Armed with the log-derivative trick, we are ready to derive the score function estimator.
 
 
 **Derivation of the estimator.** We want to overcome the problem described in the previous section, where we saw that the gradient of an expectation cannot be approximated via Monte Carlo. Our goal here will be to exploit the log-derivative trick to bypass this issue. In particular, we want to reach a friendly form of the integral and turn it into a proper expectation. Let's break it down
@@ -95,7 +95,7 @@ $$
 &= \int \frac{p_{\theta}(x)}{p_{\theta}(x)} \nabla_\theta p_{\theta}(x) f(x) dx &\text{(2.3)}\\
 &= \int p_{\theta}(x) \frac{\nabla_\theta p_{\theta}(x)}{p_{\theta}(x)} f(x) dx &\text{(2.4)}\\
 &= \int p_{\theta}(x) \nabla_\theta \log p_{\theta}(x) f(x) dx &\text{(2.5)}\\
-&= \mathbb{E}_{p_{\theta}} \big[ \underbrace{\nabla_\theta \log p_{\theta}(x)}_{\text{score function}} f(x) \big] &\text{(2.6)}
+&= \mathbb{E}_{p_{\theta}} \big[ \underbrace{\nabla_\theta \log p_{\theta}(x)}_{\text{score}} \underbrace{f(x)}_{\text{cost}} \big] &\text{(2.6)}
 \end{align}
 $$
 
@@ -119,8 +119,45 @@ $$(2.4 \rightarrow 2.5)$$ After rearranging the terms we notice that it is possi
 
 $$(2.5 \rightarrow 2.6)$$ The new form of the integral corresponds to a proper expectation, therefore we can rewrite in the equivalent form.
 
-**[TODO] The score function estimator of the ELBO.**
+**The score function estimator of the ELBO.** Let's apply the score function estimator to our original problem: finding the gradient of the ELBO.
 
+$$
+\begin{align}
+\nabla_{\theta} \text{ELBO}(q)
+&= \nabla_{\theta} \mathbb{E}_{q} \big[ \log p(x, z) - \log q_{\theta}(z) \big] = \nabla_{\theta} \mathbb{E}_{q} \big[ f_{\theta}(z) \big]&\text{(3.1)}\\
+&= \int \nabla_{\theta} \big( q_{\theta}(z)  f_{\theta}(z) \big) dz &\text{(3.2)}\\
+&= \int \nabla_{\theta} q_{\theta}(z) f_{\theta}(z) + q_{\theta}(z) \nabla_{\theta} f_{\theta}(z) dz &\text{(3.3)}\\
+&= \int q_{\theta}(z) \nabla_{\theta} \log q_{\theta}(z) f_{\theta}(z) + q_{\theta}(z) \nabla_{\theta} f_{\theta}(z) dz &\text{(3.4)}\\
+&= \mathbb{E}_{q} \big[ \nabla_{\theta} \log q_{\theta}(z) f_{\theta}(z) + \nabla_{\theta} f_{\theta}(z) \big] &\text{(3.5)}\\
+&= \mathbb{E}_{q} \big[ \nabla_{\theta} \log q_{\theta}(z) f_{\theta}(z) \big] + \mathbb{E}_{q} \big[ \nabla_{\theta} f_{\theta}(z) \big] &\text{(3.6)}\\
+&= \mathbb{E}_{q} \big[ \nabla_{\theta} \log q_{\theta}(z) f_{\theta}(z) \big] + \mathbb{E}_{q} \big[ \nabla_{\theta} \log p(x, z) - \nabla_{\theta} \log q_{\theta}(z) \big] &\text{(3.7)}\\
+&= \mathbb{E}_{q} \big[ \underbrace{\nabla_{\theta} \log q_{\theta}(z)}_{\text{score}} \big( \underbrace{\log p(x, z) - \log q_{\theta}(z)}_{\text{cost}} \big) \big] &\text{(3.8)}\\
+\end{align}
+$$
+
+$$(3.1)$$ To avoid cluttering I used $$f_{\theta}(z)$$ to represent the cost function (the quantity inside the brackets). Note that, in our particular case $$f_{\theta}(z)$$ depends on $$\theta$$ the variational parameters, since it contains the variational distribution $$q_{\theta}(z)$$.
+
+$$(3.1 \rightarrow 3.2)$$ Applying the definition of expectation to get the integral and moving the gradient using Laplace's rule.
+
+$$(3.2 \rightarrow 3.3)$$ Unlike Equation $$(2.2)$$ in the general derivation, here it is not possible to directly apply the log-derivative trick because both $$f_{\theta}(z)$$ and $$q_{\theta}(z)$$ are functions of the target parameters $$\theta$$. However, it is possible to use the [product rule](https://en.wikipedia.org/wiki/Product_rule) of derivatives to split the gradient.
+
+$$(3.3 \rightarrow 3.4)$$ Exploiting the log-derivative trick to rewrite $$\nabla_{\theta} \log q_{\theta}(z)$$.
+
+$$(3.4 \rightarrow 3.5)$$ Switched back to expectation notation.
+
+$$(3.5 \rightarrow 3.6)$$ Using the linearity of expectation to split the sum into two separate terms.
+
+$$(3.6 \rightarrow 3.7)$$ Plugging back the original terms associated to $$f_{\theta}(z)$$.
+
+$$(3.7 \rightarrow 3.8)$$ We can remove the second term in $$(3.7)$$, because
+
+$$
+\mathbb{E}_{q} \big[ \underbrace{\nabla_{\theta} \log p(x, z)}_{=0} - \underbrace{\nabla_{\theta} \log q_{\theta}(z)}_{\text{score}} \big] = \mathbb{E}_{q} [0] = 0,
+$$
+
+that is, the gradient of $$p(x, z)$$ w.r.t $$\theta$$ is zero, because the distribution does not depend on those parameters (those are the parameters of the variational distribution); the expectation of the score function is also equal to zero, as showed in the previous section.
+
+$$(3.8)$$ The expectation can be estimated using Monte Carlo if two requisites are satisfied: (i) it must be possible to sample $$\hat{z} \sim q_{\theta}(z)$$, and (ii) $$\log q_{\theta}(z)$$ must be differentiable w.r.t. $$\theta$$. Since $$q_{\theta}(z)$$ is our variational distribution we can choose a family that satisfies both those requisites.
 
 
 The pathwise gradient estimator
@@ -154,17 +191,17 @@ The question is: are those expectations equivalent? To answer this question we i
 $$
 \begin{align} 
 \nabla_\theta \mathbb{E}_{p_{\theta}}[f(x)]
-&= \nabla_\theta \mathbb{E}_{p(\epsilon)}[f(g_{\theta}(\epsilon))] &\text{(3.1)}\\
-&= \nabla_\theta \int p(\epsilon) f(g_{\theta}(\epsilon)) d\epsilon &\text{(3.2)}\\
-&= \int p(\epsilon) \nabla_\theta f(g_{\theta}(\epsilon)) d\epsilon &\text{(3.3)}\\
+&= \nabla_\theta \mathbb{E}_{p(\epsilon)}[f(g_{\theta}(\epsilon))] &\text{(4.1)}\\
+&= \nabla_\theta \int p(\epsilon) f(g_{\theta}(\epsilon)) d\epsilon &\text{(4.2)}\\
+&= \int p(\epsilon) \nabla_\theta f(g_{\theta}(\epsilon)) d\epsilon &\text{(4.3)}\\
 \end{align}
 $$
 
-$$(3.1)$$ Applying LOTUS replacing the original expectation.
+$$(4.1)$$ Applying LOTUS replacing the original expectation.
 
-$$(3.1 \rightarrow 3.2)$$ Rewriting in integral form by applying the definition of expectation.
+$$(4.1 \rightarrow 4.2)$$ Rewriting in integral form by applying the definition of expectation.
 
-$$(3.2 \rightarrow 3.3)$$ We can safely move the gradient inside the integral, this keeps intact the distribution $$p(\epsilon)$$ which is independent from $$\boldsymbol{\theta}$$.
+$$(4.2 \rightarrow 4.3)$$ We can safely move the gradient inside the integral, this keeps intact the distribution $$p(\epsilon)$$ which is independent from $$\boldsymbol{\theta}$$.
 
 From the derivation above, we see that it is now possible to apply the Monte Carlo estimator to approximate the gradient
 
@@ -178,7 +215,7 @@ $$
 
 Note that, $$f(g_{\theta}(\hat{\epsilon}_{n}))$$ is a composite function, therefore its gradient can be easily obtained by applying the [chain rule](https://en.wikipedia.org/wiki/Chain_rule).
 
-**Application to the ELBO.** Let's apply the pathwise estimator to our original problem: estimating the gradient of the ELBO. Recall that in variational inference we are interested in estimating the posterior over the latent variable $$z$$ given $$x$$ (observed variable), that is $$p(z \vert x)$$. I have used univariate random variables which are scalars (no bold notation) but the same treatment can be extended to the multivariate case. For simplicity, I assume that the variational distribution $$q_{\theta}(z)$$ is a univariate Gaussian $$\mathcal{N}(z \vert \mu, \sigma)$$ and that we are interested in finding the parameters of this Gaussian $$\boldsymbol{\theta}= \{\mu, \sigma\}$$. In a similar way the estimator can be adapted to many other continuous univariate distributions such as Gamma, Beta, von Mises, and Student. We need a valid path and a base distribution, obvious choices are the *location-scale* transform and the *standard* Gaussian
+**The pathwise estimator of the ELBO.** Let's apply the pathwise estimator to our original problem: estimating the gradient of the ELBO. Recall that in variational inference we are interested in estimating the posterior over the latent variable $$z$$ given $$x$$ (observed variable), that is $$p(z \vert x)$$. I have used univariate random variables which are scalars (no bold notation) but the same treatment can be extended to the multivariate case. For simplicity, I assume that the variational distribution $$q_{\theta}(z)$$ is a univariate Gaussian $$\mathcal{N}(z \vert \mu, \sigma)$$ and that we are interested in finding the parameters of this Gaussian $$\boldsymbol{\theta}= \{\mu, \sigma\}$$. In a similar way the estimator can be adapted to many other continuous univariate distributions such as Gamma, Beta, von Mises, and Student. We need a valid path and a base distribution, obvious choices are the *location-scale* transform and the *standard* Gaussian
 
 $$
 z = g_{\theta}(\epsilon) = \mu + \sigma \epsilon
@@ -232,7 +269,6 @@ where I have just applied the [definition of variance](https://en.wikipedia.org/
 **Variance of the pathwise estimator.** The variance of the pathwise estimator is bounded by  the  squared  Lipschitz constant of the cost function (see Mohamed et al., 2019). Importantly, the bounds are independent of the dimensionality of the parameter space and we can get low-variance gradient estimates in the high-dimensional setting. Differently from the score function case, here we are able to directly differentiate through the cost function itself. Therefore, additional terms play no role in the variance of the pathwise estimator, since only the path influencing the parameters is included in the gradient.
 
 
-
 **Efficiency.** Here, the term "efficiency" means computationally efficiency. The first thing to notice is that variance is directly connected to efficiency, since estimators with high variance require more samples to better approximate the gradient, as a consequence of the [law of the large numbers](law of large numbers). A recent analysis has been provided by Kucukelbir et al. (2017), who found that the score function estimator can require up to two orders of magnitude more samples to arrive at the same variance as a pathwise estimator. Intuitively, the variance increases with the number of terms to be estimated via Monte Carlo methods. This is why exact integration is desirable wherever possible, as it reduces the number of those terms.
 
 
@@ -244,8 +280,10 @@ Conclusion
 Resources
 ------------
 
-- [Shakir's blog](http://blog.shakirm.com) in particular [[link-1]](http://blog.shakirm.com/2015/11/machine-learning-trick-of-the-day-5-log-derivative-trick/) [[link-2]](http://blog.shakirm.com/2015/10/machine-learning-trick-of-the-day-4-reparameterisation-tricks/)
-- [Yuge's blog](https://yugeten.github.io/) in particular [[link]](https://yugeten.github.io/posts/2020/06/elbo/)
+- [Shakir Mohamed's blog](http://blog.shakirm.com) in particular [[link-1]](http://blog.shakirm.com/2015/11/machine-learning-trick-of-the-day-5-log-derivative-trick/) and [[link-2]](http://blog.shakirm.com/2015/10/machine-learning-trick-of-the-day-4-reparameterisation-tricks/)
+- Shakir Mohamed's tutorials on variational inference, e.g. [[PDF-1]](http://shakirm.com/papers/VITutorial.pdf) and [[PDF-2]](http://shakirm.com/slides/MLSS2018-Madrid-ProbThinking.pdf)
+- Deisenroth's slides [[PDF]](https://deisenroth.cc/teaching/2018-19/probabilistic-inference/variational-inference.pdf)
+- [Yuge Shi's blog](https://yugeten.github.io/) in particular [[link]](https://yugeten.github.io/posts/2020/06/elbo/)
 - *"Pattern Recognition and Machine Learning"*, Chapter 10, C. Bishop
 
 References
