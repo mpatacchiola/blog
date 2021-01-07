@@ -119,7 +119,7 @@ $$(2.4 \rightarrow 2.5)$$ After rearranging the terms we notice that it is possi
 
 $$(2.5 \rightarrow 2.6)$$ The new form of the integral corresponds to a proper expectation, therefore we can rewrite in the equivalent form.
 
-**The score function estimator of the ELBO.** Let's apply the score function estimator to our original problem: finding the gradient of the ELBO.
+**The score function estimator of the ELBO.** Applying the score function estimator to the ELBO has been known as [Black Box Variational Inference (BBVI)](https://arxiv.org/abs/1401.0118). The derivation for this case follows the generic derivation given above with some minor differences:
 
 $$
 \begin{align}
@@ -137,7 +137,7 @@ $$
 
 $$(3.1)$$ To avoid cluttering I used $$f_{\theta}(z)$$ to represent the cost function (the quantity inside the brackets). Note that, in our particular case $$f_{\theta}(z)$$ depends on $$\theta$$ the variational parameters, since it contains the variational distribution $$q_{\theta}(z)$$.
 
-$$(3.1 \rightarrow 3.2)$$ Applying the definition of expectation to get the integral and moving the gradient using Laplace's rule.
+$$(3.1 \rightarrow 3.2)$$ Applying the definition of expectation to get the integral and moving the gradient using Leibniz's rule.
 
 $$(3.2 \rightarrow 3.3)$$ Unlike Equation $$(2.2)$$ in the general derivation, here it is not possible to directly apply the log-derivative trick because both $$f_{\theta}(z)$$ and $$q_{\theta}(z)$$ are functions of the target parameters $$\theta$$. However, it is possible to use the [product rule](https://en.wikipedia.org/wiki/Product_rule) of derivatives to split the gradient.
 
@@ -170,30 +170,44 @@ In the previous section we noted that the score function estimator has a large v
 **Sampling path (or sampling process).** In continuous probability distributions samples can be drawn directly and indirectly as
 
 $$
-\hat{x} \sim p_{\theta}(x) \quad \text{and} \quad \hat{x} = g_{\theta}(\hat{\epsilon}) \quad \hat{\epsilon} \sim p(\epsilon).
+\hat{x} \sim p_{\theta}(x) \quad \text{and} \quad \hat{x} = t_{\theta}(\hat{\epsilon}) \quad \hat{\epsilon} \sim p(\epsilon).
 $$
 
-The indirect approach is also known as the *sampling path* or *sampling process* and it consists of first picking an intermediate sample $$\hat{\epsilon}$$ from a known distribution $$p(\epsilon)$$, which is independent from $$\boldsymbol{\theta}$$, and then transform the intermediate sample through a deterministic path $$g_{\theta}(\hat{\epsilon})$$ to get $$\hat{x}$$. We will refer to the intermediate distribution $$p(\epsilon)$$ as the *base distribution*, and to the function $$g_{\theta}(\hat{\epsilon})$$ as the *sampling path*.
+The indirect approach is also known as the *sampling path* or *sampling process* and it consists of first picking an intermediate sample $$\hat{\epsilon}$$ from a known distribution $$p(\epsilon)$$, which is independent from $$\boldsymbol{\theta}$$, and then transform the intermediate sample through a deterministic path $$t_{\theta}(\hat{\epsilon})$$ to get $$\hat{x}$$. We will refer to the intermediate distribution $$p(\epsilon)$$ as the *base distribution*, and to the function $$t_{\theta}(\hat{\epsilon})$$ as the *sampling path*.
+Let's see a practical example. For simplicity, I assume that the distribution we want to approximate $$q_{\theta}(x)$$ is a univariate Gaussian $$\mathcal{N}(x \vert \mu, \sigma)$$ and that we are interested in finding the parameters of this Gaussian $$\boldsymbol{\theta}= \{\mu, \sigma\}$$. In a similar way the estimator can be adapted to many other continuous univariate distributions such as Gamma, Beta, von Mises, and Student. We need a valid path and a base distribution, obvious choices are the *location-scale* transform and the *standard* Gaussian
 
+$$
+x = t_{\theta}(\epsilon) = \mu + \sigma \epsilon
+\quad \text{and} \quad
+\mathcal{N}(\epsilon \vert 0, 1).
+$$
+
+Note that, this path is reversible, meaning that we can get  $$\epsilon \rightarrow x$$ through $$t_{\theta}$$ and $$x \rightarrow \epsilon$$ through the inverse path $$t_{\theta}^{-1}$$ as follows
+
+$$
+\epsilon = t_{\theta}^{-1}(x) = \frac{x-\mu}{\sigma}.
+$$
 
 **Expectation via LOTUS.** We need to reconcile sampling paths with the formalism of our main objective that is, estimating an expected value given the measure $$p_{\theta}(x)$$ and the cost function $$f(x)$$. Comparing our target expectation with the expectation derived from the sampling path, we get
 
 $$
-\mathbb{E}_{p_{\theta}(x)}[f(x)] \quad \text{and} \quad \mathbb{E}_{p(\epsilon)}[f(g_{\theta}(\epsilon))].
+\mathbb{E}_{p_{\theta}(x)}[f(x)] \quad \text{and} \quad \mathbb{E}_{p(\epsilon)}[f(t_{\theta}(\epsilon))].
 $$
 
-The question is: are those expectations equivalent? To answer this question we invoke the *law of the unconscious statistician* or [LOTUS](https://en.wikipedia.org/wiki/Law_of_the_unconscious_statistician), which states that we can compute the expectation of a function of a random variable (in our case the cost function $$f$$ ) without the need of knowing its distribution (in our case the measure $$p_{\theta}$$) whenever we use a valid sampling path and a base distribution. In other words, we can replace the original expectation with the expectation over the base distribution $$p(\epsilon)$$ using the transformation $$g_{\theta}(\epsilon)$$. Therefore, LOTUS implies that the two expectations are equivalent.
+The question is: are those expectations equivalent? To answer this question we invoke the *law of the unconscious statistician* or [LOTUS](https://en.wikipedia.org/wiki/Law_of_the_unconscious_statistician), which states that we can compute the expectation of a function of a random variable (in our case the cost function $$f$$ ) without the need of knowing its distribution (in our case the measure $$p_{\theta}$$) whenever we use a valid sampling path and a base distribution. In other words, we can replace the original expectation with the expectation over the base distribution $$p(\epsilon)$$ using the transformation $$t_{\theta}(\epsilon)$$. Therefore, LOTUS implies that the two expectations are equivalent.
 
 
-**Derivation of the estimator.** We can exploit sampling paths and LOTUS to derive the pathwise estimator. All we need is a differentiable sampling path $$g_{\theta}(\epsilon)$$ and a base distribution $$p(\epsilon)$$. The derivation goes like this:
+**Derivation of the estimator.** We can exploit sampling paths and LOTUS to derive the pathwise estimator. All we need is a differentiable sampling path $$t_{\theta}(\epsilon)$$ and a base distribution $$p(\epsilon)$$. The derivation goes like this:
 
 
 $$
 \begin{align} 
 \nabla_\theta \mathbb{E}_{p_{\theta}}[f(x)]
-&= \nabla_\theta \mathbb{E}_{p(\epsilon)}[f(g_{\theta}(\epsilon))] &\text{(4.1)}\\
-&= \nabla_\theta \int p(\epsilon) f(g_{\theta}(\epsilon)) d\epsilon &\text{(4.2)}\\
-&= \int p(\epsilon) \nabla_\theta f(g_{\theta}(\epsilon)) d\epsilon &\text{(4.3)}\\
+&= \nabla_\theta \mathbb{E}_{p(\epsilon)}[f(t_{\theta}(\epsilon))] &\text{(4.1)}\\
+&= \nabla_\theta \int p(\epsilon) f(t_{\theta}(\epsilon)) d\epsilon &\text{(4.2)}\\
+&= \int p(\epsilon) \nabla_\theta f(t_{\theta}(\epsilon)) d\epsilon &\text{(4.3)}\\
+&= \int p(\epsilon) \nabla_x f(x) \nabla_\theta t_{\theta}(\epsilon) d\epsilon &\text{(4.4)}\\
+&= \mathbb{E}_{p(\epsilon)}[\nabla_\theta t_{\theta}(\epsilon) \underbrace{\nabla_x f(x)}_{\nabla \text{cost}}] &\text{(4.5)}\\
 \end{align}
 $$
 
@@ -201,44 +215,55 @@ $$(4.1)$$ Applying LOTUS replacing the original expectation.
 
 $$(4.1 \rightarrow 4.2)$$ Rewriting in integral form by applying the definition of expectation.
 
-$$(4.2 \rightarrow 4.3)$$ We can safely move the gradient inside the integral, this keeps intact the distribution $$p(\epsilon)$$ which is independent from $$\boldsymbol{\theta}$$.
+$$(4.2 \rightarrow 4.3)$$ Moving the gradient inside the integral, this keeps intact the distribution $$p(\epsilon)$$ which is independent from $$\boldsymbol{\theta}$$.
 
-From the derivation above, we see that it is now possible to apply the Monte Carlo estimator to approximate the gradient
+$$(4.3 \rightarrow 4.4)$$ Applying the [chain rule](https://en.wikipedia.org/wiki/Chain_rule) to unpack the gradient of the composite function.
+
+$$(4.4 \rightarrow 4.5)$$ Moving the gradient inside the expectation, reorganizing the terms, and switching back to the expectation form. Note that, unlike the derivation of the score estimator we did not need to apply the log-derivative trick.
+
+$$(4.5)$$ It is now possible to apply the Monte Carlo estimator to approximate the gradient
 
 $$
 \nabla_\theta \mathbb{E}_{p_{\theta}}[f(x)]
 \approx 
-\frac{1}{N} \sum_{n=1}^{N} \nabla_\theta f(g_{\theta}(\hat{\epsilon}_{n}))
+\frac{1}{N} \sum_{n=1}^{N} \nabla_\theta t_{\theta}(\hat{\epsilon}_n) \nabla_x f(x_n)
 \quad \text{with} \quad 
-\hat{\epsilon}_{n} \sim p(\epsilon).
-$$
-
-Note that, $$f(g_{\theta}(\hat{\epsilon}_{n}))$$ is a composite function, therefore its gradient can be easily obtained by applying the [chain rule](https://en.wikipedia.org/wiki/Chain_rule).
-
-**The pathwise estimator of the ELBO.** Let's apply the pathwise estimator to our original problem: estimating the gradient of the ELBO. Recall that in variational inference we are interested in estimating the posterior over the latent variable $$z$$ given $$x$$ (observed variable), that is $$p(z \vert x)$$. I have used univariate random variables which are scalars (no bold notation) but the same treatment can be extended to the multivariate case. For simplicity, I assume that the variational distribution $$q_{\theta}(z)$$ is a univariate Gaussian $$\mathcal{N}(z \vert \mu, \sigma)$$ and that we are interested in finding the parameters of this Gaussian $$\boldsymbol{\theta}= \{\mu, \sigma\}$$. In a similar way the estimator can be adapted to many other continuous univariate distributions such as Gamma, Beta, von Mises, and Student. We need a valid path and a base distribution, obvious choices are the *location-scale* transform and the *standard* Gaussian
-
-$$
-z = g_{\theta}(\epsilon) = \mu + \sigma \epsilon
+\hat{\epsilon}_{n} \sim p(\epsilon)
 \quad \text{and} \quad
-\mathcal{N}(\epsilon \vert 0, 1).
-$$
-
-Note that, this path is reversible, meaning that we can get  $$\epsilon \rightarrow z$$ through $$g_{\theta}$$ and $$z \rightarrow \epsilon$$ through the inverse path $$g_{\theta}^{-1}$$ as follows
-
-$$
-\epsilon = g_{\theta}^{-1}(z) = \frac{z-\mu}{\sigma}.
+x_n = t_{\theta}(\hat{\epsilon}_n).
 $$
 
 
-Under this reparameterization we can rewrite the ELBO as
+It is important to notice that unlike the score function estimator, here we are taking the gradient (or derivative) of the cost function, therefore the cost must be differentiable (no black-box allowed).
+
+**The pathwise estimator of the ELBO.** Let's apply the pathwise estimator to our original problem: estimating the gradient of the ELBO.
 
 $$
-\mathbb{E}_{q_{\theta}(x)} \bigg[ \log \frac{p(x, z)}{q_{\theta}(z)} \bigg]
-=
-\mathbb{E}_{p(\epsilon)} \bigg[ \log \frac{p(x, g_{\theta}(\epsilon))}{q_{\theta}(g_{\theta}(\epsilon))} \bigg].
+\begin{align} 
+\nabla_\theta \text{ELBO}
+&= \nabla_\theta \mathbb{E}_{q_{\theta}(z)} \big[ \log p(x, z) -\log q_{\theta}(z) \big] = \nabla_\theta \mathbb{E}_{q_{\theta}(z)} \big[ f_{\theta}(z) \big]&\text{(5.1)}\\
+&= \nabla_\theta \mathbb{E}_{p(\epsilon)} \big[ f_{\theta}(t_{\theta}(\epsilon)) \big] = \nabla_\theta \int p(\epsilon) f_{\theta}(t_{\theta}(\epsilon)) d\epsilon &\text{(5.2)}\\
+&= \int p(\epsilon) \nabla_\theta f_{\theta}(\epsilon) d\epsilon  =  \mathbb{E}_{p(\epsilon)} \big[ \nabla_\theta f_{\theta}(t_{\theta}(\epsilon)) \big] &\text{(5.3)}\\
+&= \mathbb{E}_{p(\epsilon)} \big[ \nabla_\theta \log p(x, t_{\theta}(\epsilon)) - \nabla_\theta \log q_{\theta}(t_{\theta}(\epsilon)) \big] &\text{(5.4)}\\
+&= \mathbb{E}_{p(\epsilon)} \big[ \nabla_z \log p(x, z) \nabla_\theta t_{\theta}(\epsilon) - \nabla_z \log q_{\theta}(z) \nabla_\theta t_{\theta}(\epsilon) \big] &\text{(5.5)}\\
+&= \mathbb{E}_{p(\epsilon)} \big[ \nabla_\theta t_{\theta}(\epsilon) \underbrace{\nabla_z \big( \log p(x, z) - \log q_{\theta}(z) \big)}_{\nabla \text{cost}} \big] &\text{(5.6)}\\
+\end{align}
 $$
 
-Estimating the gradient of the ELBO is now feasible, since the gradient can be moved inside the brackets as explained in Equation (3) and the expression is fully differentiable w.r.t. the parameters $$\boldsymbol{\theta}$$.
+$$(5.1)$$ To keep the notation uncluttered I used $$f_{\theta}(z)$$ to replace the ELBO terms.
+
+$$(5.1 \rightarrow 5.2)$$ Applying the reparameterization using $$p(\epsilon)$$ as base function and $$z=t(\epsilon)$$ as transformation.
+
+$$(5.2 \rightarrow 5.3)$$ It is possible to move the gradient inside the integral. Since $$p(\epsilon)$$ does not depend on $$\theta$$ it is possible to avoid the integration of this term, leading to a proper expectation.
+
+$$(5.3 \rightarrow 5.4)$$ Expanding $$f_{\theta}(t_{\theta}(\epsilon))$$ back to its original form. We also need to replace all the instances of $$z$$ with 
+the alternative form $$t_{\theta}(\epsilon)$$.
+
+$$(5.4 \rightarrow 5.5)$$ Applying the chain rule, notice that this is a gradient over a composition of three functions $$log(p(t(\cdot)))$$ which is unrolled by multiplying the gradients of the three functions.
+
+$$(5.5 \rightarrow 5.6)$$ Collecting the terms.
+
+$$(5.6)$$ The final form of the pathwise estimator of the ELBO is pretty similar to the generic form we have found before. Note that, both the marginal distribution and the variational distribution need to be differentiable.
 
 Comparing estimators
 ---------------------
@@ -282,9 +307,12 @@ Resources
 
 - [Shakir Mohamed's blog](http://blog.shakirm.com) in particular [[link-1]](http://blog.shakirm.com/2015/11/machine-learning-trick-of-the-day-5-log-derivative-trick/) and [[link-2]](http://blog.shakirm.com/2015/10/machine-learning-trick-of-the-day-4-reparameterisation-tricks/)
 - Shakir Mohamed's tutorials on variational inference, e.g. [[PDF-1]](http://shakirm.com/papers/VITutorial.pdf) and [[PDF-2]](http://shakirm.com/slides/MLSS2018-Madrid-ProbThinking.pdf)
-- Deisenroth's slides [[PDF]](https://deisenroth.cc/teaching/2018-19/probabilistic-inference/variational-inference.pdf)
+- [Marc Deisenroth's slides](https://deisenroth.cc/teaching/) in particular [[PDF]](https://deisenroth.cc/teaching/2018-19/probabilistic-inference/variational-inference.pdf)
 - [Yuge Shi's blog](https://yugeten.github.io/) in particular [[link]](https://yugeten.github.io/posts/2020/06/elbo/)
+- Yarin Gal's thesis [[PDF]](http://mlg.eng.cam.ac.uk/yarin/thesis/thesis.pdf)
+- NeurIPS 2016 tutorial on variational inference [[PDF]](https://media.nips.cc/Conferences/2016/Slides/6199-Slides.pdf)
 - *"Pattern Recognition and Machine Learning"*, Chapter 10, C. Bishop
+
 
 References
 -----------
