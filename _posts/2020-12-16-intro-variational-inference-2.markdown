@@ -1,6 +1,6 @@
 ---
 layout: post
-title:  "Variational inference: the gradient of the ELBO"
+title:  "Variational inference: estimating the gradient of the ELBO"
 date:   2020-12-16 08:00:00 +0000
 description: .
 author: Massimiliano Patacchiola
@@ -9,7 +9,7 @@ comments: false
 published: false
 ---
 
-This is the second post of the series on variational inference. In the previous post I have introduced the variational framework, and the three main characters at play: the evidence, the Kullback-Leibler (KL) divergence, and the Evidence Lower BOund (ELBO). I have showed how the ELBO can be considered as a surrogate objective for finding the posterior distribution $$p(\mathbf{z} \vert \mathbf{x})$$ when the evidence $$p(\mathbf{x})$$ is intractable. By maximizing the ELBO we can find the parameters $$\boldsymbol{\theta}$$ of a variational distribution $$q_{\theta}(\mathbf{z})$$ that better fit the posterior. However, I did not mention how the ELBO itself can by maximized in practice. One approach is to estimate the gradient of the ELBO with respect to $$\boldsymbol{\theta}$$ and then move in the direction of steepest ascent. Depending on the particular problem at hand and the choice of variational distribution, this could be challenging. 
+This is the second post of the series on variational inference. In the previous post I have introduced the variational framework, and the three main characters at play: the evidence, the Kullback-Leibler (KL) divergence, and the Evidence Lower BOund (ELBO). I have showed how the ELBO can be considered as a surrogate objective for finding the posterior distribution $$p(z \vert x)$$ when the evidence $$p(x)$$ is intractable. By maximizing the ELBO we can find the parameters $$\theta$$ of a variational distribution $$q_{\theta}(z)$$ that better fit the posterior. However, I did not mention how the ELBO itself can by maximized in practice. One approach is to estimate the gradient of the ELBO with respect to $$\theta$$ and then move in the direction of steepest ascent. Depending on the particular problem at hand and the choice of variational distribution, this could be challenging. 
 
 In this post I will focus on this particular problem, showing how we can estimate the gradients of the ELBO by using two techniques: the score function estimator (a.k.a. REINFORCE) and the pathwise estimator (a.k.a. reparametrization trick).
 
@@ -19,7 +19,7 @@ Definition of the problem
 
 We are interested in a system with two components: a stochastic component named *measure* and a *cost function*, with training consisting of two phases: a simulation phase and an optimisation phase. The entire system is stochastic since one of the element is stochastic. However, in many cases the system is said to be *doubly-stochastic* if for instance we are using stochastic gradient descent in the optimization component. In a doubly-stochastic system one source of randomness arises from the simulation phase (e.g. using Monte Carlo estimators) and a second source arises in the optimization phase (e.g. sampling datapoints in the mini-batch gradient descent).
 
-Let's try now to better formalize our setting. Consider a generic density function $$p_{\theta}(x)$$ parameterized by a vector $$\boldsymbol{\theta}$$, representing the stochastic component (measure), and a function $$f(x)$$, representing the *cost function*. We assume $$p_{\theta}(x)$$ to be differentiable, but the cost function $$f(x)$$ is not necessarily differentiable, for instance it could be discrete or a black-box (e.g. only the outputs are given). Since we are dealing with expectations (integrals) we can use Monte Carlo to get an unbiased approximation of the expected value. Monte Carlo numerically evaluates the integral by drawing samples $$x_1, \dots, x_N$$ from the distribution $$p_{\theta}(x)$$ and computing the average of the function evaluated at these points. In our case, the Monte Carlo approximation of $$\mathbb{E}_{p_{\theta}}[f(x)]$$ corresponds to
+Let's try now to better formalize our setting. Consider a generic density function $$p_{\theta}(x)$$ parameterized by a vector $$\theta$$, representing the stochastic component (measure), and a function $$f(x)$$, representing the *cost function*. We assume $$p_{\theta}(x)$$ to be differentiable, but the cost function $$f(x)$$ is not necessarily differentiable, for instance it could be discrete or a black-box (e.g. only the outputs are given). Since we are dealing with expectations (integrals) we can use Monte Carlo to get an unbiased approximation of the expected value. Monte Carlo numerically evaluates the integral by drawing samples $$x_1, \dots, x_N$$ from the distribution $$p_{\theta}(x)$$ and computing the average of the function evaluated at these points. In our case, the Monte Carlo approximation of $$\mathbb{E}_{p_{\theta}}[f(x)]$$ corresponds to
 
 $$
 \mathbb{E}_{p_{\theta}}[f(x)] \approx \frac{1}{N} \sum_{n=1}^{N} f(\hat{x}_{n}) \quad \text{with} \quad \hat{x}_{n} \sim p_{\theta}(x), 
@@ -41,7 +41,7 @@ When we try to get the gradient of the ELBO we incur in the same issue, since th
 
 $$
 \nabla_{\theta} \text{ELBO}(q)
-= \nabla_{\theta} \mathbb{E}_{q} \bigg[ \log \frac{p(\boldsymbol{x}, \boldsymbol{z})}{q(\boldsymbol{z})} \bigg].
+= \nabla_{\theta} \mathbb{E}_{q} \bigg[ \log \frac{p(x, z)}{q(z)} \bigg].
 $$
 
 Note that, the gradient of the ELBO can also be expressed in terms of measure and cost function: the variational distribution $$q$$ represents the measure and the log-ratio inside the brackets the cost function.
@@ -82,7 +82,7 @@ $$
 = \nabla_{\theta} 1 = 0.
 $$
 
-This property will be helpful when we derive the score function estimator of the ELBO; it is also fundamental in the context of [control variates](https://en.wikipedia.org/wiki/Control_variates), and it has been exploited by [Roeder et al. (2017)](https://arxiv.org/abs/1703.09194) for variance reduction. Armed with the log-derivative trick, we are ready to derive the score function estimator.
+This property will be helpful when we derive the two gradient estimators of the ELBO; it is also fundamental in the context of [control variates](https://en.wikipedia.org/wiki/Control_variates), and it has been exploited by [Roeder et al. (2017)](https://arxiv.org/abs/1703.09194) for variance reduction. Armed with the log-derivative trick, we are ready to derive the score function estimator.
 
 
 **Derivation of the estimator.** We want to overcome the problem described in the previous section, where we saw that the gradient of an expectation cannot be approximated via Monte Carlo. Our goal here will be to exploit the log-derivative trick to bypass this issue. In particular, we want to reach a friendly form of the integral and turn it into a proper expectation. Let's break it down
@@ -163,7 +163,7 @@ $$(3.8)$$ The expectation can be estimated using Monte Carlo if two requisites a
 The pathwise gradient estimator
 -------------------------------
 
-Another way to estimate the gradient consists of differentiating the cost function $$f(x)$$ through the random variable $$x$$, which encodes the pathway from the target parameters $$\boldsymbol{\theta}$$. This approach is the one used in the pathwise gradient estimator. The pathwise estimator also appears under several names, such as process derivative, pathwise derivative, and more recently as the reparameterisation trick. A well know application of the reparameterization trick is in the context of Variational Auto-Encoders (VAEs), where is used for backpropagating through a stochastic hidden layer.
+Another way to estimate the gradient consists of differentiating the cost function $$f(x)$$ through the random variable $$x$$, which encodes the pathway from the target parameters $$\theta$$. This approach is the one used in the pathwise gradient estimator. The pathwise estimator also appears under several names, such as process derivative, pathwise derivative, and more recently as the reparameterisation trick. A well know application of the reparameterization trick is in the context of Variational Auto-Encoders (VAEs), where is used for backpropagating through a stochastic hidden layer.
 
 In the previous section we noted that the score function estimator has a large variance, meaning that the resulting signal does a poor job at finding the parameters we are interested in. The pathwise estimator solve this issue, since it has low variance, but on the other hand it requires a differentiable cost function and the possibility to reparameterize the  measure $$p_{\theta}(x)$$. The idea behind the pathwise estimator is to exploit the structural property of the system. In particular, here we care about the sequence of transformations that are applied to the stochastic component affecting the overall objective. Those transformations pass through the measure and into the cost function.
 
@@ -173,8 +173,8 @@ $$
 \hat{x} \sim p_{\theta}(x) \quad \text{and} \quad \hat{x} = t_{\theta}(\hat{\epsilon}) \quad \hat{\epsilon} \sim p(\epsilon).
 $$
 
-The indirect approach is also known as the *sampling path* or *sampling process* and it consists of first picking an intermediate sample $$\hat{\epsilon}$$ from a known distribution $$p(\epsilon)$$, which is independent from $$\boldsymbol{\theta}$$, and then transform the intermediate sample through a deterministic path $$t_{\theta}(\hat{\epsilon})$$ to get $$\hat{x}$$. We will refer to the intermediate distribution $$p(\epsilon)$$ as the *base distribution*, and to the function $$t_{\theta}(\hat{\epsilon})$$ as the *sampling path*.
-Let's see a practical example. For simplicity, I assume that the distribution we want to approximate $$q_{\theta}(x)$$ is a univariate Gaussian $$\mathcal{N}(x \vert \mu, \sigma)$$ and that we are interested in finding the parameters of this Gaussian $$\boldsymbol{\theta}= \{\mu, \sigma\}$$. In a similar way the estimator can be adapted to many other continuous univariate distributions such as Gamma, Beta, von Mises, and Student. We need a valid path and a base distribution, obvious choices are the *location-scale* transform and the *standard* Gaussian
+The indirect approach is also known as the *sampling path* or *sampling process* and it consists of first picking an intermediate sample $$\hat{\epsilon}$$ from a known distribution $$p(\epsilon)$$, which is independent from $$\theta$$, and then transform the intermediate sample through a deterministic path $$t_{\theta}(\hat{\epsilon})$$ to get $$\hat{x}$$. We will refer to the intermediate distribution $$p(\epsilon)$$ as the *base distribution*, and to the function $$t_{\theta}(\hat{\epsilon})$$ as the *sampling path*.
+Let's see a practical example. For simplicity, I assume that the distribution we want to approximate $$q_{\theta}(x)$$ is a univariate Gaussian $$\mathcal{N}(x \vert \mu, \sigma)$$ and that we are interested in finding the parameters of this Gaussian $$\theta= \{\mu, \sigma\}$$. In a similar way the estimator can be adapted to many other continuous univariate distributions such as Gamma, Beta, von Mises, and Student. We need a valid path and a base distribution, obvious choices are the *location-scale* transform and the *standard* Gaussian
 
 $$
 x = t_{\theta}(\epsilon) = \mu + \sigma \epsilon
@@ -207,7 +207,7 @@ $$
 &= \nabla_\theta \int p(\epsilon) f(t_{\theta}(\epsilon)) d\epsilon &\text{(4.2)}\\
 &= \int p(\epsilon) \nabla_\theta f(t_{\theta}(\epsilon)) d\epsilon &\text{(4.3)}\\
 &= \int p(\epsilon) \nabla_x f(x) \nabla_\theta t_{\theta}(\epsilon) d\epsilon &\text{(4.4)}\\
-&= \mathbb{E}_{p(\epsilon)}[\nabla_\theta t_{\theta}(\epsilon) \underbrace{\nabla_x f(x)}_{\nabla \text{cost}}] &\text{(4.5)}\\
+&= \mathbb{E}_{p(\epsilon)}[\underbrace{\nabla_\theta t_{\theta}(\epsilon)}_{\nabla \text{path}} \underbrace{\nabla_x f(x)}_{\nabla \text{cost}}] &\text{(4.5)}\\
 \end{align}
 $$
 
@@ -215,7 +215,7 @@ $$(4.1)$$ Applying LOTUS replacing the original expectation.
 
 $$(4.1 \rightarrow 4.2)$$ Rewriting in integral form by applying the definition of expectation.
 
-$$(4.2 \rightarrow 4.3)$$ Moving the gradient inside the integral, this keeps intact the distribution $$p(\epsilon)$$ which is independent from $$\boldsymbol{\theta}$$.
+$$(4.2 \rightarrow 4.3)$$ Moving the gradient inside the integral, this keeps intact the distribution $$p(\epsilon)$$ which is independent from $$\theta$$.
 
 $$(4.3 \rightarrow 4.4)$$ Applying the [chain rule](https://en.wikipedia.org/wiki/Chain_rule) to unpack the gradient of the composite function.
 
@@ -234,36 +234,45 @@ x_n = t_{\theta}(\hat{\epsilon}_n).
 $$
 
 
-It is important to notice that unlike the score function estimator, here we are taking the gradient (or derivative) of the cost function, therefore the cost must be differentiable (no black-box allowed).
+It is important to notice that unlike the score function estimator, here we are taking the gradient (or derivative) of the cost function, therefore the cost must always be differentiable (no black-box allowed).
 
 **The pathwise estimator of the ELBO.** Let's apply the pathwise estimator to our original problem: estimating the gradient of the ELBO.
 
 $$
 \begin{align} 
 \nabla_\theta \text{ELBO}
-&= \nabla_\theta \mathbb{E}_{q_{\theta}(z)} \big[ \log p(x, z) -\log q_{\theta}(z) \big] = \nabla_\theta \mathbb{E}_{q_{\theta}(z)} \big[ f_{\theta}(z) \big]&\text{(5.1)}\\
-&= \nabla_\theta \mathbb{E}_{p(\epsilon)} \big[ f_{\theta}(t_{\theta}(\epsilon)) \big] = \nabla_\theta \int p(\epsilon) f_{\theta}(t_{\theta}(\epsilon)) d\epsilon &\text{(5.2)}\\
-&= \int p(\epsilon) \nabla_\theta f_{\theta}(\epsilon) d\epsilon  =  \mathbb{E}_{p(\epsilon)} \big[ \nabla_\theta f_{\theta}(t_{\theta}(\epsilon)) \big] &\text{(5.3)}\\
-&= \mathbb{E}_{p(\epsilon)} \big[ \nabla_\theta \log p(x, t_{\theta}(\epsilon)) - \nabla_\theta \log q_{\theta}(t_{\theta}(\epsilon)) \big] &\text{(5.4)}\\
+&= \nabla_\theta \mathbb{E}_{q_{\theta}(z)} \big[ \log p(x, z) -\log q_{\theta}(z) \big] &\text{(5.1)}\\
+&= \mathbb{E}_{p(\epsilon)} \big[ \nabla_\theta \log p(x, t_{\theta}(\epsilon)) - \nabla_\theta \log q_{\theta}(t_{\theta}(\epsilon)) \big] &\text{(5.2)}\\
+&= \mathbb{E}_{p(\epsilon)} \big[ \nabla_z \log p(x, z) \nabla_\theta t_{\theta}(\epsilon) - \nabla_z \log q_{\theta}(z) \nabla_\theta t_{\theta}(\epsilon) - \nabla_\theta \log q_{\theta}(t_{\theta}(\epsilon)) \big] &\text{(5.3)}\\
+&= \mathbb{E}_{p(\epsilon)} \big[ \nabla_z \log p(x, z) \nabla_\theta t_{\theta}(\epsilon) - \nabla_z \log q_{\theta}(z) \nabla_\theta t_{\theta}(\epsilon) \big] - \mathbb{E}_{p(\epsilon)} \big[ \nabla_\theta \log q_{\theta}(t_{\theta}(\epsilon)) \big] &\text{(5.4)}\\
 &= \mathbb{E}_{p(\epsilon)} \big[ \nabla_z \log p(x, z) \nabla_\theta t_{\theta}(\epsilon) - \nabla_z \log q_{\theta}(z) \nabla_\theta t_{\theta}(\epsilon) \big] &\text{(5.5)}\\
-&= \mathbb{E}_{p(\epsilon)} \big[ \nabla_\theta t_{\theta}(\epsilon) \underbrace{\nabla_z \big( \log p(x, z) - \log q_{\theta}(z) \big)}_{\nabla \text{cost}} \big] &\text{(5.6)}\\
+&= \mathbb{E}_{p(\epsilon)} \big[ \underbrace{\nabla_{\theta} t_{\theta}(\epsilon)}_{\nabla \text{path}} \underbrace{\nabla_z \big( \log p(x, z) - \log q_{\theta}(z) \big)}_{\nabla \text{cost}} \big] &\text{(5.6)}\\
 \end{align}
 $$
 
-$$(5.1)$$ To keep the notation uncluttered I used $$f_{\theta}(z)$$ to replace the ELBO terms.
+$$(5.1 \rightarrow 5.2)$$ Applying the reparameterization using $$p(\epsilon)$$ as base function and $$z=t(\epsilon)$$ as transformation. It is possible to move the gradient inside the integral since $$p(\epsilon)$$ does not depend on $$\theta$$. As part of the reparameterization, we need to replace all the instances of $$z$$ with the alternative form $$t_{\theta}(\epsilon)$$.
 
-$$(5.1 \rightarrow 5.2)$$ Applying the reparameterization using $$p(\epsilon)$$ as base function and $$z=t(\epsilon)$$ as transformation.
+$$(5.2 \rightarrow 5.3)$$ Applying the chain rule to the two composite functions. Decomposition of the first term is straightforward and just consists of multiplying the derivative of the three functions: the outermost ($$\log$$), the intermediate ($$p$$), and the innermost ($$t$$). Formally we have
 
-$$(5.2 \rightarrow 5.3)$$ It is possible to move the gradient inside the integral. Since $$p(\epsilon)$$ does not depend on $$\theta$$ it is possible to avoid the integration of this term, leading to a proper expectation.
+$$
+\nabla_\theta \log p(x, t_{\theta}(\epsilon))
+= 
+\frac{1}{p(x, z)} \nabla_z p(x, z) \nabla_\theta t_{\theta}(\epsilon)
+=
+\nabla_z \log p(x, z) \nabla_\theta t_{\theta}(\epsilon),
+$$
 
-$$(5.3 \rightarrow 5.4)$$ Expanding $$f_{\theta}(t_{\theta}(\epsilon))$$ back to its original form. We also need to replace all the instances of $$z$$ with 
-the alternative form $$t_{\theta}(\epsilon)$$.
+note that I have used the log-derivative trick to get $$\log p(x, z)$$ from the ratio. The decomposition of $$\nabla_\theta \log q_{\theta}(t_{\theta}(\epsilon))$$ is tricky since the function depends on $$\theta$$ in two ways: (i) through the parameters of the variational distribution $$q_{\theta}$$ and (ii) through the parameters of the transformation $$t_{\theta}$$. In this case we can still apply the chain rule, but we need to account for the [total derivative](https://en.wikipedia.org/wiki/Total_derivative), meaning that we end up with the sum of two terms, the first obtained via the chain rule decomposition (see above) and the second via the derivative of the function itself:
 
-$$(5.4 \rightarrow 5.5)$$ Applying the chain rule, notice that this is a gradient over a composition of three functions $$log(p(t(\cdot)))$$ which is unrolled by multiplying the gradients of the three functions.
+$$
+\nabla_\theta \log q_{\theta}(t_{\theta}(\epsilon)) = \nabla_z \log q_{\theta}(z) \nabla_\theta t_{\theta}(\epsilon) + \nabla_\theta \log q_{\theta}(t_{\theta}(\epsilon))
+$$
 
-$$(5.5 \rightarrow 5.6)$$ Collecting the terms.
+$$(5.3 \rightarrow 5.4)$$ Exploiting the linearity of the expectation to isolate a term.
 
-$$(5.6)$$ The final form of the pathwise estimator of the ELBO is pretty similar to the generic form we have found before. Note that, both the marginal distribution and the variational distribution need to be differentiable.
+$$(5.4 \rightarrow 5.5)$$ The term isolated in the previous step is the score and, as showed before, the expectation of the score is zero. The term can be safely removed. Well, to be honest removing this term is a delicate matter and can have an impact on the variance. In some condition the score term acts as a control variate: a term with zero expectation added to the estimator to reduce variance (see [Roeder et al., 2017](https://arxiv.org/abs/1703.09194)).
+
+$$(5.5 \rightarrow 5.6)$$ Collecting the terms. The final form of the pathwise estimator of the ELBO in $$(5.6)$$ is pretty similar to the generic form we have derived in $$(4.5)$$. Note that, both the marginal distribution and the variational distribution need to be differentiable.
 
 Comparing estimators
 ---------------------
@@ -289,7 +298,7 @@ $$
 \mathbb{E}_{p_{\theta}}[\nabla_\theta \log p_{\theta}(x) f(x)]^{2},
 $$
 
-where I have just applied the [definition of variance](https://en.wikipedia.org/wiki/Variance): the variance of a random variable is equal to the mean of the square of the random variable minus the square of the mean of the random variable. In general, when using the score function estimator we are not really concerned about the cost function $$f(x)$$, which can even be a black-box, but the variance depends on the cost function $$f(x)$$ which is a multiplicative term over the gradient. In other words, since the cost function tipically does not depend on the parameters $$\boldsymbol{\theta}$$ it will not directly affect the estimation of the gradient $$\nabla_\theta \log p_{\theta}(x)$$ but its multiplicative nature will affect the variance. For example, if $$\mathbf{x} \in \mathbb{R}^{D} $$ and the cost function is a sum of those $$D$$ terms, $$f(\mathbf{x}) =\sum f(x_d)$$, then the variance of the  estimator will be of order $$O(D^2)$$. In this case the variance depends quadratically from the dimensionality of the input.
+where I have just applied the [definition of variance](https://en.wikipedia.org/wiki/Variance): the variance of a random variable is equal to the mean of the square of the random variable minus the square of the mean of the random variable. In general, when using the score function estimator we are not really concerned about the cost function $$f(x)$$, which can even be a black-box, but the variance depends on the cost function $$f(x)$$ which is a multiplicative term over the gradient. In other words, since the cost function tipically does not depend on the parameters $$\theta$$ it will not directly affect the estimation of the gradient $$\nabla_\theta \log p_{\theta}(x)$$ but its multiplicative nature will affect the variance. For example, if $$x \in \mathbb{R}^{D} $$ and the cost function is a sum of those $$D$$ terms, $$f(x) =\sum f(x_d)$$, then the variance of the  estimator will be of order $$O(D^2)$$. In this case the variance depends quadratically from the dimensionality of the input.
 
 **Variance of the pathwise estimator.** The variance of the pathwise estimator is bounded by  the  squared  Lipschitz constant of the cost function (see Mohamed et al., 2019). Importantly, the bounds are independent of the dimensionality of the parameter space and we can get low-variance gradient estimates in the high-dimensional setting. Differently from the score function case, here we are able to directly differentiate through the cost function itself. Therefore, additional terms play no role in the variance of the pathwise estimator, since only the path influencing the parameters is included in the gradient.
 
@@ -300,6 +309,7 @@ where I have just applied the [definition of variance](https://en.wikipedia.org/
 Conclusion
 ----------
 
+In this post I have introduced two estimators of the gradient, the score function estimator and the pathwise estimator, showing how they can be applied to our particular problem: estimating the gradient of the ELBO. Which one is better? Difficult to say. The score function estimator is quite flexible and can be used when we do not have access to the cost function (e.g. black-box model) but it has high variance (this problem can be reduced using control variates and Rao-Blackwellization, see [Ranganath et al., 2014](https://arxiv.org/abs/1401.0118)). On the other hand the pathwise estimator has low variance but it cannot be used when the cost function is not differentiable. As usual the right choice is application dependant and requires knowledge of the problem at hand.
 
 
 Resources
@@ -309,6 +319,7 @@ Resources
 - Shakir Mohamed's tutorials on variational inference, e.g. [[PDF-1]](http://shakirm.com/papers/VITutorial.pdf) and [[PDF-2]](http://shakirm.com/slides/MLSS2018-Madrid-ProbThinking.pdf)
 - [Marc Deisenroth's slides](https://deisenroth.cc/teaching/) in particular [[PDF]](https://deisenroth.cc/teaching/2018-19/probabilistic-inference/variational-inference.pdf)
 - [Yuge Shi's blog](https://yugeten.github.io/) in particular [[link]](https://yugeten.github.io/posts/2020/06/elbo/)
+- [Andrew Miller's blog](https://andymiller.github.io/blog/) in particular [[link]](https://andymiller.github.io/2016/12/19/elbo-gradient-estimators.html)
 - Yarin Gal's thesis [[PDF]](http://mlg.eng.cam.ac.uk/yarin/thesis/thesis.pdf)
 - NeurIPS 2016 tutorial on variational inference [[PDF]](https://media.nips.cc/Conferences/2016/Slides/6199-Slides.pdf)
 - *"Pattern Recognition and Machine Learning"*, Chapter 10, C. Bishop
@@ -320,6 +331,8 @@ References
 Kucukelbir, A., Tran, D., Ranganath, R., Gelman, A., & Blei, D. M. (2017). Automatic differentiation variational inference. The Journal of Machine Learning Research, 18(1), 430-474.
 
 Mohamed, S., Rosca, M., Figurnov, M., & Mnih, A. (2019). Monte Carlo gradient estimation in machine learning. arXiv preprint:1906.10652 [[arXiv]](https://arxiv.org/abs/1906.10652)
+
+Ranganath, R., Gerrish, S., & Blei, D. (2014). Black box variational inference. In Artificial intelligence and statistics (pp. 814-822). PMLR. [[arXiv]](https://arxiv.org/abs/1401.0118)
 
 Roeder, G., Wu, Y., & Duvenaud, D. K. (2017). Sticking the landing: Simple, lower-variance gradient estimators for variational inference. In Advances in Neural Information Processing Systems (pp. 6925-6934). [[arXiv]](https://arxiv.org/abs/1703.09194)
 
