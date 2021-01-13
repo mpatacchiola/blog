@@ -46,7 +46,7 @@ Here is the problem: in many cases this integral is intractable. Well, what does
 Variational Bayesian methods
 ----------------------------
 
-We can exploit [variational Bayesian methods](https://en.wikipedia.org/wiki/Variational_Bayesian_methods) to solve our problem. In particular, since the exact estimation of the integral over $$p(\mathbf{x})$$ is intractable we can try approximating the true posterior $$p(\mathbf{z} \vert \mathbf{x})$$ using a *variational distribution* over the latent variables $$q(\mathbf{z})$$. As a shorthand, I will often use just $$p$$ to refer to the true distribution and $$q$$ to refer to the approximated distribution.
+We can exploit [variational Bayesian methods](https://en.wikipedia.org/wiki/Variational_Bayesian_methods) to solve our problem. In particular, since the exact estimation of the integral over $$p(\mathbf{x})$$ is intractable we can try approximating the true posterior $$p(\mathbf{z} \vert \mathbf{x})$$ using a *variational distribution* (sometimes called *guide*) over the latent variables $$q(\mathbf{z})$$. As a shorthand, I will often use just $$p$$ to refer to the true distribution and $$q$$ to refer to the approximated distribution.
 
 
 **The variational distribution.** Let's define a *family of distributions* $$\mathcal{Q}$$ from which we are going to pick the ideal candidate $$q_{\ast} \in \mathcal{Q}$$ that better fits the true distribution $$p$$. Generally, we are going to choose a friendly distribution family, such as Gaussians, to simplify our life. The parameters describing $$q$$ (e.g. mean and standard deviation of the Gaussians) are grouped in a vector $$\boldsymbol{\theta}$$, therefore in practice we are looking for $$\boldsymbol{\theta}_{\ast}$$ the optimal set of parameters of the ideal distribution $$q_{\ast}$$. The parameters of the variational distribution $$\boldsymbol{\theta}$$ and the latent variables $$\mathbf{z}$$ are often grouped together and called *unobserved variables*. The problem now is how to find the best candidate $$q_{\ast}$$. We need a measure of similarity between $$p$$ and $$q$$ that we can use as a metric during our search. The Kullback-Leibler (KL) divergence is what we are looking for.
@@ -87,8 +87,8 @@ $$
 &= \mathbb{E}_{q} \big[ \log q(\boldsymbol{z}) \big] - \mathbb{E}_{q} \big[ \log p(\boldsymbol{z} | \boldsymbol{x}) \big] & \text{(1.5)}\\
 &= \mathbb{E}_{q} \big[ \log q(\boldsymbol{z}) \big] - \mathbb{E}_{q} \bigg[ \log \frac{p(\boldsymbol{x}, \boldsymbol{z}) }{p(\boldsymbol{x})} \bigg] &\text{(1.6)}\\
 &= \mathbb{E}_{q} \big[ \log q(\boldsymbol{z}) \big] - \mathbb{E}_{q} \big[ \log p(\boldsymbol{x}, \boldsymbol{z}) - \log p(\boldsymbol{x}) \big] &\text{(1.7)}\\
-&= \mathbb{E}_{q} \big[ \log q(\boldsymbol{z}) \big] - \mathbb{E}_{q} \big[ \log p(\boldsymbol{x}, \boldsymbol{z}) \big] + \mathbb{E}_{q} \big[ \log p(\boldsymbol{x}) \big] &\text{(1.8)}\\
-&= \mathbb{E}_{q} \big[ \log q(\boldsymbol{z}) \big] - \mathbb{E}_{q} \big[ \log p(\boldsymbol{x}, \boldsymbol{z}) \big] + \underbrace{\log p(\boldsymbol{x})}_{\text{intractable}} &\text{(1.9)}\\
+&= \mathbb{E}_{q} \big[ \log q(\boldsymbol{z}) - \log p(\boldsymbol{x}, \boldsymbol{z}) \big] + \mathbb{E}_{q} \big[ \log p(\boldsymbol{x}) \big] &\text{(1.8)}\\
+&= \mathbb{E}_{q} \big[ \log q(\boldsymbol{z}) - \log p(\boldsymbol{x}, \boldsymbol{z}) \big] + \underbrace{\log p(\boldsymbol{x})}_{\text{intractable}} &\text{(1.9)}\\
 \end{aligned}
 $$
 
@@ -121,8 +121,10 @@ $$(1.6 \rightarrow 1.7)$$ Applying again the rule of logarithms to split the rat
 $$(1.7 \rightarrow 1.8)$$ Applying the rule of expectations (linearity)
 
 $$
-\mathbb{E}[A + B] = \mathbb{E}[A] + \mathbb{E}[B].
+\mathbb{E}[A + B] = \mathbb{E}[A] + \mathbb{E}[B],
 $$
+
+to rearrange the terms, ending up with two different expectations.
 
 $$(1.8 \rightarrow 1.9)$$ There is no expected value for $$\mathbb{E}_{q} \big[ \log p(\boldsymbol{x}) \big]$$ since we are considering an expectation $$\mathbb{E}_{q}$$ over $$q(\boldsymbol{z})$$ and not over $$p(\boldsymbol{x})$$.
 
@@ -136,14 +138,14 @@ Let's go back to $$\text{(1.9)}$$ where we got
 
 $$
 \text{KL} \big( q(\boldsymbol{z}) \vert\vert p(\boldsymbol{z} \vert \boldsymbol{x}) \big)
-= \mathbb{E}_{q} \big[ \log q(\boldsymbol{z}) \big] - \mathbb{E}_{q} \big[ \log p(\boldsymbol{x}, \boldsymbol{z}) \big] + \log p(\boldsymbol{x}).
+= \mathbb{E}_{q} \big[ \log q(\boldsymbol{z}) - \log p(\boldsymbol{x}, \boldsymbol{z}) \big] + \log p(\boldsymbol{x}).
 $$
 
 This decomposition is problematic because we still have two intractable terms $$\text{KL} ( q(\boldsymbol{z}) \vert\vert p(\boldsymbol{z} \vert \boldsymbol{x}) )$$ and $$\log p(\boldsymbol{x})$$.
-However, rearranging those quantities by moving the intractable terms on the same side we get
+However, rearranging those quantities by moving the intractable terms on the same side and switching signs, we get
 
 $$
--\mathbb{E}_{q} \big[ \log q(\boldsymbol{z}) \big] + \mathbb{E}_{q} \big[ \log p(\boldsymbol{x}, \boldsymbol{z}) \big]
+\mathbb{E}_{q} \big[\log p(\boldsymbol{x}, \boldsymbol{z}) - \log q(\boldsymbol{z}) \big]
 = \log p(\boldsymbol{x}) - \text{KL} \big( q(\boldsymbol{z}) || p(\boldsymbol{z} | \boldsymbol{x}) \big).
 $$
 
@@ -151,54 +153,56 @@ Here is the idea: what if we maximize the quantity on the left side? This would 
 
 $$
 \text{ELBO}(q) 
-= -\mathbb{E}_{q} \big[ \log q(\boldsymbol{z}) \big] + \mathbb{E}_{q} \big[ \log p(\boldsymbol{x}, \boldsymbol{z}) \big]
-= \mathbb{E}_{q} \bigg[ \log \frac{p(\boldsymbol{x}, \boldsymbol{z})}{q(\boldsymbol{z})} \bigg].
+= \mathbb{E}_{q} \big[\log p(\boldsymbol{x}, \boldsymbol{z}) - \log q(\boldsymbol{z}) \big]
+= \mathbb{E}_{q} \bigg[ \log \frac{p(\boldsymbol{x}, \boldsymbol{z})}{q(\boldsymbol{z})} \bigg],
 $$
 
-To obtain the last form I have first applied the linearity of the expectation and then the rule of the logarithms to get the ratio.
+where I have used the rule of logarithms to get the ratio in the last step.
 
 **Unpacking the ELBO.** The ELBO is the last trick in our arsenal. The idea is to avoid minimizing the KL divergence by maximizing an alternative quantity which is equivalent up to an added constant. The ELBO is such a quantity. The ELBO is also known as the *variational lower bound* or *negative variational free energy*. Here, we are going to unpack the ELBO until we get a decomposition that is easy to manage:
 
 $$
 \begin{aligned}
-\mathrm{ELBO}(q) 
-&=-\mathbb{E}_{q}[\log q(\boldsymbol{z})]+\mathbb{E}_{q}[\log p(\boldsymbol{z}, \boldsymbol{x})]  &\text{(2.1)}\\
-&=-\mathbb{E}_{q}[\log q(\boldsymbol{z})]+\mathbb{E}_{q}[\log \big( p(\boldsymbol{z}) p(\boldsymbol{x} \vert \boldsymbol{z}) \big) ]  &\text{(2.2)}\\
-&=-\mathbb{E}_{q}[\log q(\boldsymbol{z})]+\mathbb{E}_{q}[\log p(\boldsymbol{z}) + \log p(\boldsymbol{x} \vert \boldsymbol{z}) ]  &\text{(2.3)}\\
-&=-\mathbb{E}_{q}[\log q(\boldsymbol{z})]+\mathbb{E}_{q}[\log p(\boldsymbol{z})]+\mathbb{E}_{q}[\log p(\boldsymbol{x} \mid \boldsymbol{z})]  &\text{(2.4)}\\
-&=\mathbb{E}_{q}[\log p(\boldsymbol{x} \mid \boldsymbol{z})] + \int q(\boldsymbol{z}) \log p(\boldsymbol{z}) d\boldsymbol{z} - \int q(\boldsymbol{z}) \log q(\boldsymbol{z}) d\boldsymbol{z}  &\text{(2.5)}\\
-&=\mathbb{E}_{q}[\log p(\boldsymbol{x} \mid \boldsymbol{z})] + \int q(\boldsymbol{z}) \log p(\boldsymbol{z}) - q(\boldsymbol{z}) \log q(\boldsymbol{z}) d\boldsymbol{z}  &\text{(2.6)}\\
-&=\mathbb{E}_{q}[\log p(\boldsymbol{x} \mid \boldsymbol{z})] + \int q(\boldsymbol{z}) \big( \log p(\boldsymbol{z}) - \log q(\boldsymbol{z}) \big) d\boldsymbol{z}  &\text{(2.7)}\\
-&=\mathbb{E}_{q}[\log p(\boldsymbol{x} \mid \boldsymbol{z})] + \int q(\boldsymbol{z}) \log \frac{p(\boldsymbol{z})}{q(\boldsymbol{z})} d\boldsymbol{z}  &\text{(2.8)}\\
-&=\mathbb{E}_{q}[\log p(\boldsymbol{x} \mid \boldsymbol{z})]- \text{KL}(q(\boldsymbol{z}) \| p(\boldsymbol{z})) &\text{(2.9)}
+\mathrm{ELBO}(q)
+&=\mathbb{E}_{q} \big[\log p(\boldsymbol{x}, \boldsymbol{z}) - \log q(\boldsymbol{z}) \big] &\text{(2.1)}\\
+&=\mathbb{E}_{q}[\log p(\boldsymbol{z}, \boldsymbol{x})] -\mathbb{E}_{q}[\log q(\boldsymbol{z})] &\text{(2.2)}\\
+&=\mathbb{E}_{q}[\log \big( p(\boldsymbol{x} \vert \boldsymbol{z}) p(\boldsymbol{z}) \big) ] -\mathbb{E}_{q}[\log q(\boldsymbol{z})] &\text{(2.3)}\\
+&=\mathbb{E}_{q}[\log p(\boldsymbol{x} \mid \boldsymbol{z})] + \mathbb{E}_{q}[\log p(\boldsymbol{z})] - \mathbb{E}_{q}[\log q(\boldsymbol{z})]  &\text{(2.4)}\\
+&=\mathbb{E}_{q}[\log p(\boldsymbol{x} \mid \boldsymbol{z})] + \mathbb{E}_{q}[\log p(\boldsymbol{z}) - \log q(\boldsymbol{z})]  &\text{(2.5)}\\
+&=\mathbb{E}_{q}[\log p(\boldsymbol{x} \mid \boldsymbol{z})] + \int q(\boldsymbol{z}) \log \frac{p(\boldsymbol{z})}{q(\boldsymbol{z})} d\boldsymbol{z}  &\text{(2.6)}\\
+&=\mathbb{E}_{q}[\log p(\boldsymbol{x} \mid \boldsymbol{z})]- \text{KL}(q(\boldsymbol{z}) \| p(\boldsymbol{z})) &\text{(2.7)}
 \end{aligned}
 $$
 
-Let's take a closer look at $$\text{(2.9)}$$. The first term describes the probability of the data given the latent variable $$p(\boldsymbol{x} \mid \boldsymbol{z})$$. When we maximize the ELBO we also maximize this quantity which translate in picking those models $$q(\boldsymbol{z})$$ in the variational family $$\mathcal{Q}$$ that *better predict* the data $$\boldsymbol{x}$$. The second term, is the negative KL divergence between our variational model $$q(\boldsymbol{z})$$ and the prior over the latent variables $$p(\boldsymbol{z})$$. When we maximize the ELBO this term is pushed towards zero (because of the negative sign) meaning that the two distributions are forced to be close (identical if $$\text{KL}=0$$). In other words, the variational distribution is forced to be similar to the prior. Let's break down what has been done above:
+Let's take a closer look at $$\text{(2.7)}$$. The first term describes the probability of the data given the latent variable $$p(\boldsymbol{x} \mid \boldsymbol{z})$$. When we maximize the ELBO we also maximize this quantity which translate in picking those models $$q(\boldsymbol{z})$$ in the variational family $$\mathcal{Q}$$ that *better predict* the data $$\boldsymbol{x}$$. The second term, is the negative KL divergence between our variational model $$q(\boldsymbol{z})$$ and the prior over the latent variables $$p(\boldsymbol{z})$$. When we maximize the ELBO this term is pushed towards zero (because of the negative sign) meaning that the two distributions are forced to be close (identical if $$\text{KL}=0$$). In other words, the variational distribution is forced to be similar to the prior. Let's break down what has been done above:
 
-$$(2.1 \rightarrow 2.2)$$ Factorizing the joint probability
+$$(2.1 \rightarrow 2.2)$$ Exploiting the linearity of expectation to separate the two terms. This form is often used in the literature to highlight $$\mathbb{E}_{q}[\log p(\boldsymbol{z})]$$, which is the entropy of the variational distribution. Note that, maximizing the ELBO implies the minimization of this entropy.
 
-$$
-p(\boldsymbol{z}, \boldsymbol{x}) = p(\boldsymbol{z}) p(\boldsymbol{x} \vert \boldsymbol{z}).
-$$
+$$(2.2 \rightarrow 2.3)$$ Factorizing the joint probability: $$p(\boldsymbol{z}, \boldsymbol{x}) = p(\boldsymbol{x} \vert \boldsymbol{z}) p(\boldsymbol{z}).$$
 
-$$(2.2 \rightarrow 2.3)$$ Breaking the ratio by applying the property of logarithms
+$$(2.3 \rightarrow 2.4)$$ Breaking the product by applying the property of logarithms, then splitting the expectation
 
 $$
-\log(f(x) \ g(x)) = \log f(x) + \log g(x).
+\mathbb{E}_{q}[\log \big( p(\boldsymbol{x} \vert \boldsymbol{z}) p(\boldsymbol{z}) \big)]
+=
+\mathbb{E}_{q}[\log p(\boldsymbol{x} \vert \boldsymbol{z}) + \log p(\boldsymbol{z})]
+=
+\mathbb{E}_{q}[\log p(\boldsymbol{x} \vert \boldsymbol{z})] + \mathbb{E}_{q}[\log p(\boldsymbol{z})].
 $$
 
-$$(2.3 \rightarrow 2.4)$$ Applying the properties of expectation (linearity).
+$$(2.4 \rightarrow 2.5)$$ Applying the properties of expectation (linearity).
 
-$$(2.4 \rightarrow 2.5)$$ Rearranging the terms and applying the definition of expectation to get the integral form.
+$$(2.5 \rightarrow 2.6)$$ Rewriting the expectation as an integral (just for clarity)
 
-$$(2.5 \rightarrow 2.6)$$ Applying the property of integrals to join the two terms.
+$$
+\mathbb{E}_{q}[\log p(\boldsymbol{z}) - \log q(\boldsymbol{z})]
+=
+\int q(\boldsymbol{z})  \big( \log p(\boldsymbol{z}) - \log q(\boldsymbol{z}) \big) d\boldsymbol{z}
+=
+\int q(\boldsymbol{z}) \log \frac{p(\boldsymbol{z})}{q(\boldsymbol{z})} d\boldsymbol{z}.
+$$
 
-$$(2.6 \rightarrow 2.7)$$ Collecting the common factor $$q(\mathbf{z})$$.
-
-$$(2.7 \rightarrow 2.8)$$ Applying the properties of logarithm to arrange the difference as a ratio.
-
-$$(2.8 \rightarrow 2.9)$$ The integral in the second term is equivalent to the definition of negative KL divergence.
+$$(2.6 \rightarrow 2.7)$$ The integral is equivalent to the negative KL divergence.
 
 
 Other routes to the ELBO
@@ -244,9 +248,9 @@ $$
 
 and therefore the ELBO is a lower bound over the (log)evidence. Let's breakdown the various steps:
 
-$$(3.1)$$ Just rewriting $$\log p(\boldsymbol{x})$$ by using the definition of joint probability.
+$$(3.1)$$ Rewriting $$p(\boldsymbol{x})$$ as a marginalization of the joint distribution over $$\boldsymbol{z}$$.
 
-$$(3.1 \rightarrow 3.2)$$ Using the good old trick of including a new term for convenience. I will state the obvious: the new quantity is equal to 1 and has no effect on the product, therefore this is a legit operation.
+$$(3.1 \rightarrow 3.2)$$ Including a new term for convenience. I will state the obvious: the new quantity is equal to 1 and has no effect on the product, therefore this is a legit operation.
 
 $$(3.2 \rightarrow 3.3)$$ The new integral can be rewritten as an expectation.
 
@@ -292,7 +296,7 @@ $$(4.4 \rightarrow 4.5)$$ Applying the rule of logarithms to turn a product into
 Conclusion
 ----------
 
-In this post I have provided an introduction to variational inference introducing the three main characters at play: the evidence, the KL-divergence, and the ELBO. I have tried to be as compact as possible, explaining every step along the way. Below you can find some additional resources if you want to know more about variational inference.
+In this post I have provided an introduction to variational inference introducing the three main characters at play: the evidence, the KL-divergence, and the ELBO. I have tried to be as compact as possible, explaining every step along the way. Variational inference focuses on optimisation instead of integration, it can be applied to many probabilistic models (e.g. non-conjugate, high-dimensional, directed and undirected), it is numerically stable, fast to converge, and easy to train on GPUs. Below you can find some additional resources if you want to know more about variational inference.
 
 
 Resources
@@ -301,6 +305,7 @@ Resources
 - *"Variational Inference"*, A.L. Popkes [[PDF]](http://alpopkes.com/files/variational_inference.pdf)
 - *"Pattern Recognition and Machine Learning"*, Chapter 10, C. Bishop
 - *"Variational Inference: A Review for Statisticians"*, D. Blei, A. Kucukelbir, and J.D. McAuliffe [[arXiv]](https://arxiv.org/pdf/1601.00670v1.pdf)
+- Shakir's tutorials on variational inference [[PDF-1]](http://shakirm.com/papers/VITutorial.pdf) and [[PDF-2]](http://shakirm.com/slides/MLSS2018-Madrid-ProbThinking.pdf)
 
 
 
