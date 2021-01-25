@@ -6,11 +6,22 @@ layout: default
   
   {{ content }}
 
-  <h1 class="page-heading">
-      <img src="./images/new.png" alt="new post" height="20">
-      <b>Few-shot Learning (video course)</b>
-  </h1>
+
+  <ul class="post-list">
+    <h1 class="page-heading">
+        <img src="./images/new.png" alt="new post" height="20">
+        <b>Variational Inference</b>
+    </h1>
+    {% for post in site.posts %}
+    {% if post.published == true and post.type == 'variational inference'  %}
+      <li><span>{{ post.date | date: "[%Y.%m.%d]" }}</span> &raquo; <a class="post-link" href="{{ post.url | relative_url}}" style="text-decoration: underline; font-size:100%; display: inline;">{{ post.title}}</a></li>
+    {% endif %}
+    {% endfor %}
+  </ul>
   
+  <h1 class="page-heading">
+      <b>Few-shot Learning (video course)</b>
+  </h1>        
   <ul class="post-list">
         <li><span><a href="https://youtu.be/NmqsQPoTtOQ" style="text-decoration: underline;">Lesson 2.5</a> </span> &raquo; Beyond MAML with MAML++, instability in MAML, multi-step loss</li> 
           
@@ -32,6 +43,13 @@ layout: default
 
   <ul class="post-list">
 
+    <h1 class="page-heading"><b>Bayesian Methods</b></h1>
+    {% for post in site.posts %}
+    {% if post.published == true and post.type == 'bayesian methods'  %}
+      <li><span>{{ post.date | date: "[%Y.%m.%d]" }}</span> &raquo; <a class="post-link" href="{{ post.url | relative_url}}" style="text-decoration: underline; font-size:100%; display: inline;">{{ post.title}}</a></li>
+    {% endif %}
+    {% endfor %}
+    
     <h1 class="page-heading"><b>Reinforcement Learning</b></h1>
     {% for post in site.posts %}
     {% if post.published == true and post.type == 'reinforcement learning'  %}
@@ -46,13 +64,6 @@ layout: default
     {% endif %}
     {% endfor %}
     
-        <h1 class="page-heading"><b>Bayesian Methods</b></h1>
-    {% for post in site.posts %}
-    {% if post.published == true and post.type == 'bayesian methods'  %}
-      <li><span>{{ post.date | date: "[%Y.%m.%d]" }}</span> &raquo; <a class="post-link" href="{{ post.url | relative_url}}" style="text-decoration: underline; font-size:100%; display: inline;">{{ post.title}}</a></li>
-    {% endif %}
-    {% endfor %}
-
   </ul>
 
 

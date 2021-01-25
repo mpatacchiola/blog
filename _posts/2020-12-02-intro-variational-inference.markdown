@@ -1,15 +1,15 @@
 ---
 layout: post
-title:  "Variational inference: evidence, KL, and ELBO"
-date:   2020-12-02 08:00:00 +0000
-description: .
+title:  "Evidence, KL-divergence, and ELBO"
+date:   2021-01-25 18:00:00 +0000
+description: A blog series about Variational Inference. This post introduces the evidence, the ELBO, and the KL-divergence.
 author: Massimiliano Patacchiola
-type: bayesian methods
-comments: false
-published: false
+type: variational inference
+comments: true
+published: true
 ---
 
-This post is the first of a series on variational inference, a tool that has been widely used in machine learning as engine of many successful methods, e.g. Variational Auto-Encoders (VAEs). My goal here is to define the problem and then introduce the main characters at play: evidence, Kullback-Leibler (KL) divergence, and Evidence Lower BOund (ELBO). Those three quantities have a central role in variational inference and it is therefore necessary to have a clear understanding of how they are interconnected.
+This post is the first of a series on variational inference, a tool that has been widely used in machine learning. My goal here is to define the problem and then introduce the main characters at play: evidence, Kullback-Leibler (KL) divergence, and Evidence Lower BOund (ELBO). Those three quantities have a central role in variational inference and it is therefore necessary to have a clear understanding of how they are interconnected. I have followed a step-by-step approach in the disentanglement of the mathematical derivations, which should help you to keep the flow. Enjoy the reading!
 
 
 Definition of the problem
@@ -32,9 +32,9 @@ $$
 p(\mathbf{z} \vert \mathbf{x}) = \frac{p(\mathbf{z}, \mathbf{x})}{p(\mathbf{x})}.
 $$
 
-However, we have a problem. 
+However, estimating the posterior in such a way is not possible. 
 
-**Problem: intractable posterior.** Let's give a closer look at $$p(\mathbf{z} \vert \mathbf{x})$$. The numerator of the posterior is the joint distribution over the observed and latent variables $$p(\mathbf{z}, \mathbf{x})$$ which is efficient to compute. The denominator $$p(\mathbf{x})$$ of the posterior is called *marginal likelihood* or *evidence* and can be estimated as follows
+**Problem: intractable posterior.** Let's give a closer look at $$p(\mathbf{z} \vert \mathbf{x})$$. The numerator of the posterior is the joint distribution over the observed and latent variables $$p(\mathbf{z}, \mathbf{x})$$ which is generally efficient to compute. The denominator $$p(\mathbf{x})$$ of the posterior is called *marginal likelihood* or *evidence* and can be estimated as follows
 
 $$
 p(\mathbf{x}) = \int p(\mathbf{z}, \mathbf{x}) d \mathbf{z}.
@@ -146,9 +146,10 @@ However, rearranging those quantities by moving the intractable terms on the sam
 
 $$
 \mathbb{E}_{q} \big[\log p(\boldsymbol{x}, \boldsymbol{z}) - \log q(\boldsymbol{z}) \big]
-= \log p(\boldsymbol{x}) - \text{KL} \big( q(\boldsymbol{z}) || p(\boldsymbol{z} | \boldsymbol{x}) \big).
+= \log p(\boldsymbol{x}) - \text{KL} \big( q(\boldsymbol{z}) || p(\boldsymbol{z} | \boldsymbol{x}) \big),
 $$
 
+where the sign of the expectation has been changed by switching the sign of the terms inside the brackets.
 Here is the idea: what if we maximize the quantity on the left side? This would be great because the terms on the left are tractable. Is this legit? Here is the interesting part, by maximizing the quantity on the left we are simultaneously (i) maximizing the evidence $$p(\boldsymbol{x})$$, and (ii) minimizing the KL divergence between our variational distribution $$q(\boldsymbol{z})$$ and the true posterior $$p(\boldsymbol{z} \vert \boldsymbol{x})$$, that is what we wanted to achieve with this machinery. Crucially, since the KL divergence is non-negative $$\text{KL} \geq 0$$ the left term is a lower-bound over the log-evidence $$p(\boldsymbol{x})$$ called the *Evidence Lower BOund (ELBO)*
 
 $$
@@ -167,14 +168,14 @@ $$
 &=\mathbb{E}_{q} \big[\log p(\boldsymbol{x}, \boldsymbol{z}) - \log q(\boldsymbol{z}) \big] &\text{(2.1)}\\
 &=\mathbb{E}_{q}[\log p(\boldsymbol{z}, \boldsymbol{x})] -\mathbb{E}_{q}[\log q(\boldsymbol{z})] &\text{(2.2)}\\
 &=\mathbb{E}_{q}[\log \big( p(\boldsymbol{x} \vert \boldsymbol{z}) p(\boldsymbol{z}) \big) ] -\mathbb{E}_{q}[\log q(\boldsymbol{z})] &\text{(2.3)}\\
-&=\mathbb{E}_{q}[\log p(\boldsymbol{x} \mid \boldsymbol{z})] + \mathbb{E}_{q}[\log p(\boldsymbol{z})] - \mathbb{E}_{q}[\log q(\boldsymbol{z})]  &\text{(2.4)}\\
-&=\mathbb{E}_{q}[\log p(\boldsymbol{x} \mid \boldsymbol{z})] + \mathbb{E}_{q}[\log p(\boldsymbol{z}) - \log q(\boldsymbol{z})]  &\text{(2.5)}\\
-&=\mathbb{E}_{q}[\log p(\boldsymbol{x} \mid \boldsymbol{z})] + \int q(\boldsymbol{z}) \log \frac{p(\boldsymbol{z})}{q(\boldsymbol{z})} d\boldsymbol{z}  &\text{(2.6)}\\
-&=\mathbb{E}_{q}[\log p(\boldsymbol{x} \mid \boldsymbol{z})]- \text{KL}(q(\boldsymbol{z}) \| p(\boldsymbol{z})) &\text{(2.7)}
+&=\mathbb{E}_{q}[\log p(\boldsymbol{x} \vert \boldsymbol{z})] + \mathbb{E}_{q}[\log p(\boldsymbol{z})] - \mathbb{E}_{q}[\log q(\boldsymbol{z})]  &\text{(2.4)}\\
+&=\mathbb{E}_{q}[\log p(\boldsymbol{x} \vert\boldsymbol{z})] + \mathbb{E}_{q}[\log p(\boldsymbol{z}) - \log q(\boldsymbol{z})]  &\text{(2.5)}\\
+&=\mathbb{E}_{q}[\log p(\boldsymbol{x} \vert \boldsymbol{z})] + \int q(\boldsymbol{z}) \log \frac{p(\boldsymbol{z})}{q(\boldsymbol{z})} d\boldsymbol{z}  &\text{(2.6)}\\
+&=\mathbb{E}_{q}[\log p(\boldsymbol{x} \vert \boldsymbol{z})]- \text{KL}(q(\boldsymbol{z}) \| p(\boldsymbol{z})) &\text{(2.7)}
 \end{aligned}
 $$
 
-Let's take a closer look at $$\text{(2.7)}$$. The first term describes the probability of the data given the latent variable $$p(\boldsymbol{x} \mid \boldsymbol{z})$$. When we maximize the ELBO we also maximize this quantity which translate in picking those models $$q(\boldsymbol{z})$$ in the variational family $$\mathcal{Q}$$ that *better predict* the data $$\boldsymbol{x}$$. The second term, is the negative KL divergence between our variational model $$q(\boldsymbol{z})$$ and the prior over the latent variables $$p(\boldsymbol{z})$$. When we maximize the ELBO this term is pushed towards zero (because of the negative sign) meaning that the two distributions are forced to be close (identical if $$\text{KL}=0$$). In other words, the variational distribution is forced to be similar to the prior. Let's break down what has been done above:
+Let's take a closer look at $$\text{(2.7)}$$. The first term describes the probability of the data given the latent variable $$p(\boldsymbol{x} \mid \boldsymbol{z})$$. When we maximize the ELBO we also maximize this quantity which translate in picking those models $$q(\boldsymbol{z})$$ in the variational family $$\mathcal{Q}$$ that *better predict* the data $$\boldsymbol{x}$$. The second term, is the negative KL divergence between our variational model $$q(\boldsymbol{z})$$ and the prior over the latent variables $$p(\boldsymbol{z})$$. When we maximize the ELBO this term is pushed towards zero (because of the negative sign) meaning that the two distributions are forced to be close (identical if $$\text{KL}=0$$). In other words, the variational distribution is forced to be similar to the prior. For this reason, this form of the ELBO is sometimes called the *prior-contrastive*. Let's break down what has been done above:
 
 $$(2.1 \rightarrow 2.2)$$ Exploiting the linearity of expectation to separate the two terms. This form is often used in the literature to highlight $$\mathbb{E}_{q}[\log p(\boldsymbol{z})]$$, which is the entropy of the variational distribution. Note that, maximizing the ELBO implies the minimization of this entropy.
 
@@ -274,13 +275,17 @@ $$
 
 As you can see this derivation is different from the one based on the Jensen's inequality, since it returns two terms: the ELBO and the KL divergence. Here is a quick explanation of what has been done above:
 
-$$(4.1)$$ The expectation over $$q(\boldsymbol{z})$$ has no effect on $$p(\boldsymbol{x})$$ therefore
+$$(4.1)$$ The expectation over $$q(\boldsymbol{z})$$ has no effect on $$p(\boldsymbol{x})$$ because
 
 $$
-\mathbb{E}_{q}[\log p(\boldsymbol{x})] = \log p(\boldsymbol{x}).
+\mathbb{E}_{q}[\log p(\boldsymbol{x})]
+
+= \int q(\boldsymbol{z}) \log p(\boldsymbol{x}) d\boldsymbol{z} 
+= \log p(\boldsymbol{x}) \int q(\boldsymbol{z}) d\boldsymbol{z}
+= \log p(\boldsymbol{x}).
 $$
 
-$$(4.1 \rightarrow 4.2)$$ Applying a refactoring based on the basic probability rule
+$$(4.1 \rightarrow 4.2)$$ Applying a refactoring based on
 
 $$
 p(\boldsymbol{x}) = \frac{p(\boldsymbol{x}, \boldsymbol{z})}{p(\boldsymbol{z} \vert \boldsymbol{x})}.
@@ -303,9 +308,7 @@ Resources
 ------------
 
 - *"Variational Inference"*, A.L. Popkes [[PDF]](http://alpopkes.com/files/variational_inference.pdf)
-- *"Pattern Recognition and Machine Learning"*, Chapter 10, C. Bishop
 - *"Variational Inference: A Review for Statisticians"*, D. Blei, A. Kucukelbir, and J.D. McAuliffe [[arXiv]](https://arxiv.org/pdf/1601.00670v1.pdf)
-- Shakir's tutorials on variational inference [[PDF-1]](http://shakirm.com/papers/VITutorial.pdf) and [[PDF-2]](http://shakirm.com/slides/MLSS2018-Madrid-ProbThinking.pdf)
-
-
-
+- Shakir Mohamed's tutorials, e.g. [[PDF-1]](http://shakirm.com/papers/VITutorial.pdf) and [[PDF-2]](http://shakirm.com/slides/MLSS2018-Madrid-ProbThinking.pdf)
+- Yarin Gal's thesis [[PDF]](http://mlg.eng.cam.ac.uk/yarin/thesis/thesis.pdf)
+- - *"Pattern Recognition and Machine Learning"*, Chapter 10, C. Bishop
