@@ -55,9 +55,9 @@ We can exploit [variational Bayesian methods](https://en.wikipedia.org/wiki/Vari
 **The Kullback-Leibler (KL) divergence.** The KL divergence can be used to measure the similarity between two distributions. For instance, given our distributions $$p$$ and $$q$$ we define
 
 $$
-\text{KL} \big( q(\boldsymbol{z}) || p(\boldsymbol{z} | \boldsymbol{x}) \big) 
-= \int q(\boldsymbol{z}) \log \frac{q(\boldsymbol{z})}{p(\boldsymbol{z} | \boldsymbol{x})} d\boldsymbol{z}
-= - \int q(\boldsymbol{z}) \log \frac{p(\boldsymbol{z} | \boldsymbol{x})}{q(\boldsymbol{z})} d\boldsymbol{z}.
+\text{KL} \big( q(\mathbf{z}) || p(\mathbf{z} | \mathbf{x}) \big) 
+= \int q(\mathbf{z}) \log \frac{q(\mathbf{z})}{p(\mathbf{z} | \mathbf{x})} d\mathbf{z}
+= - \int q(\mathbf{z}) \log \frac{p(\mathbf{z} | \mathbf{x})}{q(\mathbf{z})} d\mathbf{z}.
 $$
 
 In our particular case, we want to find the best candidate distribution $$q_{\ast}$$ that minimizes the KL divergence
@@ -79,16 +79,16 @@ with $$\text{KL}(p \vert\vert q)$$ called the *forward* and $$\text{KL}(q \vert\
 
 $$
 \begin{aligned}
-\text{KL} \big( q(\boldsymbol{z}) || p(\boldsymbol{z} | \boldsymbol{x}) \big) 
-&= \int q(\boldsymbol{z}) \log \frac{q(\boldsymbol{z})}{p(\boldsymbol{z} | \boldsymbol{x})} d\boldsymbol{z} &\text{(1.1)}\\
-&= \int q(\boldsymbol{z}) \big( \log q(\boldsymbol{z}) - \log p(\boldsymbol{z} | \boldsymbol{x}) \big) d\boldsymbol{z} &\text{(1.2)}\\
-&= \int q(\boldsymbol{z}) \log q(\boldsymbol{z}) - q(\boldsymbol{z}) \log p(\boldsymbol{z} | \boldsymbol{x}) d\boldsymbol{z} &\text{(1.3)}\\
-&= \int q(\boldsymbol{z}) \log q(\boldsymbol{z}) d\boldsymbol{z} - \int q(\boldsymbol{z}) \log p(\boldsymbol{z} | \boldsymbol{x}) d\boldsymbol{z} &\text{(1.4)}\\ 
-&= \mathbb{E}_{q} \big[ \log q(\boldsymbol{z}) \big] - \mathbb{E}_{q} \big[ \log p(\boldsymbol{z} | \boldsymbol{x}) \big] & \text{(1.5)}\\
-&= \mathbb{E}_{q} \big[ \log q(\boldsymbol{z}) \big] - \mathbb{E}_{q} \bigg[ \log \frac{p(\boldsymbol{x}, \boldsymbol{z}) }{p(\boldsymbol{x})} \bigg] &\text{(1.6)}\\
-&= \mathbb{E}_{q} \big[ \log q(\boldsymbol{z}) \big] - \mathbb{E}_{q} \big[ \log p(\boldsymbol{x}, \boldsymbol{z}) - \log p(\boldsymbol{x}) \big] &\text{(1.7)}\\
-&= \mathbb{E}_{q} \big[ \log q(\boldsymbol{z}) - \log p(\boldsymbol{x}, \boldsymbol{z}) \big] + \mathbb{E}_{q} \big[ \log p(\boldsymbol{x}) \big] &\text{(1.8)}\\
-&= \mathbb{E}_{q} \big[ \log q(\boldsymbol{z}) - \log p(\boldsymbol{x}, \boldsymbol{z}) \big] + \underbrace{\log p(\boldsymbol{x})}_{\text{intractable}} &\text{(1.9)}\\
+\text{KL} \big( q(\mathbf{z}) || p(\mathbf{z} | \mathbf{x}) \big) 
+&= \int q(\mathbf{z}) \log \frac{q(\mathbf{z})}{p(\mathbf{z} | \mathbf{x})} d\mathbf{z} &\text{(1.1)}\\
+&= \int q(\mathbf{z}) \big( \log q(\mathbf{z}) - \log p(\mathbf{z} | \mathbf{x}) \big) d\mathbf{z} &\text{(1.2)}\\
+&= \int q(\mathbf{z}) \log q(\mathbf{z}) - q(\mathbf{z}) \log p(\mathbf{z} | \mathbf{x}) d\mathbf{z} &\text{(1.3)}\\
+&= \int q(\mathbf{z}) \log q(\mathbf{z}) d\mathbf{z} - \int q(\mathbf{z}) \log p(\mathbf{z} | \mathbf{x}) d\mathbf{z} &\text{(1.4)}\\ 
+&= \mathbb{E}_{q} \big[ \log q(\mathbf{z}) \big] - \mathbb{E}_{q} \big[ \log p(\mathbf{z} | \mathbf{x}) \big] & \text{(1.5)}\\
+&= \mathbb{E}_{q} \big[ \log q(\mathbf{z}) \big] - \mathbb{E}_{q} \bigg[ \log \frac{p(\mathbf{x}, \mathbf{z}) }{p(\mathbf{x})} \bigg] &\text{(1.6)}\\
+&= \mathbb{E}_{q} \big[ \log q(\mathbf{z}) \big] - \mathbb{E}_{q} \big[ \log p(\mathbf{x}, \mathbf{z}) - \log p(\mathbf{x}) \big] &\text{(1.7)}\\
+&= \mathbb{E}_{q} \big[ \log q(\mathbf{z}) - \log p(\mathbf{x}, \mathbf{z}) \big] + \mathbb{E}_{q} \big[ \log p(\mathbf{x}) \big] &\text{(1.8)}\\
+&= \mathbb{E}_{q} \big[ \log q(\mathbf{z}) - \log p(\mathbf{x}, \mathbf{z}) \big] + \underbrace{\log p(\mathbf{x})}_{\text{intractable}} &\text{(1.9)}\\
 \end{aligned}
 $$
 
@@ -100,7 +100,7 @@ $$
 \log \frac{f(x)}{g(x)} = \log f(x) - \log g(x).
 $$
 
-$$(1.2 \rightarrow 1.3)$$ Multiplying the two terms with $$q(\boldsymbol{z})$$ and expanding.
+$$(1.2 \rightarrow 1.3)$$ Multiplying the two terms with $$q(\mathbf{z})$$ and expanding.
 
 $$(1.3 \rightarrow 1.4)$$ Applying the property of integrals 
 
@@ -113,7 +113,7 @@ $$(1.4 \rightarrow 1.5)$$ Applying the definition of expectation over the integr
 $$(1.5 \rightarrow 1.6)$$ Straightforward application of the rule of probabilities
 
 $$
-p(\boldsymbol{z} | \boldsymbol{x}) = \frac{p(\boldsymbol{x}, \boldsymbol{z}) }{p(\boldsymbol{x})}.
+p(\mathbf{z} | \mathbf{x}) = \frac{p(\mathbf{x}, \mathbf{z}) }{p(\mathbf{x})}.
 $$
 
 $$(1.6 \rightarrow 1.7)$$ Applying again the rule of logarithms to split the ratio.
@@ -126,7 +126,7 @@ $$
 
 to rearrange the terms, ending up with two different expectations.
 
-$$(1.8 \rightarrow 1.9)$$ There is no expected value for $$\mathbb{E}_{q} \big[ \log p(\boldsymbol{x}) \big]$$ since we are considering an expectation $$\mathbb{E}_{q}$$ over $$q(\boldsymbol{z})$$ and not over $$p(\boldsymbol{x})$$.
+$$(1.8 \rightarrow 1.9)$$ There is no expected value for $$\mathbb{E}_{q} \big[ \log p(\mathbf{x}) \big]$$ since we are considering an expectation $$\mathbb{E}_{q}$$ over $$q(\mathbf{z})$$ and not over $$p(\mathbf{x})$$.
 
 
 
@@ -137,25 +137,25 @@ Evidence Lower BOund (ELBO)
 Let's go back to $$\text{(1.9)}$$ where we got
 
 $$
-\text{KL} \big( q(\boldsymbol{z}) \vert\vert p(\boldsymbol{z} \vert \boldsymbol{x}) \big)
-= \mathbb{E}_{q} \big[ \log q(\boldsymbol{z}) - \log p(\boldsymbol{x}, \boldsymbol{z}) \big] + \log p(\boldsymbol{x}).
+\text{KL} \big( q(\mathbf{z}) \vert\vert p(\mathbf{z} \vert \mathbf{x}) \big)
+= \mathbb{E}_{q} \big[ \log q(\mathbf{z}) - \log p(\mathbf{x}, \mathbf{z}) \big] + \log p(\mathbf{x}).
 $$
 
-This decomposition is problematic because we still have two intractable terms $$\text{KL} ( q(\boldsymbol{z}) \vert\vert p(\boldsymbol{z} \vert \boldsymbol{x}) )$$ and $$\log p(\boldsymbol{x})$$.
+This decomposition is problematic because we still have two intractable terms $$\text{KL} ( q(\mathbf{z}) \vert\vert p(\mathbf{z} \vert \mathbf{x}) )$$ and $$\log p(\mathbf{x})$$.
 However, rearranging those quantities by moving the intractable terms on the same side and switching signs, we get
 
 $$
-\mathbb{E}_{q} \big[\log p(\boldsymbol{x}, \boldsymbol{z}) - \log q(\boldsymbol{z}) \big]
-= \log p(\boldsymbol{x}) - \text{KL} \big( q(\boldsymbol{z}) || p(\boldsymbol{z} | \boldsymbol{x}) \big),
+\mathbb{E}_{q} \big[\log p(\mathbf{x}, \mathbf{z}) - \log q(\mathbf{z}) \big]
+= \log p(\mathbf{x}) - \text{KL} \big( q(\mathbf{z}) || p(\mathbf{z} | \mathbf{x}) \big),
 $$
 
 where the sign of the expectation has been changed by switching the sign of the terms inside the brackets.
-Here is the idea: what if we maximize the quantity on the left side? This would be great because the terms on the left are tractable. Is this legit? Here is the interesting part, by maximizing the quantity on the left we are simultaneously (i) maximizing the evidence $$p(\boldsymbol{x})$$, and (ii) minimizing the KL divergence between our variational distribution $$q(\boldsymbol{z})$$ and the true posterior $$p(\boldsymbol{z} \vert \boldsymbol{x})$$, that is what we wanted to achieve with this machinery. Crucially, since the KL divergence is non-negative $$\text{KL} \geq 0$$ the left term is a lower-bound over the log-evidence $$p(\boldsymbol{x})$$ called the *Evidence Lower BOund (ELBO)*
+Here is the idea: what if we maximize the quantity on the left side? This would be great because the terms on the left are tractable. Is this legit? Here is the interesting part, by maximizing the quantity on the left we are simultaneously (i) maximizing the evidence $$p(\mathbf{x})$$, and (ii) minimizing the KL divergence between our variational distribution $$q(\mathbf{z})$$ and the true posterior $$p(\mathbf{z} \vert \mathbf{x})$$, that is what we wanted to achieve with this machinery. Crucially, since the KL divergence is non-negative $$\text{KL} \geq 0$$ the left term is a lower-bound over the log-evidence $$p(\mathbf{x})$$ called the *Evidence Lower BOund (ELBO)*
 
 $$
 \text{ELBO}(q) 
-= \mathbb{E}_{q} \big[\log p(\boldsymbol{x}, \boldsymbol{z}) - \log q(\boldsymbol{z}) \big]
-= \mathbb{E}_{q} \bigg[ \log \frac{p(\boldsymbol{x}, \boldsymbol{z})}{q(\boldsymbol{z})} \bigg],
+= \mathbb{E}_{q} \big[\log p(\mathbf{x}, \mathbf{z}) - \log q(\mathbf{z}) \big]
+= \mathbb{E}_{q} \bigg[ \log \frac{p(\mathbf{x}, \mathbf{z})}{q(\mathbf{z})} \bigg],
 $$
 
 where I have used the rule of logarithms to get the ratio in the last step.
@@ -165,30 +165,30 @@ where I have used the rule of logarithms to get the ratio in the last step.
 $$
 \begin{aligned}
 \mathrm{ELBO}(q)
-&=\mathbb{E}_{q} \big[\log p(\boldsymbol{x}, \boldsymbol{z}) - \log q(\boldsymbol{z}) \big] &\text{(2.1)}\\
-&=\mathbb{E}_{q}[\log p(\boldsymbol{z}, \boldsymbol{x})] -\mathbb{E}_{q}[\log q(\boldsymbol{z})] &\text{(2.2)}\\
-&=\mathbb{E}_{q}[\log \big( p(\boldsymbol{x} \vert \boldsymbol{z}) p(\boldsymbol{z}) \big) ] -\mathbb{E}_{q}[\log q(\boldsymbol{z})] &\text{(2.3)}\\
-&=\mathbb{E}_{q}[\log p(\boldsymbol{x} \vert \boldsymbol{z})] + \mathbb{E}_{q}[\log p(\boldsymbol{z})] - \mathbb{E}_{q}[\log q(\boldsymbol{z})]  &\text{(2.4)}\\
-&=\mathbb{E}_{q}[\log p(\boldsymbol{x} \vert\boldsymbol{z})] + \mathbb{E}_{q}[\log p(\boldsymbol{z}) - \log q(\boldsymbol{z})]  &\text{(2.5)}\\
-&=\mathbb{E}_{q}[\log p(\boldsymbol{x} \vert \boldsymbol{z})] + \int q(\boldsymbol{z}) \log \frac{p(\boldsymbol{z})}{q(\boldsymbol{z})} d\boldsymbol{z}  &\text{(2.6)}\\
-&=\mathbb{E}_{q}[\log p(\boldsymbol{x} \vert \boldsymbol{z})]- \text{KL}(q(\boldsymbol{z}) \| p(\boldsymbol{z})) &\text{(2.7)}
+&=\mathbb{E}_{q} \big[\log p(\mathbf{x}, \mathbf{z}) - \log q(\mathbf{z}) \big] &\text{(2.1)}\\
+&=\mathbb{E}_{q}[\log p(\mathbf{z}, \mathbf{x})] -\mathbb{E}_{q}[\log q(\mathbf{z})] &\text{(2.2)}\\
+&=\mathbb{E}_{q}[\log \big( p(\mathbf{x} \vert \mathbf{z}) p(\mathbf{z}) \big) ] -\mathbb{E}_{q}[\log q(\mathbf{z})] &\text{(2.3)}\\
+&=\mathbb{E}_{q}[\log p(\mathbf{x} \vert \mathbf{z})] + \mathbb{E}_{q}[\log p(\mathbf{z})] - \mathbb{E}_{q}[\log q(\mathbf{z})]  &\text{(2.4)}\\
+&=\mathbb{E}_{q}[\log p(\mathbf{x} \vert\mathbf{z})] + \mathbb{E}_{q}[\log p(\mathbf{z}) - \log q(\mathbf{z})]  &\text{(2.5)}\\
+&=\mathbb{E}_{q}[\log p(\mathbf{x} \vert \mathbf{z})] + \int q(\mathbf{z}) \log \frac{p(\mathbf{z})}{q(\mathbf{z})} d\mathbf{z}  &\text{(2.6)}\\
+&=\mathbb{E}_{q}[\log p(\mathbf{x} \vert \mathbf{z})]- \text{KL}(q(\mathbf{z}) \| p(\mathbf{z})) &\text{(2.7)}
 \end{aligned}
 $$
 
-Let's take a closer look at $$\text{(2.7)}$$. The first term describes the probability of the data given the latent variable $$p(\boldsymbol{x} \mid \boldsymbol{z})$$. When we maximize the ELBO we also maximize this quantity which translate in picking those models $$q(\boldsymbol{z})$$ in the variational family $$\mathcal{Q}$$ that *better predict* the data $$\boldsymbol{x}$$. The second term, is the negative KL divergence between our variational model $$q(\boldsymbol{z})$$ and the prior over the latent variables $$p(\boldsymbol{z})$$. When we maximize the ELBO this term is pushed towards zero (because of the negative sign) meaning that the two distributions are forced to be close (identical if $$\text{KL}=0$$). In other words, the variational distribution is forced to be similar to the prior. For this reason, this form of the ELBO is sometimes called the *prior-contrastive*. Let's break down what has been done above:
+Let's take a closer look at $$\text{(2.7)}$$. The first term describes the probability of the data given the latent variable $$p(\mathbf{x} \mid \mathbf{z})$$. When we maximize the ELBO we also maximize this quantity which translate in picking those models $$q(\mathbf{z})$$ in the variational family $$\mathcal{Q}$$ that *better predict* the data $$\mathbf{x}$$. The second term, is the negative KL divergence between our variational model $$q(\mathbf{z})$$ and the prior over the latent variables $$p(\mathbf{z})$$. When we maximize the ELBO this term is pushed towards zero (because of the negative sign) meaning that the two distributions are forced to be close (identical if $$\text{KL}=0$$). In other words, the variational distribution is forced to be similar to the prior. For this reason, this form of the ELBO is sometimes called the *prior-contrastive*. Let's break down what has been done above:
 
-$$(2.1 \rightarrow 2.2)$$ Exploiting the linearity of expectation to separate the two terms. This form is often used in the literature to highlight $$\mathbb{E}_{q}[\log p(\boldsymbol{z})]$$, which is the entropy of the variational distribution. Note that, maximizing the ELBO implies the minimization of this entropy.
+$$(2.1 \rightarrow 2.2)$$ Exploiting the linearity of expectation to separate the two terms. This form is often used in the literature to highlight $$\mathbb{E}_{q}[\log p(\mathbf{z})]$$, which is the entropy of the variational distribution. Note that, maximizing the ELBO implies the minimization of this entropy.
 
-$$(2.2 \rightarrow 2.3)$$ Factorizing the joint probability: $$p(\boldsymbol{z}, \boldsymbol{x}) = p(\boldsymbol{x} \vert \boldsymbol{z}) p(\boldsymbol{z}).$$
+$$(2.2 \rightarrow 2.3)$$ Factorizing the joint probability: $$p(\mathbf{z}, \mathbf{x}) = p(\mathbf{x} \vert \mathbf{z}) p(\mathbf{z}).$$
 
 $$(2.3 \rightarrow 2.4)$$ Breaking the product by applying the property of logarithms, then splitting the expectation
 
 $$
-\mathbb{E}_{q}[\log \big( p(\boldsymbol{x} \vert \boldsymbol{z}) p(\boldsymbol{z}) \big)]
+\mathbb{E}_{q}[\log \big( p(\mathbf{x} \vert \mathbf{z}) p(\mathbf{z}) \big)]
 =
-\mathbb{E}_{q}[\log p(\boldsymbol{x} \vert \boldsymbol{z}) + \log p(\boldsymbol{z})]
+\mathbb{E}_{q}[\log p(\mathbf{x} \vert \mathbf{z}) + \log p(\mathbf{z})]
 =
-\mathbb{E}_{q}[\log p(\boldsymbol{x} \vert \boldsymbol{z})] + \mathbb{E}_{q}[\log p(\boldsymbol{z})].
+\mathbb{E}_{q}[\log p(\mathbf{x} \vert \mathbf{z})] + \mathbb{E}_{q}[\log p(\mathbf{z})].
 $$
 
 $$(2.4 \rightarrow 2.5)$$ Applying the properties of expectation (linearity).
@@ -196,11 +196,11 @@ $$(2.4 \rightarrow 2.5)$$ Applying the properties of expectation (linearity).
 $$(2.5 \rightarrow 2.6)$$ Rewriting the expectation as an integral (just for clarity)
 
 $$
-\mathbb{E}_{q}[\log p(\boldsymbol{z}) - \log q(\boldsymbol{z})]
+\mathbb{E}_{q}[\log p(\mathbf{z}) - \log q(\mathbf{z})]
 =
-\int q(\boldsymbol{z})  \big( \log p(\boldsymbol{z}) - \log q(\boldsymbol{z}) \big) d\boldsymbol{z}
+\int q(\mathbf{z})  \big( \log p(\mathbf{z}) - \log q(\mathbf{z}) \big) d\mathbf{z}
 =
-\int q(\boldsymbol{z}) \log \frac{p(\boldsymbol{z})}{q(\boldsymbol{z})} d\boldsymbol{z}.
+\int q(\mathbf{z}) \log \frac{p(\mathbf{z})}{q(\mathbf{z})} d\mathbf{z}.
 $$
 
 $$(2.6 \rightarrow 2.7)$$ The integral is equivalent to the negative KL divergence.
@@ -211,9 +211,9 @@ Other routes to the ELBO
 
 We are dealing with three quantities: 
 
-- the log-evidence $$\log p(\boldsymbol{x})$$
-- the KL divergence $$\text{KL} ( q(\boldsymbol{z}) \vert\vert p(\boldsymbol{z} \vert \boldsymbol{x}) )$$
-- the ELBO $$-\mathbb{E}_{q} \big[ \log q(\boldsymbol{z}) \big] + \mathbb{E}_{q} \big[ \log p(\boldsymbol{x}, \boldsymbol{z}) \big]$$
+- the log-evidence $$\log p(\mathbf{x})$$
+- the KL divergence $$\text{KL} ( q(\mathbf{z}) \vert\vert p(\mathbf{z} \vert \mathbf{x}) )$$
+- the ELBO $$-\mathbb{E}_{q} \big[ \log q(\mathbf{z}) \big] + \mathbb{E}_{q} \big[ \log p(\mathbf{x}, \mathbf{z}) \big]$$
 
 As we saw above, those quantities are strictly intertwined. In previous sections I have used the KL-divergence as starting point for the derivation of the ELBO and the evidence. However, it is also possible to use the evidence as starting point. In particular, there are two possible derivations, the first based on the Jensen's inequality shows why the ELBO is a lower bound over the evidence, the second starts from the evidence to return the KL divergence and the ELBO. Let's dive into those two derivations.
 
@@ -233,23 +233,23 @@ That's it. The log of the expectation of a random variable is greater than or eq
 
 $$
 \begin{aligned}
-\log p(\boldsymbol{x})
-&=\log \int p(\boldsymbol{x}, \boldsymbol{z}) d\boldsymbol{z} &\text{(3.1)}\\
-&=\log \int p(\boldsymbol{x}, \boldsymbol{z}) \frac{q(\boldsymbol{z})}{q(\boldsymbol{z})} d\boldsymbol{z} &\text{(3.2)}\\
-&=\log \mathbb{E}_{q} \bigg[ \frac{p(\boldsymbol{x}, \boldsymbol{z})}{q(\boldsymbol{z})} \bigg] &\text{(3.3)}\\
-&\geq \underbrace{\mathbb{E}_{q} \bigg[ \log \frac{p(\boldsymbol{x}, \boldsymbol{z})}{q(\boldsymbol{z})} \bigg]}_{\text{ELBO}} &\text{(3.4)}\\
+\log p(\mathbf{x})
+&=\log \int p(\mathbf{x}, \mathbf{z}) d\mathbf{z} &\text{(3.1)}\\
+&=\log \int p(\mathbf{x}, \mathbf{z}) \frac{q(\mathbf{z})}{q(\mathbf{z})} d\mathbf{z} &\text{(3.2)}\\
+&=\log \mathbb{E}_{q} \bigg[ \frac{p(\mathbf{x}, \mathbf{z})}{q(\mathbf{z})} \bigg] &\text{(3.3)}\\
+&\geq \underbrace{\mathbb{E}_{q} \bigg[ \log \frac{p(\mathbf{x}, \mathbf{z})}{q(\mathbf{z})} \bigg]}_{\text{ELBO}} &\text{(3.4)}\\
 \end{aligned}
 $$
 
 In the last step I have used the Jensen's inequality such that
 
 $$
-\log p(\boldsymbol{x}) \geq \text{ELBO},
+\log p(\mathbf{x}) \geq \text{ELBO},
 $$
 
 and therefore the ELBO is a lower bound over the (log)evidence. Let's breakdown the various steps:
 
-$$(3.1)$$ Rewriting $$p(\boldsymbol{x})$$ as a marginalization of the joint distribution over $$\boldsymbol{z}$$.
+$$(3.1)$$ Rewriting $$p(\mathbf{x})$$ as a marginalization of the joint distribution over $$\mathbf{z}$$.
 
 $$(3.1 \rightarrow 3.2)$$ Including a new term for convenience. I will state the obvious: the new quantity is equal to 1 and has no effect on the product, therefore this is a legit operation.
 
@@ -264,31 +264,31 @@ This derivation is not so popular as the previous one but it is helpful, since i
 
 $$
 \begin{aligned}
-\log p(\boldsymbol{x})
-&=\mathbb{E}_{q}[\log p(\boldsymbol{x})] &\text{(4.1)}\\
-&=\mathbb{E}_{q} \bigg[ \log \frac{p(\boldsymbol{x}, \boldsymbol{z})}{p(\boldsymbol{z} \vert \boldsymbol{x})} \bigg] &\text{(4.2)}\\
-&=\mathbb{E}_{q} \bigg[ \log \frac{p(\boldsymbol{x}, \boldsymbol{z})}{p(\boldsymbol{z} \vert \boldsymbol{x})} \frac{q(\boldsymbol{z})}{q(\boldsymbol{z})} \bigg] &\text{(4.3)}\\
-&=\mathbb{E}_{q} \bigg[ \log \frac{p(\boldsymbol{x}, \boldsymbol{z})}{q(\boldsymbol{z})} \frac{q(\boldsymbol{z})}{p(\boldsymbol{z} \vert \boldsymbol{x})} \bigg] &\text{(4.4)}\\
-&=\underbrace{\mathbb{E}_{q} \bigg[ \log \frac{p(\boldsymbol{x}, \boldsymbol{z})}{q(\boldsymbol{z})} \bigg]}_{\text{ELBO}} + \underbrace{\mathbb{E}_{q} \bigg[ \log \frac{q(\boldsymbol{z})}{p(\boldsymbol{z} \vert \boldsymbol{x})} \bigg]}_{\text{KL}} &\text{(4.5)}\\
+\log p(\mathbf{x})
+&=\mathbb{E}_{q}[\log p(\mathbf{x})] &\text{(4.1)}\\
+&=\mathbb{E}_{q} \bigg[ \log \frac{p(\mathbf{x}, \mathbf{z})}{p(\mathbf{z} \vert \mathbf{x})} \bigg] &\text{(4.2)}\\
+&=\mathbb{E}_{q} \bigg[ \log \frac{p(\mathbf{x}, \mathbf{z})}{p(\mathbf{z} \vert \mathbf{x})} \frac{q(\mathbf{z})}{q(\mathbf{z})} \bigg] &\text{(4.3)}\\
+&=\mathbb{E}_{q} \bigg[ \log \frac{p(\mathbf{x}, \mathbf{z})}{q(\mathbf{z})} \frac{q(\mathbf{z})}{p(\mathbf{z} \vert \mathbf{x})} \bigg] &\text{(4.4)}\\
+&=\underbrace{\mathbb{E}_{q} \bigg[ \log \frac{p(\mathbf{x}, \mathbf{z})}{q(\mathbf{z})} \bigg]}_{\text{ELBO}} + \underbrace{\mathbb{E}_{q} \bigg[ \log \frac{q(\mathbf{z})}{p(\mathbf{z} \vert \mathbf{x})} \bigg]}_{\text{KL}} &\text{(4.5)}\\
 \end{aligned}
 $$
 
 As you can see this derivation is different from the one based on the Jensen's inequality, since it returns two terms: the ELBO and the KL divergence. Here is a quick explanation of what has been done above:
 
-$$(4.1)$$ The expectation over $$q(\boldsymbol{z})$$ has no effect on $$p(\boldsymbol{x})$$ because
+$$(4.1)$$ The expectation over $$q(\mathbf{z})$$ has no effect on $$p(\mathbf{x})$$ because
 
 $$
-\mathbb{E}_{q}[\log p(\boldsymbol{x})]
+\mathbb{E}_{q}[\log p(\mathbf{x})]
 
-= \int q(\boldsymbol{z}) \log p(\boldsymbol{x}) d\boldsymbol{z} 
-= \log p(\boldsymbol{x}) \int q(\boldsymbol{z}) d\boldsymbol{z}
-= \log p(\boldsymbol{x}).
+= \int q(\mathbf{z}) \log p(\mathbf{x}) d\mathbf{z} 
+= \log p(\mathbf{x}) \int q(\mathbf{z}) d\mathbf{z}
+= \log p(\mathbf{x}).
 $$
 
 $$(4.1 \rightarrow 4.2)$$ Applying a refactoring based on
 
 $$
-p(\boldsymbol{x}) = \frac{p(\boldsymbol{x}, \boldsymbol{z})}{p(\boldsymbol{z} \vert \boldsymbol{x})}.
+p(\mathbf{x}) = \frac{p(\mathbf{x}, \mathbf{z})}{p(\mathbf{z} \vert \mathbf{x})}.
 $$
 
 $$(4.2 \rightarrow 4.3)$$ Including a new term for convenience, this has no effect on the product.
@@ -311,4 +311,4 @@ Resources
 - *"Variational Inference: A Review for Statisticians"*, D. Blei, A. Kucukelbir, and J.D. McAuliffe [[arXiv]](https://arxiv.org/pdf/1601.00670v1.pdf)
 - Shakir Mohamed's tutorials, e.g. [[PDF-1]](http://shakirm.com/papers/VITutorial.pdf) and [[PDF-2]](http://shakirm.com/slides/MLSS2018-Madrid-ProbThinking.pdf)
 - Yarin Gal's thesis [[PDF]](http://mlg.eng.cam.ac.uk/yarin/thesis/thesis.pdf)
-- - *"Pattern Recognition and Machine Learning"*, Chapter 10, C. Bishop
+- *"Pattern Recognition and Machine Learning"*, Chapter 10, C. Bishop
