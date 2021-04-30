@@ -32,3 +32,11 @@ end
 #documents by default, which allows unintended read access (such as template="/etc/passwd") 
 #or unintended embedded Ruby code execution.
 gem "kramdown", ">= 2.3.0"
+
+
+# Patch for GitHub alert
+#The REXML gem before 3.2.5 in Ruby before 2.6.7, 2.7.x before 2.7.3, and 3.x before 3.0.1 
+#does not properly address XML round-trip issues. An incorrect document can be produced after 
+#parsing and serializing.
+gem "rexml", ">= 3.2.5"
+
