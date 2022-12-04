@@ -177,7 +177,7 @@ $$
 
 Let's take a closer look at $$\text{(2.7)}$$. The first term describes the probability of the data given the latent variable $$p(\mathbf{x} \mid \mathbf{z})$$. When we maximize the ELBO we also maximize this quantity which translate in picking those models $$q(\mathbf{z})$$ in the variational family $$\mathcal{Q}$$ that *better predict* the data $$\mathbf{x}$$. The second term, is the negative KL divergence between our variational model $$q(\mathbf{z})$$ and the prior over the latent variables $$p(\mathbf{z})$$. When we maximize the ELBO this term is pushed towards zero (because of the negative sign) meaning that the two distributions are forced to be close (identical if $$\text{KL}=0$$). In other words, the variational distribution is forced to be similar to the prior. For this reason, this form of the ELBO is sometimes called the *prior-contrastive*. Let's break down what has been done above:
 
-$$(2.1 \rightarrow 2.2)$$ Exploiting the linearity of expectation to separate the two terms. This form is often used in the literature to highlight $$\mathbb{E}_{q}[\log p(\mathbf{z})]$$, which is the entropy of the variational distribution. Note that, maximizing the ELBO implies the minimization of this entropy.
+$$(2.1 \rightarrow 2.2)$$ Exploiting the linearity of expectation to separate the two terms. This form is often used in the literature to isolate $$\mathbb{E}_{q}[\log q(\mathbf{z})]$$, which is the entropy of the variational distribution. Note that, maximizing the ELBO implies the minimization of this entropy.
 
 $$(2.2 \rightarrow 2.3)$$ Factorizing the joint probability: $$p(\mathbf{z}, \mathbf{x}) = p(\mathbf{x} \vert \mathbf{z}) p(\mathbf{z}).$$
 
