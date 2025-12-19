@@ -38,5 +38,4 @@ gem "kramdown", ">= 2.3.0"
 #The REXML gem before 3.2.5 in Ruby before 2.6.7, 2.7.x before 2.7.3, and 3.x before 3.0.1 
 #does not properly address XML round-trip issues. An incorrect document can be produced after 
 #parsing and serializing.
-gem "rexml", ">= 3.2.5"
-
+gem "rexml", ">= 3.3.9"
